@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { DesktopNav } from "@/components/DesktopNav";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";

@@ -74,7 +74,7 @@ export const BuyCoinsPage = (): JSX.Element => {
 
       <div className="flex flex-col items-center px-6 py-12">
         {/* Heading */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <h1 className="text-5xl font-bold text-white tracking-tight">Buy coins</h1>
           <p className="mt-3 text-base text-white/50">Coins helps you get answers to your questions</p>
         </div>
@@ -87,17 +87,19 @@ export const BuyCoinsPage = (): JSX.Element => {
               className="rounded-3xl border border-[#3a3c3e] bg-[#1e2022] p-7 flex flex-col gap-5"
               data-testid={`coin-pack-${pack.coins}`}
             >
-              {/* Coins badge */}
-              <div className="inline-flex items-center gap-2 bg-[#2a2c2e] rounded-full px-3 py-1.5 w-fit">
-                <span>🪙</span>
-                <span className="text-sm font-semibold text-white">{pack.coins} coins</span>
+              {/* Coins badge — centered */}
+              <div className="flex justify-center">
+                <div className="inline-flex items-center gap-2 bg-[#2a2c2e] rounded-full px-4 py-2 w-fit">
+                  <span>🪙</span>
+                  <span className="text-sm font-semibold text-white">{pack.coins} coins</span>
+                </div>
               </div>
 
-              {/* Price */}
-              <p className="text-5xl font-bold text-white leading-none">{pack.price}</p>
+              {/* Price — centered */}
+              <p className="text-5xl font-bold text-white leading-none text-center">{pack.price}</p>
 
-              {/* Description */}
-              <p className="text-sm text-white/55 leading-6 flex-1">{pack.description}</p>
+              {/* Description — centered */}
+              <p className="text-sm text-white/55 leading-6 flex-1 text-center">{pack.description}</p>
 
               {/* CTA */}
               <button

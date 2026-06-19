@@ -10,6 +10,8 @@ import {
   deleteAuthToken,
 } from "./storage";
 import { randomInt } from "crypto";
+import { generateAIResponse } from "./ai";
+import { sendOTPEmail, sendWelcomeEmail, sendExpertReplyEmail } from "./email";
 
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function getTokenFromRequest(req: Request): string | null {
@@ -58,6 +60,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const hashedPw = hashPassword(password);
     const user = await storage.createUser({ email, firstName, lastName, password: hashedPw });
     const token = createAuthToken(user.id);
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(email, firstName).catch((err) =>
+      console.error("[EMAIL] Failed to send welcome email:", err.message)
+    );
+
     return res.status(201).json({ user: safeUser(user), token });
   });
 
@@ -103,9 +111,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (user) {
       const otp = String(randomInt(100000, 999999));
       await storage.createPasswordReset(email, otp);
-      // In production, send email. For demo, return OTP in response.
+
+      // Send OTP via Resend (non-blocking)
+      sendOTPEmail(email, otp, user.firstName).catch((err) => {
+        console.error("[EMAIL] Failed to send OTP email:", err.message);
+      });
+
       console.log(`[AUTH] OTP for ${email}: ${otp}`);
-      return res.json({ message: "OTP sent", otp }); // remove otp from response in production
+
+      // In dev mode only, return OTP hint
+      const isDev = process.env.NODE_ENV === "development";
+      return res.json({ message: "OTP sent", ...(isDev ? { otp } : {}) });
     }
     return res.json({ message: "If that email exists, an OTP has been sent." });
   });
@@ -196,6 +212,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return res.status(402).json({ message: "Insufficient coins. Please purchase more coins." });
     }
 
+    // Create enquiry first
     const enquiry = await storage.createEnquiry({
       userId,
       expertType: result.data.expertType,
@@ -205,7 +222,53 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     });
 
     await storage.updateUserCoins(userId, -coinsNeeded);
+
+    // Generate AI response asynchronously (don't block the HTTP response)
+    generateAIResponse(result.data.question, result.data.expertType, result.data.country)
+      .then(async (aiAnswer) => {
+        const updated = await storage.updateEnquiryAnswer(enquiry.id, aiAnswer, "AI + Expert Review");
+        // Send notification email to user
+        if (updated) {
+          sendExpertReplyEmail(user.email, user.firstName, result.data.question, enquiry.id).catch(
+            (err) => console.error("[EMAIL] Failed to send expert reply email:", err.message)
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("[AI] Failed to generate AI response:", err.message);
+      });
+
     return res.status(201).json(enquiry);
+  });
+
+  // ── Admin: Answer enquiry manually ─────────────────────────────────────────
+  // PATCH /api/enquiries/:id/answer
+  app.patch("/api/enquiries/:id/answer", requireAuth, async (req, res) => {
+    const schema = z.object({
+      answer: z.string().min(1),
+      answeredBy: z.string().default("Expert Team"),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const enquiry = await storage.getEnquiry(req.params.id);
+    if (!enquiry) return res.status(404).json({ message: "Enquiry not found" });
+
+    const updated = await storage.updateEnquiryAnswer(
+      req.params.id,
+      result.data.answer,
+      result.data.answeredBy
+    );
+
+    // Notify the user by email
+    const user = await storage.getUser(enquiry.userId);
+    if (user) {
+      sendExpertReplyEmail(user.email, user.firstName, enquiry.question, enquiry.id).catch((err) =>
+        console.error("[EMAIL] Failed to send expert reply notification:", err.message)
+      );
+    }
+
+    return res.json(updated);
   });
 
   // ── Experts ────────────────────────────────────────────────────────────────

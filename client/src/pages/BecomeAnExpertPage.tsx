@@ -31,7 +31,6 @@ export const BecomeAnExpertPage = (): JSX.Element => {
   return (
     <main className="min-h-screen w-full bg-[#0f1011] text-white flex flex-col">
       <DesktopNav
-        isLoggedIn={false}
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
       />

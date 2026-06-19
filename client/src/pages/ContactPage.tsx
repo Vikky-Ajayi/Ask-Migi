@@ -10,7 +10,6 @@ export const ContactPage = (): JSX.Element => {
   return (
     <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
       <DesktopNav
-        isLoggedIn={false}
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
       />

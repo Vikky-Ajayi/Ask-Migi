@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { DesktopNav } from "@/components/DesktopNav";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
@@ -20,11 +20,13 @@ export const ChatPage = (): JSX.Element => {
   const { isLoggedIn, isLoading: authLoading, refreshUser } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load all enquiries
   const { data: enquiries = [], isLoading: enqLoading } = useQuery<any[]>({
     queryKey: ["/api/enquiries"],
     enabled: isLoggedIn,
+    refetchInterval: 5000, // Poll every 5s for AI response updates
   });
 
   // Auto-select first enquiry if none selected
@@ -33,6 +35,11 @@ export const ChatPage = (): JSX.Element => {
       setActiveId(enquiries[0].id);
     }
   }, [enquiries, activeId]);
+
+  // Scroll to bottom when active enquiry changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [activeId]);
 
   // Active enquiry details
   const activeEnquiry = enquiries.find((e: any) => e.id === activeId);
@@ -52,7 +59,7 @@ export const ChatPage = (): JSX.Element => {
       await qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
       await refreshUser();
       setActiveId(data.id);
-      toast({ title: "Question submitted!", description: "An expert will respond within 3–5 business days." });
+      toast({ title: "Question submitted!", description: "An AI + Expert response will be generated shortly." });
     },
     onError: (e: any) => {
       if (e.message?.includes("402")) {
@@ -96,12 +103,12 @@ export const ChatPage = (): JSX.Element => {
   }));
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+    <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
       <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
-      <div className="flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 65px)" }}>
+      <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar */}
-        <div className="w-64 shrink-0 px-4 py-4 border-r border-white/5 overflow-y-auto">
+        <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
           <ChatSidebar
             enquiries={sidebarItems}
             activeId={activeId}
@@ -112,33 +119,34 @@ export const ChatPage = (): JSX.Element => {
         </div>
 
         {/* Main content */}
-        <div className="flex flex-1 flex-col min-h-0">
+        <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
           {/* Notice banner */}
-          <div className="mx-auto w-full max-w-2xl px-6 pt-4">
-            <div className="rounded-2xl bg-[#242628] border border-[#3a3c3e] px-4 py-3 text-sm text-white/80 text-center leading-5">
-              <span className="font-semibold text-white">Please note:</span> Expert responses are not instant. You'll receive a response in 3-5 Business days
+          <div className="px-6 pt-4 shrink-0">
+            <div className="mx-auto w-full max-w-2xl rounded-2xl bg-[#242628] border border-[#3a3c3e] px-5 py-3 text-sm text-white/80 text-center leading-5">
+              <span className="font-semibold text-white">Please note:</span>{" "}
+              Expert responses are not instant. You'll receive a response in 3-5 Business days
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Messages area */}
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="mx-auto w-full max-w-2xl flex flex-col gap-5">
+            <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
               {!activeEnquiry && !enqLoading && (
-                <div className="text-center text-white/40 py-12">
-                  <p>No question selected. Use the chat below to ask your first question.</p>
+                <div className="text-center text-white/40 py-16">
+                  <p>No question selected. Use the input below to ask a question.</p>
                 </div>
               )}
 
               {activeEnquiry && (
                 <>
-                  {/* User message */}
+                  {/* User message bubble */}
                   <div className="flex justify-end">
-                    <div className="max-w-[70%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                    <div className="max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
                       <p className="text-sm text-white/90 leading-6">{activeEnquiry.question}</p>
                     </div>
                   </div>
 
-                  {/* Expert reply */}
+                  {/* Expert / AI reply */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">
@@ -149,19 +157,37 @@ export const ChatPage = (): JSX.Element => {
                         · {activeEnquiry.status === "answered" ? "Answered" : "Pending response"}
                       </span>
                     </div>
-                    <p className="text-sm text-white/70 leading-6 ml-10">
-                      {activeEnquiry.status === "answered" && activeEnquiry.answer
-                        ? activeEnquiry.answer
-                        : "Thank you for your question! An expert will review and respond as soon as possible. You'll be notified when your response is ready."}
-                    </p>
+
+                    {activeEnquiry.status === "answered" && activeEnquiry.answer ? (
+                      <div className="ml-10">
+                        {activeEnquiry.answer.split("\n\n").map((para: string, i: number) => (
+                          <p key={i} className="text-sm text-white/80 leading-6 mb-3 last:mb-0">
+                            {para}
+                          </p>
+                        ))}
+                        {activeEnquiry.answeredBy && (
+                          <p className="text-xs text-white/30 mt-3 italic">
+                            — {activeEnquiry.answeredBy}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="ml-10 flex items-center gap-2">
+                        <p className="text-sm text-white/60 leading-6">
+                          Thank you for your question! An expert will review and respond as soon as possible. You'll be notified when your response is ready.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
+
+              <div ref={messagesEndRef} />
             </div>
           </div>
 
           {/* Bottom input */}
-          <div className="border-t border-white/5 px-6 py-4">
+          <div className="border-t border-white/5 px-6 py-4 shrink-0">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-3">
               <ChatInput
                 onSubmit={handleSubmit}
