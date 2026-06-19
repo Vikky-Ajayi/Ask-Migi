@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { AppHeader } from "@/components/AppHeader";
-import { Sidebar } from "@/components/Sidebar";
+import { useLocation } from "wouter";
+import { DesktopNav } from "@/components/DesktopNav";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 
 const faqs = [
@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: "Is AskMigi free to use?",
-    a: "No, AskMigi is a paid service. To ask a question or get a response from an expert, users purchase coins and use them to submit their inquiries. The number of coins required may vary depending on the complexity of your question or the type of expert you're consulting. This system helps ensure that only high-quality advice is delivered by certified immigration experts, travel agents, or tour guides.",
+    a: "No, AskMigi is a paid service. To ask a question or get a response from an expert, users purchase coins and use them to submit their inquiries. The number of coins required may vary depending on the complexity of your question or the type of expert you're consulting.",
   },
   {
     q: "How do I know the information is reliable?",
@@ -35,7 +35,7 @@ const faqs = [
   },
   {
     q: "Can AskMigi help me settle in a new country?",
-    a: "Absolutely. AskMigi can help you with: Finding accommodation, Understanding healthcare, banking, and education systems, Cultural insights and finding a job, Understanding your rights and responsibilities as a visitor or new resident, Choosing a pathway to permanent residence or citizenship, where applicable.",
+    a: "Absolutely. AskMigi can help you with: Finding accommodation, Understanding healthcare, banking, and education systems, Cultural insights and finding a job, Understanding your rights and responsibilities as a visitor or new resident.",
   },
   {
     q: "Can I speak directly with an expert?",
@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: "Is AskMigi affiliated with any government or embassy?",
-    a: "No. AskMigi is an independent platform and is not affiliated with any government, embassy, or consular office. Our experts may be licensed or certified in their own country; all guidance provided is independent and for informational purposes only.",
+    a: "No. AskMigi is an independent platform and is not affiliated with any government, embassy, or consular office. All guidance provided is independent and for informational purposes only.",
   },
   {
     q: "What happens if I receive incorrect or outdated information?",
@@ -70,53 +70,58 @@ const faqs = [
 const FAQItem = ({ q, a }: { q: string; a: string }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[#3a3c3e]">
+    <div className="border-b border-[#2e3032]">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between py-4 text-left gap-4"
+        className="w-full flex items-center justify-between py-5 text-left gap-4"
         data-testid={`faq-item-${q.slice(0, 20).replace(/\s+/g, "-").toLowerCase()}`}
       >
         <span className="text-sm font-semibold text-white leading-5">{q}</span>
-        <ChevronDown size={18} className={`shrink-0 text-white/60 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          size={18}
+          className={`shrink-0 text-white/40 transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
-      {open && (
-        <p className="pb-4 text-sm text-white/60 leading-6">{a}</p>
-      )}
+      {open && <p className="pb-5 text-sm text-white/60 leading-6">{a}</p>}
     </div>
   );
 };
 
 export const FAQPage = (): JSX.Element => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [, navigate] = useLocation();
   const [authView, setAuthView] = useState<AuthView>(null);
-  const [isLoggedIn] = useState(false);
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-[375px] flex-col px-4 pb-10">
-        <AppHeader
-          onMenuClick={() => setSidebarOpen(true)}
-          onProfileClick={() => {}}
-          isLoggedIn={isLoggedIn}
-          onSignUpClick={() => setAuthView("register")}
-        />
+    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+      <DesktopNav
+        isLoggedIn={false}
+        onLoginClick={() => setAuthView("login")}
+        onSignUpClick={() => setAuthView("register")}
+      />
 
-        <section className="mt-6 flex flex-col gap-6">
-          <h1 className="text-3xl font-bold text-white tracking-tight text-center">FAQ's</h1>
+      <div className="flex flex-col items-center px-6 py-12">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-3xl font-bold text-white tracking-tight text-center mb-8">FAQ's</h1>
           <div className="flex flex-col">
             {faqs.map((item) => (
               <FAQItem key={item.q} q={item.q} a={item.a} />
             ))}
           </div>
-        </section>
 
-        <footer className="mt-8 pt-4 border-t border-[#3a3c3e] text-center text-xs text-white/40">
-          <img className="h-6 mx-auto mb-3" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-          Ask Migi® — Terms of Use · Privacy Policy · Disclaimer · Refund Policy
-        </footer>
+          {/* Footer */}
+          <div className="mt-12 pt-8 border-t border-[#2e3032] flex flex-col items-center gap-4">
+            <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+            <div className="flex items-center gap-5 flex-wrap justify-center text-xs text-white/40">
+              {[["Terms of Use", "/terms"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"]].map(([label, path]) => (
+                <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} onAuthAction={(a) => setAuthView(a)} />
       <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
     </main>
   );

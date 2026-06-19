@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
-import { AppHeader } from "@/components/AppHeader";
-import { Sidebar } from "@/components/Sidebar";
+import { useState } from "react";
+import { DesktopNav } from "@/components/DesktopNav";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 
 const policies: Record<string, { title: string; content: string[] }> = {
@@ -60,44 +59,42 @@ interface PolicyPageProps {
 
 export const PolicyPage = ({ type }: PolicyPageProps): JSX.Element => {
   const [, navigate] = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authView, setAuthView] = useState<AuthView>(null);
-  const [isLoggedIn] = useState(false);
   const policy = policies[type];
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-[375px] flex-col px-4 pb-10">
-        <AppHeader
-          onMenuClick={() => setSidebarOpen(true)}
-          onProfileClick={() => {}}
-          isLoggedIn={isLoggedIn}
-          onSignUpClick={() => setAuthView("register")}
-        />
+    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+      <DesktopNav
+        isLoggedIn={false}
+        onLoginClick={() => setAuthView("login")}
+        onSignUpClick={() => setAuthView("register")}
+      />
 
-        <section className="mt-6 flex flex-col gap-6">
-          <h1 className="text-2xl font-bold text-white tracking-tight">{policy.title}</h1>
-          <div className="flex flex-col gap-5">
+      <div className="flex flex-col items-center px-6 py-12">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-3xl font-bold text-white tracking-tight mb-8">{policy.title}</h1>
+          <div className="flex flex-col gap-6">
             {policy.content.map((paragraph, i) => (
-              <p key={i} className="text-sm text-white/70 leading-6">
+              <p key={i} className="text-sm text-white/65 leading-7">
                 {paragraph}
               </p>
             ))}
           </div>
-        </section>
 
-        <footer className="mt-8 pt-6 border-t border-[#3a3c3e] text-center">
-          <img className="h-6 mx-auto mb-4" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-          <div className="flex justify-center gap-4 flex-wrap text-xs text-white/40">
-            <button onClick={() => navigate("/terms")} className="hover:text-white">Terms of Use</button>
-            <button onClick={() => navigate("/privacy-policy")} className="hover:text-white">Privacy Policy</button>
-            <button onClick={() => navigate("/disclaimer")} className="hover:text-white">Disclaimer</button>
-            <button onClick={() => navigate("/refund-policy")} className="hover:text-white">Refund Policy</button>
+          {/* Footer */}
+          <div className="mt-12 pt-8 border-t border-[#2e3032] flex flex-col items-center gap-4">
+            <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+            <div className="flex items-center gap-5 flex-wrap justify-center text-xs text-white/40">
+              {[["Terms of Use", "/terms"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"]].map(([label, path]) => (
+                <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        </footer>
+        </div>
       </div>
 
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isLoggedIn={isLoggedIn} onAuthAction={(a) => setAuthView(a)} />
       <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
     </main>
   );

@@ -15,6 +15,7 @@ import { ContactPage } from "@/pages/ContactPage";
 import { PolicyPage } from "@/pages/PolicyPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { ExpertWelcomePage } from "@/pages/ExpertWelcomePage";
+import { BecomeAnExpertPage } from "@/pages/BecomeAnExpertPage";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/expert-welcome" component={ExpertWelcomePage} />
+      <Route path="/become-an-expert" component={BecomeAnExpertPage} />
       <Route path="/disclaimer">
         {() => <PolicyPage type="disclaimer" />}
       </Route>
