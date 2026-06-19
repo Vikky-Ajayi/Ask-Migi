@@ -1,0 +1,67 @@
+the AI chat system we will be using groq AI. This is the link to existing platform: https://www.askmigi.com/. And I attached all the images for all the screens. And this is the figma link: https://www.figma.com/design/lVfDgWsIaE7puqz7aCOlXk/Ask-Migi?node-id=0-1&p=f&t=5dfIBkPvF84RFwwe-0
+
+### Key Project Details
+
+- **Current Status:**
+  - The live site exists but was developed by another, now unreachable developer.
+  - The project will be redeveloped from scratch based on the existing live site and updated Figma designs.
+  - A quote is requested for the redesign and redevelopment.
+
+- **Platform Concept:**
+  - Initially conceived as an immigration help platform connecting users to immigration agents.
+  - Revised to focus on job seekers providing access to **career advisors**, **job coaches**, or **work specialists**.
+
+- **User Interaction Model:**
+  - Users ask questions which first receive an AI-generated response.
+  - The AI response is held back and reviewed by a job coach or career specialist.
+  - The final answer sent to the user includes **both AI and human responses**.
+  - For users to ask a question via chat, they must purchase and spend virtual **coins**.
+
+- **Payment Systems:**
+  - Users purchase coins using multiple payment methods:
+    - **Card payments**
+    - **Cryptocurrency payments** (to accommodate users facing card payment difficulties).
+  
+- **Communication Modes:**
+  - **Chat**: Requires coin purchase; response is a combination of AI and human review.
+  - **Call**: Users call a number and are charged via airtime; no coin purchase required.
+
+### Functional and Technical Specifications
+
+| Feature                    | Description                                                                                       |
+|----------------------------|---------------------------------------------------------------------------------------------------|
+| Redesign                   | Complete rebuild from scratch based on current live site and Figma 5 file with minor changes       |
+| AI-assisted responses      | AI generates initial answers; responses reviewed and added to by human experts                   |
+| Payment options            | Card payments and crypto payments enabled for coin purchases                                     |
+| User access model          | - Chat: coin-based questions <br> - Call: airtime-based charges, no coins required                |
+| Coin system                | Virtual currency needed to ask chat questions; coins are deducted upon question submission       |
+| User roles                 | Job seekers (users), career advisors/job coaches (human reviewers)                               |
+
+### Key Insights
+
+- The **hybrid AI-human response system** is central to the platform's interactivity, aiming to combine quick AI feedback with personalised human insight.
+- **Multiple payment methods**, including crypto, suggest an awareness of international users or areas with unreliable card payment systems.
+- The ability to call without coins enables a **flexible engagement model**, broadening accessibility.
+- The request for a quote implies the project is at an early stage and requires scheduling and budgeting input.
+
+### Outstanding Information
+
+- **Exact timeline** for project completion or milestones: *Not specified*.
+- Full technical stack, platform infrastructure, or development tools: *Not specified*.
+- Details on platform launch strategy or user acquisition plan: *Not specified*.
+
+### Summary Table of Project Aspects
+
+| Aspect                  | Status/Details                                          |
+|-------------------------|---------------------------------------------------------|
+| Project history         | Previously built but not launched                        |
+| Current redesign focus  | Job advisory with AI + human responses                   |
+| User question process   | AI response → human review → final combined response     |
+| Payment modalities      | Card & crypto for coins; airtime charges for calls       |
+| Communication modes     | Chat (coin-based), call (airtime-based)                  |
+| Developer contact       | Previous developer unavailable; new development pending  |
+| Quote request           | Requested based on Figma 5 file and project scope        |
+
+### Conclusion
+
+This project represents a **reactivation and evolution of a job advisory platform**, integrating AI assistance with human expert review. The system emphasizes flexible payment methods and user communication choices, aiming to address accessibility challenges. The client seeks a detailed quote and follow-up to avoid project delays, indicating urgency for prompt engagement and planning.
