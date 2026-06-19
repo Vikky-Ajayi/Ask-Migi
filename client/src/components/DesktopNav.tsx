@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, User } from "lucide-react";
+import { ChevronDown, User, Settings, LogOut, ClipboardList } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface DesktopNavProps {
@@ -125,31 +125,30 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
                 <User size={16} className="text-white/70" />
               </button>
               {profileOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-white/10">
-                    <p className="text-sm font-semibold text-white">{user.firstName} {user.lastName}</p>
-                    <p className="text-xs text-white/50 truncate">{user.email}</p>
-                  </div>
+                <div className="absolute top-full right-0 mt-2 w-44 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
                   <button
                     onClick={() => { navigate("/enquiries"); setProfileOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2.5"
                     data-testid="nav-enquiries"
                   >
-                    📋 My Enquiries
+                    <ClipboardList size={14} className="text-white/50" />
+                    My Enquiries
                   </button>
                   <button
                     onClick={() => { navigate("/settings"); setProfileOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2.5"
                     data-testid="nav-settings"
                   >
-                    ⚙️ Settings
+                    <Settings size={14} className="text-white/50" />
+                    Settings
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2.5"
                     data-testid="nav-logout"
                   >
-                    ↩️ Log out
+                    <LogOut size={14} className="text-white/50" />
+                    Log out
                   </button>
                 </div>
               )}

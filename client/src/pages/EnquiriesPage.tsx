@@ -106,12 +106,10 @@ export const EnquiriesPage = (): JSX.Element => {
 
         {/* Main content */}
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          {/* Notice banner */}
-          <div className="px-6 pt-4 shrink-0">
-            <div className="mx-auto w-full max-w-2xl rounded-2xl bg-[#242628] border border-[#3a3c3e] px-5 py-3 text-sm text-white/80 text-center leading-5">
-              <span className="font-semibold text-white">Please note:</span>{" "}
-              Expert responses are not instant. You'll receive a response in 3-5 Business days
-            </div>
+          {/* Notice banner — full width */}
+          <div className="w-full bg-[#1e2022] border-b border-white/5 px-6 py-3 text-sm text-white/70 text-center shrink-0">
+            <span className="font-semibold text-white">Please note:</span>{" "}
+            Expert responses are not instant. You'll receive a response in 3-5 Business days
           </div>
 
           {/* Messages */}

@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { DesktopNav } from "@/components/DesktopNav";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
-import { MapPin } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 
@@ -26,26 +25,23 @@ interface Expert {
 
 const ExpertCard = ({ expert }: { expert: Expert }) => (
   <div
-    className="rounded-3xl border border-[#3a3c3e] bg-[#1e2022] p-6 flex flex-col gap-5"
+    className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-6 flex flex-col gap-4"
     data-testid={`expert-card-${expert.id}`}
   >
     {/* Header */}
     <div>
       <h3 className="text-base font-bold text-white">{expert.name}</h3>
-      <div className="flex items-center gap-1.5 mt-1">
-        <MapPin size={12} className="text-white/40" />
-        <p className="text-sm text-white/40">{expert.location}</p>
-      </div>
+      <p className="text-sm text-white/40 mt-0.5">{expert.location}</p>
     </div>
 
     {/* Countries */}
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-white/40 font-medium">Countries Covered</p>
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs text-white/40">Countries Covered</p>
       <div className="flex flex-wrap gap-1.5">
         {expert.countries.map((c) => (
           <span
             key={c}
-            className="h-7 rounded-full bg-blue-950/60 text-blue-300 text-xs font-medium px-3 flex items-center border border-blue-800/30"
+            className="h-7 rounded-full bg-blue-900/50 border border-blue-700/40 text-blue-300 text-xs font-medium px-3 flex items-center"
           >
             {c}
           </span>
@@ -54,13 +50,13 @@ const ExpertCard = ({ expert }: { expert: Expert }) => (
     </div>
 
     {/* Visa Services */}
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-white/40 font-medium">Visa Services</p>
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs text-white/40">Visa Services</p>
       <div className="flex flex-wrap gap-1.5">
         {expert.visaServices.map((v) => (
           <span
             key={v}
-            className="h-7 rounded-full bg-emerald-950/60 text-emerald-400 text-xs font-medium px-3 flex items-center border border-emerald-800/30"
+            className="h-7 rounded-full bg-emerald-900/50 border border-emerald-700/40 text-emerald-300 text-xs font-medium px-3 flex items-center"
           >
             {v}
           </span>
@@ -69,8 +65,8 @@ const ExpertCard = ({ expert }: { expert: Expert }) => (
     </div>
 
     {/* Services Available */}
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-white/40 font-medium">Services Available</p>
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs text-white/40">Services Available</p>
       <div className="flex flex-wrap gap-1.5">
         {expert.services.map((s) => (
           <span
@@ -142,7 +138,7 @@ export const ExpertsPage = (): JSX.Element => {
       />
 
       <div className="flex flex-1">
-        {/* Left sidebar — same as chat page */}
+        {/* Left sidebar — only when logged in */}
         {isLoggedIn && (
           <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
             <ChatSidebar
@@ -190,7 +186,7 @@ export const ExpertsPage = (): JSX.Element => {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="rounded-3xl border border-[#3a3c3e] bg-[#1e2022] p-6 h-64 animate-pulse" />
+                <div key={n} className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-6 h-64 animate-pulse" />
               ))}
             </div>
           ) : experts.length === 0 ? (

@@ -351,7 +351,6 @@ const OTPDialog = ({
       <AuthInput placeholder="Enter Code" value={code} onChange={setCode} testId="input-otp" />
       {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       <div className="mt-6 flex flex-col gap-4">
-        <PrimaryButton onClick={handleVerify} loading={loading} testId="button-continue-otp">Continue</PrimaryButton>
         <p className="text-center text-sm text-white/60">
           Didn't get Code?{" "}
           <button
@@ -359,9 +358,10 @@ const OTPDialog = ({
             className="text-white font-semibold underline underline-offset-2"
             data-testid="link-reset-code"
           >
-            Resend Code
+            Reset Code
           </button>
         </p>
+        <PrimaryButton onClick={handleVerify} loading={loading} testId="button-continue-otp">Continue</PrimaryButton>
       </div>
     </DialogWrapper>
   );

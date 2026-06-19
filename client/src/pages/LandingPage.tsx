@@ -2,16 +2,25 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { DesktopNav } from "@/components/DesktopNav";
 import { ChatInput } from "@/components/ChatInput";
+import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export const LandingPage = (): JSX.Element => {
   const [, navigate] = useLocation();
   const [authView, setAuthView] = useState<AuthView>(null);
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoading, refreshUser } = useAuth();
   const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: enquiries = [] } = useQuery<any[]>({
+    queryKey: ["/api/enquiries"],
+    enabled: isLoggedIn,
+    refetchInterval: 5000,
+  });
 
   const handleQuestionSubmit = async (q: string, expertType: string, country: string) => {
     if (!isLoggedIn) {
@@ -26,6 +35,8 @@ export const LandingPage = (): JSX.Element => {
         country,
       });
       const data = await res.json();
+      await qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
+      await refreshUser();
       navigate(`/chat?id=${data.id}`);
     } catch (e: any) {
       if (e.message?.includes("402")) {
@@ -39,6 +50,20 @@ export const LandingPage = (): JSX.Element => {
     }
   };
 
+  const sidebarItems: SidebarEnquiry[] = enquiries.map((e: any) => ({
+    id: e.id,
+    question: e.question,
+    status: e.status,
+  }));
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+        <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
       <DesktopNav
@@ -46,28 +71,43 @@ export const LandingPage = (): JSX.Element => {
         onSignUpClick={() => setAuthView("register")}
       />
 
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-        <div className="w-full max-w-2xl flex flex-col gap-8">
-          {/* Hero */}
-          <div className="flex flex-col items-center gap-5 text-center">
-            <img className="h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-            <p className="max-w-xl text-base text-white/70 leading-7">
-              Get expert immigration guidance every step of the way—whether visiting, relocating, or pursuing citizenship, our experts help you settle with confidence.
+      <div className="flex flex-1">
+        {/* Left sidebar — only when logged in */}
+        {isLoggedIn && (
+          <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
+            <ChatSidebar
+              enquiries={sidebarItems}
+              activeId=""
+              onSelect={(id) => navigate(`/chat?id=${id}`)}
+              onNewQuestion={() => {}}
+            />
+          </div>
+        )}
+
+        {/* Main centered content */}
+        <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
+          <div className="w-full max-w-2xl flex flex-col gap-8">
+            {/* Hero */}
+            <div className="flex flex-col items-center gap-5 text-center">
+              <img className="h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+              <p className="max-w-xl text-base text-white/70 leading-7">
+                Get expert immigration guidance every step of the way—whether visiting, relocating, or pursuing citizenship, our experts help you settle with confidence.
+              </p>
+            </div>
+
+            {/* Chat input with tabs */}
+            <ChatInput onSubmit={handleQuestionSubmit} showAudienceTabs={true} />
+
+            {/* Footer disclaimer */}
+            <p className="text-center text-sm text-white/50 leading-6">
+              By messaging Ask MiGi, you agree to our{" "}
+              <button onClick={() => navigate("/terms")} className="text-white underline underline-offset-2">Terms of Use,</button>{" "}
+              <button onClick={() => navigate("/privacy-policy")} className="text-white underline underline-offset-2">Privacy Policy</button>,{" "}
+              <button onClick={() => navigate("/disclaimer")} className="text-white underline underline-offset-2">Disclaimer</button>{" "}
+              and{" "}
+              <button onClick={() => navigate("/refund-policy")} className="text-white underline underline-offset-2">Refund Policy</button>.
             </p>
           </div>
-
-          {/* Chat input with tabs */}
-          <ChatInput onSubmit={handleQuestionSubmit} showAudienceTabs={true} />
-
-          {/* Footer disclaimer */}
-          <p className="text-center text-sm text-white/50 leading-6">
-            By messaging Ask MiGi, you agree to our{" "}
-            <button onClick={() => navigate("/terms")} className="text-white underline underline-offset-2">Terms of Use,</button>{" "}
-            <button onClick={() => navigate("/privacy-policy")} className="text-white underline underline-offset-2">Privacy Policy</button>,{" "}
-            <button onClick={() => navigate("/disclaimer")} className="text-white underline underline-offset-2">Disclaimer</button>{" "}
-            and{" "}
-            <button onClick={() => navigate("/refund-policy")} className="text-white underline underline-offset-2">Refund Policy</button>.
-          </p>
         </div>
       </div>
 
