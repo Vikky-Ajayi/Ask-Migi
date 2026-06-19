@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { X, Mail, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export type AuthView = "login" | "register" | "forgot" | "otp" | "new-password" | "success" | null;
 
@@ -11,7 +13,6 @@ interface AuthSheetsProps {
 
 export const AuthSheets = ({ view, onViewChange, onClose }: AuthSheetsProps) => {
   if (!view) return null;
-
   return (
     <>
       <div
@@ -100,22 +101,27 @@ const PrimaryButton = ({
   children,
   onClick,
   testId,
+  loading,
+  disabled,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   testId?: string;
+  loading?: boolean;
+  disabled?: boolean;
 }) => (
   <button
     type="button"
     onClick={onClick}
-    className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+    disabled={loading || disabled}
+    className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
     data-testid={testId}
   >
-    {children}
+    {loading ? "Loading…" : children}
   </button>
 );
 
-// --- Login ---
+// ── Login ────────────────────────────────────────────────────────────────────
 const LoginDialog = ({
   onViewChange,
   onClose,
@@ -126,17 +132,30 @@ const LoginDialog = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { login } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogin = async () => {
+    setError("");
+    if (!email || !password) { setError("Please fill in all fields."); return; }
+    setLoading(true);
+    try {
+      await login(email, password);
+      toast({ title: "Welcome back!", description: "You've been logged in successfully." });
+      onClose();
+    } catch (e: any) {
+      setError(e.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DialogWrapper title="Log in" onClose={onClose}>
       <div className="flex flex-col gap-3 mb-4">
-        <AuthInput
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          testId="input-email"
-        />
+        <AuthInput placeholder="Email" type="email" value={email} onChange={setEmail} testId="input-email" />
         <AuthInput
           placeholder="Password"
           type={showPw ? "text" : "password"}
@@ -154,17 +173,12 @@ const LoginDialog = ({
       >
         Forgot Password?
       </button>
+      {error && <p className="text-sm text-red-400 text-center mb-3">{error}</p>}
       <div className="flex flex-col gap-4">
-        <PrimaryButton onClick={onClose} testId="button-login">
-          Log in
-        </PrimaryButton>
+        <PrimaryButton onClick={handleLogin} loading={loading} testId="button-login">Log in</PrimaryButton>
         <p className="text-center text-sm text-white/60">
           Don't have an account?{" "}
-          <button
-            onClick={() => onViewChange("register")}
-            className="text-white font-semibold underline underline-offset-2"
-            data-testid="link-create-account"
-          >
+          <button onClick={() => onViewChange("register")} className="text-white font-semibold underline underline-offset-2" data-testid="link-create-account">
             Create Account
           </button>
         </p>
@@ -173,7 +187,7 @@ const LoginDialog = ({
   );
 };
 
-// --- Register ---
+// ── Register ─────────────────────────────────────────────────────────────────
 const RegisterDialog = ({
   onViewChange,
   onClose,
@@ -186,10 +200,30 @@ const RegisterDialog = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { register } = useAuth();
+  const { toast } = useToast();
+
+  const handleRegister = async () => {
+    setError("");
+    if (!first || !last || !email || !password) { setError("Please fill in all fields."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setLoading(true);
+    try {
+      await register({ email, firstName: first, lastName: last, password });
+      toast({ title: "Account created!", description: "Welcome to Ask MiGi. You've received 5 welcome coins!" });
+      onClose();
+    } catch (e: any) {
+      setError(e.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DialogWrapper title="Create An Account" onClose={onClose}>
-      <div className="flex flex-col gap-3 mb-6">
+      <div className="flex flex-col gap-3 mb-4">
         <AuthInput placeholder="First name" value={first} onChange={setFirst} testId="input-first-name" />
         <AuthInput placeholder="Last name" value={last} onChange={setLast} testId="input-last-name" />
         <AuthInput placeholder="Email" type="email" value={email} onChange={setEmail} testId="input-email" />
@@ -203,17 +237,12 @@ const RegisterDialog = ({
           testId="input-password"
         />
       </div>
+      {error && <p className="text-sm text-red-400 text-center mb-3">{error}</p>}
       <div className="flex flex-col gap-4">
-        <PrimaryButton onClick={onClose} testId="button-create-account">
-          Create Account
-        </PrimaryButton>
+        <PrimaryButton onClick={handleRegister} loading={loading} testId="button-create-account">Create Account</PrimaryButton>
         <p className="text-center text-sm text-white/60">
           Already have an account?{" "}
-          <button
-            onClick={() => onViewChange("login")}
-            className="text-white font-semibold underline underline-offset-2"
-            data-testid="link-login"
-          >
+          <button onClick={() => onViewChange("login")} className="text-white font-semibold underline underline-offset-2" data-testid="link-login">
             Log in
           </button>
         </p>
@@ -222,7 +251,7 @@ const RegisterDialog = ({
   );
 };
 
-// --- Forgot Password ---
+// ── Forgot Password ───────────────────────────────────────────────────────────
 const ForgotPasswordDialog = ({
   onViewChange,
   onClose,
@@ -231,6 +260,30 @@ const ForgotPasswordDialog = ({
   onClose: () => void;
 }) => {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleRequest = async () => {
+    setError("");
+    if (!email) { setError("Please enter your email."); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      // Store email + OTP info in sessionStorage for OTP step
+      sessionStorage.setItem("reset_email", email);
+      if (data.otp) sessionStorage.setItem("reset_otp_hint", data.otp);
+      onViewChange("otp");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DialogWrapper title="Forgot Password?" onClose={onClose}>
@@ -239,15 +292,10 @@ const ForgotPasswordDialog = ({
         <p className="text-sm font-semibold text-white">Enter your email address.</p>
       </div>
       <p className="text-sm text-white/50 mb-5">We will send you a 6-digit code to reset your password</p>
-      <AuthInput
-        placeholder="Email"
-        type="email"
-        value={email}
-        onChange={setEmail}
-        testId="input-email"
-      />
+      <AuthInput placeholder="Email" type="email" value={email} onChange={setEmail} testId="input-email" />
+      {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       <div className="mt-6">
-        <PrimaryButton onClick={() => onViewChange("otp")} testId="button-request-reset">
+        <PrimaryButton onClick={handleRequest} loading={loading} testId="button-request-reset">
           Request Password Reset
         </PrimaryButton>
       </div>
@@ -255,7 +303,7 @@ const ForgotPasswordDialog = ({
   );
 };
 
-// --- OTP ---
+// ── OTP ──────────────────────────────────────────────────────────────────────
 const OTPDialog = ({
   onViewChange,
   onClose,
@@ -264,20 +312,54 @@ const OTPDialog = ({
   onClose: () => void;
 }) => {
   const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const email = sessionStorage.getItem("reset_email") || "";
+  const otpHint = sessionStorage.getItem("reset_otp_hint");
+
+  const handleVerify = async () => {
+    setError("");
+    if (!code) { setError("Please enter the code."); return; }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.message || "Invalid OTP");
+        return;
+      }
+      sessionStorage.setItem("reset_verified_otp", code);
+      onViewChange("new-password");
+    } catch {
+      setError("Verification failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DialogWrapper title="Enter OTP" onClose={onClose}>
-      <p className="text-sm text-white/60 mb-1">Enter the 6 digit Code sent to</p>
-      <p className="text-sm font-semibold text-white mb-5">Freebornehirhere@gmail.com</p>
+      <p className="text-sm text-white/60 mb-1">Enter the 6-digit code sent to</p>
+      <p className="text-sm font-semibold text-white mb-5">{email || "your email"}</p>
+      {otpHint && (
+        <p className="text-xs text-yellow-400/70 mb-3">Demo hint: your OTP is <strong>{otpHint}</strong></p>
+      )}
       <AuthInput placeholder="Enter Code" value={code} onChange={setCode} testId="input-otp" />
+      {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       <div className="mt-6 flex flex-col gap-4">
-        <PrimaryButton onClick={() => onViewChange("new-password")} testId="button-continue-otp">
-          Continue
-        </PrimaryButton>
+        <PrimaryButton onClick={handleVerify} loading={loading} testId="button-continue-otp">Continue</PrimaryButton>
         <p className="text-center text-sm text-white/60">
           Didn't get Code?{" "}
-          <button className="text-white font-semibold underline underline-offset-2" data-testid="link-reset-code">
-            Reset Code
+          <button
+            onClick={() => onViewChange("forgot")}
+            className="text-white font-semibold underline underline-offset-2"
+            data-testid="link-reset-code"
+          >
+            Resend Code
           </button>
         </p>
       </div>
@@ -285,7 +367,7 @@ const OTPDialog = ({
   );
 };
 
-// --- New Password ---
+// ── New Password ──────────────────────────────────────────────────────────────
 const NewPasswordDialog = ({
   onViewChange,
   onClose,
@@ -297,10 +379,42 @@ const NewPasswordDialog = ({
   const [confirm, setConfirm] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleReset = async () => {
+    setError("");
+    if (!pw || !confirm) { setError("Please fill in all fields."); return; }
+    if (pw !== confirm) { setError("Passwords don't match."); return; }
+    if (pw.length < 6) { setError("Password must be at least 6 characters."); return; }
+    const email = sessionStorage.getItem("reset_email") || "";
+    const otp = sessionStorage.getItem("reset_verified_otp") || "";
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, newPassword: pw }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.message || "Reset failed");
+        return;
+      }
+      sessionStorage.removeItem("reset_email");
+      sessionStorage.removeItem("reset_otp_hint");
+      sessionStorage.removeItem("reset_verified_otp");
+      onViewChange("success");
+    } catch {
+      setError("Reset failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <DialogWrapper title="Create a new password" onClose={onClose}>
-      <div className="flex flex-col gap-3 mb-6">
+      <div className="flex flex-col gap-3 mb-4">
         <AuthInput
           placeholder="New Password"
           type={showPw ? "text" : "password"}
@@ -320,14 +434,13 @@ const NewPasswordDialog = ({
           testId="input-confirm-password"
         />
       </div>
-      <PrimaryButton onClick={() => onViewChange("success")} testId="button-continue-newpw">
-        Continue
-      </PrimaryButton>
+      {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+      <PrimaryButton onClick={handleReset} loading={loading} testId="button-continue-newpw">Continue</PrimaryButton>
     </DialogWrapper>
   );
 };
 
-// --- Success Dialog ---
+// ── Success Dialog ────────────────────────────────────────────────────────────
 const SuccessDialog = ({
   onClose,
   onViewChange,
@@ -356,9 +469,14 @@ const SuccessDialog = ({
       <p className="text-sm text-white/60">You have successfully reset your password. Proceed to log in.</p>
     </div>
     <div className="mt-6">
-      <PrimaryButton onClick={() => onViewChange("login")} testId="button-continue-success">
+      <button
+        type="button"
+        onClick={() => onViewChange("login")}
+        className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+        data-testid="button-continue-success"
+      >
         Continue
-      </PrimaryButton>
+      </button>
     </div>
   </div>
 );

@@ -1,16 +1,255 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { z } from "zod";
+import {
+  storage,
+  hashPassword,
+  verifyPassword,
+  createAuthToken,
+  getUserIdFromToken,
+  deleteAuthToken,
+} from "./storage";
+import { randomInt } from "crypto";
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+// ── Auth middleware ────────────────────────────────────────────────────────────
+function getTokenFromRequest(req: Request): string | null {
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith("Bearer ")) return auth.slice(7);
+  return null;
+}
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const token = getTokenFromRequest(req);
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  const userId = getUserIdFromToken(token);
+  if (!userId) return res.status(401).json({ message: "Invalid or expired token" });
+  const user = await storage.getUser(userId);
+  if (!user) return res.status(401).json({ message: "User not found" });
+  (req as any).userId = userId;
+  (req as any).user = user;
+  next();
+}
+
+// ── Sanitize user (strip password) ───────────────────────────────────────────
+function safeUser(user: any) {
+  const { password, ...rest } = user;
+  return rest;
+}
+
+export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+
+  // ── Auth routes ─────────────────────────────────────────────────────────────
+
+  // POST /api/auth/register
+  app.post("/api/auth/register", async (req, res) => {
+    const schema = z.object({
+      email: z.string().email("Invalid email"),
+      firstName: z.string().min(1, "First name required"),
+      lastName: z.string().min(1, "Last name required"),
+      password: z.string().min(6, "Password must be at least 6 characters"),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const { email, firstName, lastName, password } = result.data;
+    const existing = await storage.getUserByEmail(email);
+    if (existing) return res.status(409).json({ message: "An account with this email already exists" });
+
+    const hashedPw = hashPassword(password);
+    const user = await storage.createUser({ email, firstName, lastName, password: hashedPw });
+    const token = createAuthToken(user.id);
+    return res.status(201).json({ user: safeUser(user), token });
+  });
+
+  // POST /api/auth/login
+  app.post("/api/auth/login", async (req, res) => {
+    const schema = z.object({
+      email: z.string().email("Invalid email"),
+      password: z.string().min(1, "Password required"),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const { email, password } = result.data;
+    const user = await storage.getUserByEmail(email);
+    if (!user || !verifyPassword(password, user.password)) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const token = createAuthToken(user.id);
+    return res.json({ user: safeUser(user), token });
+  });
+
+  // POST /api/auth/logout
+  app.post("/api/auth/logout", (req, res) => {
+    const token = getTokenFromRequest(req);
+    if (token) deleteAuthToken(token);
+    return res.json({ message: "Logged out" });
+  });
+
+  // GET /api/auth/me
+  app.get("/api/auth/me", requireAuth, async (req, res) => {
+    return res.json({ user: safeUser((req as any).user) });
+  });
+
+  // POST /api/auth/forgot-password
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    const schema = z.object({ email: z.string().email() });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: "Invalid email" });
+
+    const { email } = result.data;
+    const user = await storage.getUserByEmail(email);
+    // Always respond success to avoid email enumeration
+    if (user) {
+      const otp = String(randomInt(100000, 999999));
+      await storage.createPasswordReset(email, otp);
+      // In production, send email. For demo, return OTP in response.
+      console.log(`[AUTH] OTP for ${email}: ${otp}`);
+      return res.json({ message: "OTP sent", otp }); // remove otp from response in production
+    }
+    return res.json({ message: "If that email exists, an OTP has been sent." });
+  });
+
+  // POST /api/auth/verify-otp
+  app.post("/api/auth/verify-otp", async (req, res) => {
+    const schema = z.object({ email: z.string().email(), otp: z.string() });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: "Invalid request" });
+
+    const { email, otp } = result.data;
+    const reset = await storage.getPasswordReset(email, otp);
+    if (!reset) return res.status(400).json({ message: "Invalid or expired OTP" });
+    return res.json({ message: "OTP verified", resetId: reset.id });
+  });
+
+  // POST /api/auth/reset-password
+  app.post("/api/auth/reset-password", async (req, res) => {
+    const schema = z.object({
+      email: z.string().email(),
+      otp: z.string(),
+      newPassword: z.string().min(6),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const { email, otp, newPassword } = result.data;
+    const reset = await storage.getPasswordReset(email, otp);
+    if (!reset) return res.status(400).json({ message: "Invalid or expired OTP" });
+
+    const user = await storage.getUserByEmail(email);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await storage.updateUserPassword(user.id, hashPassword(newPassword));
+    await storage.markPasswordResetUsed(reset.id);
+    return res.json({ message: "Password reset successfully" });
+  });
+
+  // PATCH /api/auth/change-password (logged in user)
+  app.patch("/api/auth/change-password", requireAuth, async (req, res) => {
+    const schema = z.object({
+      currentPassword: z.string().min(1),
+      newPassword: z.string().min(6, "New password must be at least 6 characters"),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const user = (req as any).user;
+    if (!verifyPassword(result.data.currentPassword, user.password)) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+    await storage.updateUserPassword(user.id, hashPassword(result.data.newPassword));
+    return res.json({ message: "Password changed successfully" });
+  });
+
+  // ── Enquiries ──────────────────────────────────────────────────────────────
+
+  // GET /api/enquiries
+  app.get("/api/enquiries", requireAuth, async (req, res) => {
+    const userId = (req as any).userId;
+    const enquiries = await storage.getEnquiries(userId);
+    return res.json(enquiries);
+  });
+
+  // GET /api/enquiries/:id
+  app.get("/api/enquiries/:id", requireAuth, async (req, res) => {
+    const enquiry = await storage.getEnquiry(req.params.id);
+    if (!enquiry) return res.status(404).json({ message: "Enquiry not found" });
+    if (enquiry.userId !== (req as any).userId) return res.status(403).json({ message: "Forbidden" });
+    return res.json(enquiry);
+  });
+
+  // POST /api/enquiries
+  app.post("/api/enquiries", requireAuth, async (req, res) => {
+    const schema = z.object({
+      question: z.string().min(10, "Question must be at least 10 characters"),
+      expertType: z.enum(["immigration", "travel", "tour"]).default("immigration"),
+      country: z.string().default("United Kingdom"),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const userId = (req as any).userId;
+    const user = (req as any).user;
+    const coinsNeeded = 3;
+
+    if (user.coins < coinsNeeded) {
+      return res.status(402).json({ message: "Insufficient coins. Please purchase more coins." });
+    }
+
+    const enquiry = await storage.createEnquiry({
+      userId,
+      expertType: result.data.expertType,
+      question: result.data.question,
+      country: result.data.country,
+      coinsUsed: coinsNeeded,
+    });
+
+    await storage.updateUserCoins(userId, -coinsNeeded);
+    return res.status(201).json(enquiry);
+  });
+
+  // ── Experts ────────────────────────────────────────────────────────────────
+
+  // GET /api/experts?type=travel
+  app.get("/api/experts", async (req, res) => {
+    const type = req.query.type as string | undefined;
+    const experts = await storage.getExperts(type);
+    return res.json(experts);
+  });
+
+  // GET /api/experts/:id
+  app.get("/api/experts/:id", async (req, res) => {
+    const expert = await storage.getExpert(req.params.id);
+    if (!expert) return res.status(404).json({ message: "Expert not found" });
+    return res.json(expert);
+  });
+
+  // ── Coins ──────────────────────────────────────────────────────────────────
+
+  // POST /api/coins/purchase
+  app.post("/api/coins/purchase", requireAuth, async (req, res) => {
+    const schema = z.object({
+      coinsAmount: z.number().int().positive(),
+      price: z.string(),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const userId = (req as any).userId;
+    const purchase = await storage.createCoinPurchase({
+      userId,
+      coinsAmount: result.data.coinsAmount,
+      price: result.data.price,
+    });
+    const updatedUser = await storage.updateUserCoins(userId, result.data.coinsAmount);
+    return res.status(201).json({ purchase, coins: updatedUser?.coins });
+  });
+
+  // GET /api/coins/purchases
+  app.get("/api/coins/purchases", requireAuth, async (req, res) => {
+    const purchases = await storage.getCoinPurchases((req as any).userId);
+    return res.json(purchases);
+  });
 
   return httpServer;
 }

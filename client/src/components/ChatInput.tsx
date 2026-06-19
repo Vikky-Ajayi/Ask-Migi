@@ -1,22 +1,34 @@
 import { useState } from "react";
 import { Paperclip, ArrowUp, ChevronDown } from "lucide-react";
-import { useLocation } from "wouter";
 
 interface ChatInputProps {
-  onSubmit?: (question: string) => void;
+  onSubmit?: (question: string, expertType: string, country: string) => void;
   showAudienceTabs?: boolean;
+  isSubmitting?: boolean;
 }
 
 const audienceOptions = ["Immigration Experts", "Travel agents", "Tour Guides"];
 
-export const ChatInput = ({ onSubmit, showAudienceTabs = true }: ChatInputProps) => {
+const countries = [
+  { flag: "🇬🇧", name: "United Kingdom" },
+  { flag: "🇺🇸", name: "United States" },
+  { flag: "🇨🇦", name: "Canada" },
+  { flag: "🇦🇺", name: "Australia" },
+  { flag: "🇩🇪", name: "Germany" },
+  { flag: "🇫🇷", name: "France" },
+  { flag: "🇳🇬", name: "Nigeria" },
+  { flag: "🇬🇭", name: "Ghana" },
+];
+
+export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = false }: ChatInputProps) => {
   const [question, setQuestion] = useState("");
   const [selectedAudience, setSelectedAudience] = useState("Immigration Experts");
+  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [langOpen, setLangOpen] = useState(false);
 
   const handleSubmit = () => {
-    if (question.trim()) {
-      onSubmit?.(question);
+    if (question.trim() && !isSubmitting) {
+      onSubmit?.(question.trim(), selectedAudience, selectedCountry.name);
       setQuestion("");
     }
   };
@@ -31,7 +43,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true }: ChatInputProps)
   return (
     <div className="flex flex-col gap-3">
       {showAudienceTabs && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {audienceOptions.map((opt) => {
             const active = selectedAudience === opt;
             return (
@@ -57,9 +69,10 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true }: ChatInputProps)
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="|What do you want to know?"
+            placeholder="What do you want to know?"
             rows={3}
-            className="w-full resize-none bg-transparent text-base text-white/80 placeholder:text-white/40 focus:outline-none leading-6"
+            disabled={isSubmitting}
+            className="w-full resize-none bg-transparent text-base text-white/80 placeholder:text-white/40 focus:outline-none leading-6 disabled:opacity-60"
             data-testid="input-question"
           />
         </div>
@@ -72,6 +85,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true }: ChatInputProps)
               className="h-9 w-9 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Attach file"
               data-testid="button-attach"
+              type="button"
             >
               <Paperclip size={18} />
             </button>
@@ -79,24 +93,28 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true }: ChatInputProps)
             <div className="relative">
               <button
                 onClick={() => setLangOpen((v) => !v)}
+                type="button"
                 className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-[#3a3c3e] text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
                 data-testid="button-language"
               >
-                <span>🇬🇧</span>
-                <span>United Kingdom</span>
+                <span>{selectedCountry.flag}</span>
+                <span>{selectedCountry.name}</span>
                 <ChevronDown size={13} className={`transition-transform ${langOpen ? "rotate-180" : ""}`} />
               </button>
               {langOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setLangOpen(false)} />
-                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#1e2022] border border-white/10 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                    {[["🇬🇧", "United Kingdom"], ["🇺🇸", "United States"], ["🇨🇦", "Canada"], ["🇦🇺", "Australia"]].map(([flag, name]) => (
+                  <div className="absolute bottom-full left-0 mb-2 w-52 bg-[#1e2022] border border-white/10 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                    {countries.map((c) => (
                       <button
-                        key={name}
-                        onClick={() => setLangOpen(false)}
-                        className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                        key={c.name}
+                        type="button"
+                        onClick={() => { setSelectedCountry(c); setLangOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 flex items-center gap-2 ${
+                          selectedCountry.name === c.name ? "text-white" : "text-white/80"
+                        }`}
                       >
-                        {flag} {name}
+                        {c.flag} {c.name}
                       </button>
                     ))}
                   </div>
@@ -113,11 +131,17 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true }: ChatInputProps)
             </div>
             <button
               onClick={handleSubmit}
-              className="h-9 w-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+              type="button"
+              disabled={isSubmitting || !question.trim()}
+              className="h-9 w-9 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="Submit question"
               data-testid="button-submit"
             >
-              <ArrowUp size={18} className="text-black" />
+              {isSubmitting ? (
+                <div className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              ) : (
+                <ArrowUp size={18} className="text-black" />
+              )}
             </button>
           </div>
         </div>

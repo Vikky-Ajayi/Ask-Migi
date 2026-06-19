@@ -1,20 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { ChevronDown, User } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface DesktopNavProps {
-  isLoggedIn?: boolean;
-  coins?: number;
   onLoginClick?: () => void;
   onSignUpClick?: () => void;
 }
 
-export const DesktopNav = ({
-  isLoggedIn = false,
-  coins = 50,
-  onLoginClick,
-  onSignUpClick,
-}: DesktopNavProps) => {
+export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => {
+  const { user, isLoggedIn, logout } = useAuth();
   const [, navigate] = useLocation();
   const [expertOpen, setExpertOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -32,6 +27,12 @@ export const DesktopNav = ({
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    setProfileOpen(false);
+    navigate("/");
+  };
 
   return (
     <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#161618] border-b border-white/5">
@@ -86,7 +87,7 @@ export const DesktopNav = ({
           </button>
           {helpOpen && (
             <div className="absolute top-full left-0 mt-2 w-36 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
-              {[["FAQ", "/faq"], ["Contact Us", "/contact"]].map(([label, path]) => (
+              {([["FAQ", "/faq"], ["Contact Us", "/contact"]] as const).map(([label, path]) => (
                 <button
                   key={label}
                   onClick={() => { navigate(path); setHelpOpen(false); }}
@@ -102,7 +103,7 @@ export const DesktopNav = ({
 
       {/* Right side */}
       <div className="flex items-center gap-3">
-        {isLoggedIn ? (
+        {isLoggedIn && user ? (
           <>
             {/* Coin balance */}
             <button
@@ -111,7 +112,7 @@ export const DesktopNav = ({
               data-testid="nav-coins"
             >
               <span>🪙</span>
-              <span className="font-medium">{coins} Coins</span>
+              <span className="font-medium">{user.coins} Coins</span>
             </button>
             {/* Avatar */}
             <div className="relative" ref={profileRef}>
@@ -119,11 +120,23 @@ export const DesktopNav = ({
                 onClick={() => setProfileOpen((v) => !v)}
                 className="h-9 w-9 rounded-full bg-[#242628] border border-white/20 flex items-center justify-center hover:bg-[#2a2c2e] transition-colors"
                 data-testid="nav-avatar"
+                title={`${user.firstName} ${user.lastName}`}
               >
                 <User size={16} className="text-white/70" />
               </button>
               {profileOpen && (
-                <div className="absolute top-full right-0 mt-2 w-44 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
+                <div className="absolute top-full right-0 mt-2 w-48 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-white/10">
+                    <p className="text-sm font-semibold text-white">{user.firstName} {user.lastName}</p>
+                    <p className="text-xs text-white/50 truncate">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { navigate("/enquiries"); setProfileOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                    data-testid="nav-enquiries"
+                  >
+                    📋 My Enquiries
+                  </button>
                   <button
                     onClick={() => { navigate("/settings"); setProfileOpen(false); }}
                     className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2"
@@ -132,8 +145,8 @@ export const DesktopNav = ({
                     ⚙️ Settings
                   </button>
                   <button
-                    onClick={() => setProfileOpen(false)}
-                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2"
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-white/5 flex items-center gap-2"
                     data-testid="nav-logout"
                   >
                     ↩️ Log out

@@ -1,11 +1,17 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { DesktopNav } from "@/components/DesktopNav";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
+import { useAuth } from "@/context/AuthContext";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const coinPacks = [
   {
     coins: 5,
     price: "$99.99",
+    rawPrice: "99.99",
     description:
       "Perfect if you have one or two quick questions. Ideal for users exploring immigration or travel options and just need basic guidance.",
     buttonLabel: "Get 5 coins",
@@ -13,6 +19,7 @@ const coinPacks = [
   {
     coins: 12,
     price: "$199.99",
+    rawPrice: "199.99",
     description:
       "Great for users with multiple questions across different topics (e.g. visa types, documents, timelines). Offers more coins at a better rate per question.",
     buttonLabel: "Get 12 coins",
@@ -20,6 +27,7 @@ const coinPacks = [
   {
     coins: 25,
     price: "$399.99",
+    rawPrice: "399.99",
     description:
       "Designed for users who need detailed advice, follow-up questions, or plan to speak with experts multiple times. Best value for regular, in-depth support.",
     buttonLabel: "Get 25 coins",
@@ -28,13 +36,38 @@ const coinPacks = [
 
 export const BuyCoinsPage = (): JSX.Element => {
   const [authView, setAuthView] = useState<AuthView>(null);
-  const isLoggedIn = true;
+  const [, navigate] = useLocation();
+  const { isLoggedIn, refreshUser } = useAuth();
+  const { toast } = useToast();
+
+  const purchaseMutation = useMutation({
+    mutationFn: async ({ coinsAmount, price }: { coinsAmount: number; price: string }) => {
+      const res = await apiRequest("POST", "/api/coins/purchase", { coinsAmount, price });
+      return res.json();
+    },
+    onSuccess: async (data, variables) => {
+      await refreshUser();
+      toast({
+        title: "Coins added!",
+        description: `${variables.coinsAmount} coins have been added to your account.`,
+      });
+    },
+    onError: (e: any) => {
+      toast({ title: "Purchase failed", description: e.message || "Please try again.", variant: "destructive" });
+    },
+  });
+
+  const handlePurchase = (pack: typeof coinPacks[0]) => {
+    if (!isLoggedIn) {
+      setAuthView("login");
+      return;
+    }
+    purchaseMutation.mutate({ coinsAmount: pack.coins, price: pack.rawPrice });
+  };
 
   return (
     <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
       <DesktopNav
-        isLoggedIn={isLoggedIn}
-        coins={50}
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
       />
@@ -68,10 +101,12 @@ export const BuyCoinsPage = (): JSX.Element => {
 
               {/* CTA */}
               <button
-                className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+                onClick={() => handlePurchase(pack)}
+                disabled={purchaseMutation.isPending}
+                className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors disabled:opacity-60"
                 data-testid={`button-buy-${pack.coins}`}
               >
-                {pack.buttonLabel}
+                {purchaseMutation.isPending ? "Processing…" : pack.buttonLabel}
               </button>
             </div>
           ))}

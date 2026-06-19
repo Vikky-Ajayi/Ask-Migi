@@ -1,37 +1,35 @@
 import { Search, PenSquare } from "lucide-react";
 import { useState } from "react";
 
-interface Enquiry {
-  id: number;
+export interface SidebarEnquiry {
+  id: string;
   question: string;
-  status: "answered" | "pending";
+  status: string;
 }
-
-const mockEnquiries: Enquiry[] = [
-  { id: 1, question: "How can I move to the United ...", status: "answered" },
-  { id: 2, question: "How can I move to the United ...", status: "pending" },
-  { id: 3, question: "How can I move to the United ...", status: "pending" },
-  { id: 4, question: "How can I move to the United ...", status: "pending" },
-  { id: 5, question: "How can I move to the United ...", status: "pending" },
-  { id: 6, question: "How can I move to the United ...", status: "pending" },
-  { id: 7, question: "How can I move to the United ...", status: "pending" },
-];
 
 interface ChatSidebarProps {
-  activeId?: number;
-  onSelect?: (id: number) => void;
+  enquiries?: SidebarEnquiry[];
+  activeId?: string;
+  onSelect?: (id: string) => void;
   onNewQuestion?: () => void;
+  isLoading?: boolean;
 }
 
-export const ChatSidebar = ({ activeId, onSelect, onNewQuestion }: ChatSidebarProps) => {
+export const ChatSidebar = ({
+  enquiries = [],
+  activeId,
+  onSelect,
+  onNewQuestion,
+  isLoading = false,
+}: ChatSidebarProps) => {
   const [search, setSearch] = useState("");
 
-  const filtered = mockEnquiries.filter((e) =>
+  const filtered = enquiries.filter((e) =>
     e.question.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <aside className="w-52 shrink-0 flex flex-col gap-3 pt-4 border-r border-white/5 pr-4">
+    <aside className="w-full flex flex-col gap-3 pt-4">
       {/* New Question button */}
       <button
         onClick={onNewQuestion}
@@ -60,29 +58,39 @@ export const ChatSidebar = ({ activeId, onSelect, onNewQuestion }: ChatSidebarPr
         </div>
 
         {/* Enquiry list */}
-        <div className="flex flex-col gap-0.5">
-          {filtered.map((enq) => (
-            <button
-              key={enq.id}
-              onClick={() => onSelect?.(enq.id)}
-              className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex flex-col gap-1 ${
-                activeId === enq.id ? "bg-[#2a2c2e]" : "hover:bg-[#1e2022]"
-              }`}
-              data-testid={`enquiry-item-${enq.id}`}
-            >
-              <p className="text-xs text-white/70 truncate">{enq.question}</p>
-              <span
-                className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full w-fit ${
-                  enq.status === "answered"
-                    ? "bg-green-900/50 text-green-400"
-                    : "bg-white/10 text-white/50"
+        {isLoading ? (
+          <div className="flex flex-col gap-1">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="h-12 rounded-xl bg-[#242628] animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-xs text-white/30 px-1 py-2">No enquiries yet.</p>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            {filtered.map((enq) => (
+              <button
+                key={enq.id}
+                onClick={() => onSelect?.(enq.id)}
+                className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors flex flex-col gap-1 ${
+                  activeId === enq.id ? "bg-[#2a2c2e]" : "hover:bg-[#1e2022]"
                 }`}
+                data-testid={`enquiry-item-${enq.id}`}
               >
-                {enq.status === "answered" ? "✓ Answered" : "⏳ Pending"}
-              </span>
-            </button>
-          ))}
-        </div>
+                <p className="text-xs text-white/70 truncate">{enq.question}</p>
+                <span
+                  className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full w-fit ${
+                    enq.status === "answered"
+                      ? "bg-green-900/50 text-green-400"
+                      : "bg-white/10 text-white/50"
+                  }`}
+                >
+                  {enq.status === "answered" ? "✓ Answered" : "⏳ Pending"}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </aside>
   );

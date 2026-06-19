@@ -3,19 +3,45 @@ import { useLocation } from "wouter";
 import { DesktopNav } from "@/components/DesktopNav";
 import { ChatInput } from "@/components/ChatInput";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
+import { useAuth } from "@/context/AuthContext";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export const LandingPage = (): JSX.Element => {
   const [, navigate] = useLocation();
   const [authView, setAuthView] = useState<AuthView>(null);
+  const { isLoggedIn, isLoading } = useAuth();
+  const { toast } = useToast();
 
-  const handleQuestionSubmit = (q: string) => {
-    navigate("/chat");
+  const handleQuestionSubmit = async (q: string, expertType: string, country: string) => {
+    if (!isLoggedIn) {
+      setAuthView("login");
+      return;
+    }
+    try {
+      const res = await apiRequest("POST", "/api/enquiries", {
+        question: q,
+        expertType: expertType === "Immigration Experts" ? "immigration"
+          : expertType === "Travel agents" ? "travel" : "tour",
+        country,
+      });
+      const data = await res.json();
+      navigate(`/chat?id=${data.id}`);
+    } catch (e: any) {
+      if (e.message?.includes("402")) {
+        toast({ title: "Not enough coins", description: "Please purchase more coins to continue.", variant: "destructive" });
+        navigate("/buy-coins");
+      } else if (e.message?.includes("401")) {
+        setAuthView("login");
+      } else {
+        toast({ title: "Error", description: e.message || "Failed to submit question.", variant: "destructive" });
+      }
+    }
   };
 
   return (
     <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
       <DesktopNav
-        isLoggedIn={false}
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
       />
