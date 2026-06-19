@@ -1,0 +1,127 @@
+import { useLocation } from "wouter";
+import { X, ChevronDown } from "lucide-react";
+import { useState } from "react";
+
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+  isLoggedIn?: boolean;
+  onAuthAction?: (action: "login" | "register") => void;
+}
+
+export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: SidebarProps) => {
+  const [, navigate] = useLocation();
+  const [expertOpen, setExpertOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  const go = (path: string) => {
+    navigate(path);
+    onClose();
+  };
+
+  if (!open) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        data-testid="sidebar-backdrop"
+      />
+      <aside className="fixed inset-y-0 left-0 z-50 w-72 bg-[#1a1c1e] flex flex-col p-6 gap-1 overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <img className="h-7 w-[110px]" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+          <button
+            onClick={onClose}
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-white/10 text-white"
+            data-testid="button-close-sidebar"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {!isLoggedIn && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => { onAuthAction?.("login"); onClose(); }}
+              className="flex-1 h-9 rounded-[48px] bg-[#242628] text-white text-sm font-medium hover:bg-[#2b2d2f]"
+              data-testid="sidebar-button-login"
+            >
+              Log in
+            </button>
+            <button
+              onClick={() => { onAuthAction?.("register"); onClose(); }}
+              className="flex-1 h-9 rounded-[48px] bg-white text-black text-sm font-medium hover:bg-white/90"
+              data-testid="sidebar-button-register"
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
+
+        <NavItem label="Home" onClick={() => go("/")} />
+        <NavItem label="Previous Enquiries" onClick={() => go("/enquiries")} />
+        <NavItem label="Buy Coins" onClick={() => go("/buy-coins")} />
+
+        <div>
+          <button
+            onClick={() => setExpertOpen((v) => !v)}
+            className="w-full flex items-center justify-between py-3 px-2 text-white/80 hover:text-white text-sm font-medium"
+            data-testid="sidebar-become-expert"
+          >
+            Become an Expert
+            <ChevronDown size={16} className={`transition-transform ${expertOpen ? "rotate-180" : ""}`} />
+          </button>
+          {expertOpen && (
+            <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-3">
+              <SubNavItem label="Immigration Experts" onClick={() => go("/experts?tab=immigration")} />
+              <SubNavItem label="Travel Agents" onClick={() => go("/experts?tab=travel")} />
+              <SubNavItem label="Tour Guides" onClick={() => go("/experts?tab=tour")} />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <button
+            onClick={() => setHelpOpen((v) => !v)}
+            className="w-full flex items-center justify-between py-3 px-2 text-white/80 hover:text-white text-sm font-medium"
+            data-testid="sidebar-help"
+          >
+            Help
+            <ChevronDown size={16} className={`transition-transform ${helpOpen ? "rotate-180" : ""}`} />
+          </button>
+          {helpOpen && (
+            <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-3">
+              <SubNavItem label="FAQ" onClick={() => go("/faq")} />
+              <SubNavItem label="Contact Us" onClick={() => go("/contact")} />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto pt-6 flex flex-col gap-1 border-t border-white/10">
+          <NavItem label="Disclaimer" onClick={() => go("/disclaimer")} small />
+          <NavItem label="Privacy Policy" onClick={() => go("/privacy-policy")} small />
+          <NavItem label="Refund Policy" onClick={() => go("/refund-policy")} small />
+        </div>
+      </aside>
+    </>
+  );
+};
+
+const NavItem = ({ label, onClick, small }: { label: string; onClick: () => void; small?: boolean }) => (
+  <button
+    onClick={onClick}
+    className={`w-full text-left py-3 px-2 text-white/80 hover:text-white font-medium rounded-lg hover:bg-white/5 transition-colors ${small ? "text-xs" : "text-sm"}`}
+  >
+    {label}
+  </button>
+);
+
+const SubNavItem = ({ label, onClick }: { label: string; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="w-full text-left py-2 px-2 text-white/60 hover:text-white text-sm rounded-lg hover:bg-white/5 transition-colors"
+  >
+    {label}
+  </button>
+);
