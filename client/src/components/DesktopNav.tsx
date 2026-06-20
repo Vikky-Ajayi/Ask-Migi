@@ -150,10 +150,10 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
             {/* Sign Up — pill with CircleUser icon matching design */}
             <button
               onClick={onSignUpClick}
-              className="flex items-center gap-2 h-9 px-4 rounded-full bg-[#2a2c2e] border border-white/20 text-sm text-white font-medium hover:bg-[#333537] transition-colors"
+              className="flex items-center gap-2 h-9 px-4 rounded-full bg-white text-sm text-black font-medium hover:bg-white/90 transition-colors"
               data-testid="nav-signup"
             >
-              <CircleUser size={18} className="text-white" />
+              <CircleUser size={18} className="text-black" />
               Sign Up
             </button>
             {/* Log In — simple outlined pill */}
