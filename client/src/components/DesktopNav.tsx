@@ -147,16 +147,16 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
           </>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Sign Up — pill with a leading circle avatar icon */}
+            {/* Sign Up — pill with a floating avatar circle inside */}
             <button
               onClick={onSignUpClick}
-              className="flex items-center gap-0 h-9 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors overflow-hidden"
+              className="flex items-center gap-2 h-9 pl-1.5 pr-4 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors"
               data-testid="nav-signup"
             >
-              <span className="flex items-center justify-center w-8 h-9 bg-white/15 border-r border-white/20">
-                <User size={14} className="text-white" />
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 border border-white/25 flex-shrink-0">
+                <User size={12} className="text-white" />
               </span>
-              <span className="px-3">Sign Up</span>
+              Sign Up
             </button>
             {/* Log In — simple outlined pill */}
             <button
