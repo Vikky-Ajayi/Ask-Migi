@@ -46,36 +46,53 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Expert photos */}
-      <section className="flex justify-center items-center pb-12 md:pb-16">
-        <div className="relative" style={{ height: "360px", width: "440px" }}>
-          {/* Left card */}
+      <section className="flex justify-center items-center pb-12 md:pb-16 px-4">
+        {/*
+          Design spec (Figma):
+          - Both images: 277 × 415 px, border-radius 39px, border 7px white
+          - Left:  rotate(+8deg),  left: 447px in 1440px canvas
+          - Right: rotate(-8deg),  left: 732px in 1440px canvas  →  gap = 285px
+          - Left image is on top at the overlap point
+          We scale both to ~80% (222 × 332px) and preserve the 285→228px gap ratio.
+        */}
+        <div
+          className="relative shrink-0"
+          style={{ width: "472px", height: "390px" }}
+        >
+          {/* Left image — rotate +8deg, sits on top */}
           <img
             src="/expert1.png"
             alt="Expert"
-            className="absolute rounded-[28px] shadow-2xl object-cover"
+            className="absolute object-cover"
             style={{
-              transform: "rotate(-8deg)",
-              transformOrigin: "bottom right",
-              left: "10px",
-              top: "40px",
-              width: "210px",
-              height: "280px",
-              zIndex: 1,
+              width: "222px",
+              height: "332px",
+              left: "0px",
+              top: "30px",
+              borderRadius: "31px",
+              border: "6px solid white",
+              transform: "rotate(8deg)",
+              transformOrigin: "center center",
+              zIndex: 2,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             }}
           />
-          {/* Right card */}
+          {/* Right image — rotate -8deg, sits behind */}
           <img
             src="/expert2.png"
             alt="Expert"
-            className="absolute rounded-[28px] shadow-2xl object-cover"
+            className="absolute object-cover"
             style={{
-              transform: "rotate(5deg)",
-              transformOrigin: "bottom left",
-              right: "10px",
+              width: "222px",
+              height: "332px",
+              left: "228px",
               top: "10px",
-              width: "210px",
-              height: "305px",
-              zIndex: 2,
+              borderRadius: "31px",
+              border: "6px solid white",
+              transform: "rotate(-8deg)",
+              transformOrigin: "center center",
+              zIndex: 1,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             }}
           />
         </div>
