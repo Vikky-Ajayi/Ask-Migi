@@ -58,13 +58,10 @@ module.exports = {
       fontFamily: {
         "caption1-medium": "var(--caption1-medium-font-family)",
         sans: [
+          "'Roobert TRIAL'",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
-          '"Apple Color Emoji"',
-          '"Segoe UI Emoji"',
-          '"Segoe UI Symbol"',
-          '"Noto Color Emoji"',
         ],
       },
       borderRadius: {
