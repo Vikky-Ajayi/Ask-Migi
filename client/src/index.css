@@ -212,10 +212,16 @@
 @layer base {
   * {
     @apply border-border;
+    letter-spacing: -0.02em;
+  }
+
+  html, body {
+    font-family: 'Roobert TRIAL', sans-serif;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Roobert TRIAL', sans-serif;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
