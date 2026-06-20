@@ -47,8 +47,8 @@ export const BecomeAnExpertPage = (): JSX.Element => {
 
       {/* Expert photos — V-shape: tops fan out, bottoms meet/overlap */}
       <section className="flex justify-center pb-12 md:pb-16 px-4">
-        <div className="relative shrink-0" style={{ width: "420px", height: "380px" }}>
-          {/* Left image: rotate(-8deg) → top leans left, bottom leans right into right card */}
+        <div className="relative shrink-0" style={{ width: "520px", height: "380px" }}>
+          {/* Left image: rotate(-8deg) → top leans left, bottom leans right */}
           <img
             src="/expert1.png"
             alt="Expert"
@@ -57,16 +57,15 @@ export const BecomeAnExpertPage = (): JSX.Element => {
               width: "220px",
               height: "330px",
               top: "20px",
-              left: "10px",
+              left: "20px",
               borderRadius: "32px",
-              border: "7px solid white",
               transform: "rotate(-8deg)",
               transformOrigin: "center center",
               zIndex: 2,
               boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
             }}
           />
-          {/* Right image: rotate(+8deg) → top leans right, bottom leans left into left card */}
+          {/* Right image: rotate(+8deg) → top leans right, bottom leans left */}
           <img
             src="/expert2.png"
             alt="Expert"
@@ -75,9 +74,8 @@ export const BecomeAnExpertPage = (): JSX.Element => {
               width: "220px",
               height: "330px",
               top: "20px",
-              right: "10px",
+              right: "20px",
               borderRadius: "32px",
-              border: "7px solid white",
               transform: "rotate(8deg)",
               transformOrigin: "center center",
               zIndex: 1,
