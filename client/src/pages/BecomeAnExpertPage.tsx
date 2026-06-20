@@ -46,8 +46,8 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Expert photos */}
-      <section className="flex justify-center items-center px-4 md:px-6 pb-12 md:pb-16">
-        <div className="relative flex items-center justify-center" style={{ height: "300px", width: "380px" }}>
+      <section className="flex justify-center items-center pb-12 md:pb-16">
+        <div className="relative" style={{ height: "360px", width: "440px" }}>
           {/* Left card */}
           <img
             src="/expert1.png"
@@ -55,10 +55,11 @@ export const BecomeAnExpertPage = (): JSX.Element => {
             className="absolute rounded-[28px] shadow-2xl object-cover"
             style={{
               transform: "rotate(-8deg)",
+              transformOrigin: "bottom right",
               left: "10px",
-              top: "30px",
-              width: "175px",
-              height: "235px",
+              top: "40px",
+              width: "210px",
+              height: "280px",
               zIndex: 1,
             }}
           />
@@ -68,11 +69,12 @@ export const BecomeAnExpertPage = (): JSX.Element => {
             alt="Expert"
             className="absolute rounded-[28px] shadow-2xl object-cover"
             style={{
-              transform: "rotate(6deg)",
+              transform: "rotate(5deg)",
+              transformOrigin: "bottom left",
               right: "10px",
               top: "10px",
-              width: "175px",
-              height: "255px",
+              width: "210px",
+              height: "305px",
               zIndex: 2,
             }}
           />
