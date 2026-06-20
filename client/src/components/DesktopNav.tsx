@@ -42,7 +42,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
         <img className="h-7" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
       </button>
 
-      {/* Center links */}
+      {/* Right side — nav links + auth */}
       <div className="flex items-center gap-6">
         {/* Become an Expert */}
         <div className="relative" ref={expertRef}>
@@ -100,10 +100,8 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
             </div>
           )}
         </div>
-      </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-3">
+        {/* Auth / profile */}
         {isLoggedIn && user ? (
           <>
             {/* Coin balance */}
@@ -148,15 +146,19 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
             </div>
           </>
         ) : (
-          <>
+          <div className="flex items-center gap-2">
+            {/* Sign Up — pill with a leading circle avatar icon */}
             <button
               onClick={onSignUpClick}
-              className="flex items-center gap-2 h-9 px-4 rounded-full bg-white/10 border border-white/20 text-sm text-white font-medium hover:bg-white/20 transition-colors"
+              className="flex items-center gap-0 h-9 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors overflow-hidden"
               data-testid="nav-signup"
             >
-              <User size={14} />
-              Sign Up
+              <span className="flex items-center justify-center w-8 h-9 bg-white/15 border-r border-white/20">
+                <User size={14} className="text-white" />
+              </span>
+              <span className="px-3">Sign Up</span>
             </button>
+            {/* Log In — simple outlined pill */}
             <button
               onClick={onLoginClick}
               className="flex items-center h-9 px-4 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors"
@@ -164,7 +166,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
             >
               Log In
             </button>
-          </>
+          </div>
         )}
       </div>
     </nav>
