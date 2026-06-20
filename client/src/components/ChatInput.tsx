@@ -105,7 +105,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
               data-testid="button-attach"
               type="button"
             >
-              <Paperclip size={16} />
+              <Paperclip size={16} className="-rotate-45" />
             </button>
 
             <div className="relative">
