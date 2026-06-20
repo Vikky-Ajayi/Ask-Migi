@@ -45,44 +45,13 @@ export const BecomeAnExpertPage = (): JSX.Element => {
         </div>
       </section>
 
-      {/* Expert photos — V-shape: tops fan out, bottoms meet/overlap */}
+      {/* Expert photos */}
       <section className="flex justify-center pb-12 md:pb-16 px-4">
-        <div className="relative shrink-0" style={{ width: "520px", height: "380px" }}>
-          {/* Left image: rotate(-8deg) → top leans left, bottom leans right */}
-          <img
-            src="/expert1.png"
-            alt="Expert"
-            className="absolute object-cover"
-            style={{
-              width: "220px",
-              height: "330px",
-              top: "20px",
-              left: "20px",
-              borderRadius: "32px",
-              transform: "rotate(-8deg)",
-              transformOrigin: "center center",
-              zIndex: 2,
-              boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
-            }}
-          />
-          {/* Right image: rotate(+8deg) → top leans right, bottom leans left */}
-          <img
-            src="/expert2.png"
-            alt="Expert"
-            className="absolute object-cover"
-            style={{
-              width: "220px",
-              height: "330px",
-              top: "20px",
-              right: "20px",
-              borderRadius: "32px",
-              transform: "rotate(8deg)",
-              transformOrigin: "center center",
-              zIndex: 1,
-              boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
-            }}
-          />
-        </div>
+        <img
+          src="/experts-group.png"
+          alt="Expert consultants"
+          className="w-full max-w-lg object-contain"
+        />
       </section>
 
       {/* Application Process */}
