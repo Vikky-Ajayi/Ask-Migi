@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, X, User, Lock } from "lucide-react";
+import coinImg from "@assets/coins_1781943901685.png";
 import { DesktopNav } from "@/components/DesktopNav";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
@@ -195,8 +196,9 @@ export const SettingsPage = (): JSX.Element => {
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-white/40">Coin Balance</label>
-                    <div className="h-12 rounded-xl bg-[#242628] px-4 flex items-center text-sm text-white/70">
-                      🪙 {user.coins} Coins
+                    <div className="h-12 rounded-xl bg-[#242628] px-4 flex items-center gap-2 text-sm text-white/70">
+                      <img src={coinImg} alt="coins" className="w-[18px] h-[18px] object-contain" style={{ imageRendering: "auto" }} />
+                      {user.coins} Coins
                     </div>
                   </div>
                 </div>

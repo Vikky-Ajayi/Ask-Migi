@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import coinImg from "@assets/coins_1781943901685.png";
 
 interface DesktopNavProps {
   onLoginClick?: () => void;
@@ -111,7 +112,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#242628] border border-white/10 text-sm text-white/90 hover:bg-[#2a2c2e]"
               data-testid="nav-coins"
             >
-              <span>🪙</span>
+              <img src={coinImg} alt="coins" className="w-[18px] h-[18px] object-contain" style={{ imageRendering: "auto" }} />
               <span className="font-medium">{user.coins} Coins</span>
             </button>
             {/* Avatar */}
@@ -158,7 +159,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
             </button>
             <button
               onClick={onLoginClick}
-              className="text-sm text-white/70 hover:text-white transition-colors"
+              className="flex items-center h-9 px-4 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors"
               data-testid="nav-login"
             >
               Log In

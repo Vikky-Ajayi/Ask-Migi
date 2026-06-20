@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Paperclip, ArrowUp, ChevronDown } from "lucide-react";
+import coinImg from "@assets/coins_1781943901685.png";
+import ukFlagImg from "@assets/emojione_flag-for-united-kingdom_1781943901686.png";
 
 interface ChatInputProps {
   onSubmit?: (question: string, expertType: string, country: string) => void;
@@ -10,15 +12,31 @@ interface ChatInputProps {
 const audienceOptions = ["Immigration Experts", "Travel agents", "Tour Guides"];
 
 const countries = [
-  { flag: "🇬🇧", name: "United Kingdom" },
-  { flag: "🇺🇸", name: "United States" },
-  { flag: "🇨🇦", name: "Canada" },
-  { flag: "🇦🇺", name: "Australia" },
-  { flag: "🇩🇪", name: "Germany" },
-  { flag: "🇫🇷", name: "France" },
-  { flag: "🇳🇬", name: "Nigeria" },
-  { flag: "🇬🇭", name: "Ghana" },
+  { flag: null, flagImg: ukFlagImg, name: "United Kingdom" },
+  { flag: "🇺🇸", flagImg: null, name: "United States" },
+  { flag: "🇨🇦", flagImg: null, name: "Canada" },
+  { flag: "🇦🇺", flagImg: null, name: "Australia" },
+  { flag: "🇩🇪", flagImg: null, name: "Germany" },
+  { flag: "🇫🇷", flagImg: null, name: "France" },
+  { flag: "🇳🇬", flagImg: null, name: "Nigeria" },
+  { flag: "🇬🇭", flagImg: null, name: "Ghana" },
 ];
+
+const CountryFlag = ({ country, size = 20 }: { country: typeof countries[0]; size?: number }) => {
+  if (country.flagImg) {
+    return (
+      <img
+        src={country.flagImg}
+        alt={country.name}
+        width={size}
+        height={size}
+        className="object-contain flex-shrink-0"
+        style={{ imageRendering: "auto" }}
+      />
+    );
+  }
+  return <span style={{ fontSize: size * 0.85 }}>{country.flag}</span>;
+};
 
 export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = false }: ChatInputProps) => {
   const [question, setQuestion] = useState("");
@@ -97,7 +115,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
                 className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-[#3a3c3e] text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
                 data-testid="button-language"
               >
-                <span>{selectedCountry.flag}</span>
+                <CountryFlag country={selectedCountry} size={20} />
                 <span>{selectedCountry.name}</span>
                 <ChevronDown size={13} className={`transition-transform ${langOpen ? "rotate-180" : ""}`} />
               </button>
@@ -114,7 +132,8 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
                           selectedCountry.name === c.name ? "text-white" : "text-white/80"
                         }`}
                       >
-                        {c.flag} {c.name}
+                        <CountryFlag country={c} size={18} />
+                        {c.name}
                       </button>
                     ))}
                   </div>
@@ -126,7 +145,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
           {/* Right: coins + submit */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-[#3a3c3e] text-sm text-white/60">
-              <span>🪙</span>
+              <img src={coinImg} alt="coins" className="w-[18px] h-[18px] object-contain" style={{ imageRendering: "auto" }} />
               <span>3 Coins/question</span>
             </div>
             <button

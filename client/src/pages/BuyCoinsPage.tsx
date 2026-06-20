@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import coinImg from "@assets/coins_1781943901685.png";
 
 const coinPacks = [
   {
@@ -90,7 +91,7 @@ export const BuyCoinsPage = (): JSX.Element => {
               {/* Coins badge — centered */}
               <div className="flex justify-center">
                 <div className="inline-flex items-center gap-2 bg-[#2a2c2e] rounded-full px-4 py-2 w-fit">
-                  <span>🪙</span>
+                  <img src={coinImg} alt="coins" className="w-[20px] h-[20px] object-contain" style={{ imageRendering: "auto" }} />
                   <span className="text-sm font-semibold text-white">{pack.coins} coins</span>
                 </div>
               </div>
