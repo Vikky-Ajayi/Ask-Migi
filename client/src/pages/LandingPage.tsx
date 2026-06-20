@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { DesktopNav } from "@/components/DesktopNav";
+import { NavBar } from "@/components/NavBar";
 import { ChatInput } from "@/components/ChatInput";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
@@ -59,20 +59,19 @@ export const LandingPage = (): JSX.Element => {
   if (isLoading) {
     return (
       <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
-        <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+        <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
       </main>
     );
   }
 
   return (
     <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
-      <DesktopNav
+      <NavBar
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
       />
 
       <div className="flex flex-1">
-        {/* Left sidebar — only when logged in */}
         {isLoggedIn && (
           <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
             <ChatSidebar
@@ -84,22 +83,18 @@ export const LandingPage = (): JSX.Element => {
           </div>
         )}
 
-        {/* Main centered content */}
-        <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-          <div className="w-full max-w-2xl flex flex-col gap-8">
-            {/* Hero */}
-            <div className="flex flex-col items-center gap-5 text-center">
-              <img className="h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-              <p className="max-w-xl text-base text-white/70 leading-7">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 md:py-12">
+          <div className="w-full max-w-2xl flex flex-col gap-6 md:gap-8">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <img className="h-10 md:h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+              <p className="max-w-xl text-sm md:text-base text-white/70 leading-7">
                 Get expert immigration guidance every step of the way—whether visiting, relocating, or pursuing citizenship, our experts help you settle with confidence.
               </p>
             </div>
 
-            {/* Chat input with tabs */}
             <ChatInput onSubmit={handleQuestionSubmit} showAudienceTabs={true} />
 
-            {/* Footer disclaimer */}
-            <p className="text-center text-sm text-white/50 leading-6">
+            <p className="text-center text-xs md:text-sm text-white/50 leading-6">
               By messaging Ask MiGi, you agree to our{" "}
               <button onClick={() => navigate("/terms")} className="text-white underline underline-offset-2">Terms of Use,</button>{" "}
               <button onClick={() => navigate("/privacy-policy")} className="text-white underline underline-offset-2">Privacy Policy</button>,{" "}

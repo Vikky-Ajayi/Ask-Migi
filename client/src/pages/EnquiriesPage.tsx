@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { DesktopNav } from "@/components/DesktopNav";
+import { NavBar } from "@/components/NavBar";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { ChatInput } from "@/components/ChatInput";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
@@ -25,9 +25,7 @@ export const EnquiriesPage = (): JSX.Element => {
   });
 
   useEffect(() => {
-    if (!activeId && enquiries.length > 0) {
-      setActiveId(enquiries[0].id);
-    }
+    if (!activeId && enquiries.length > 0) setActiveId(enquiries[0].id);
   }, [enquiries, activeId]);
 
   useEffect(() => {
@@ -70,8 +68,8 @@ export const EnquiriesPage = (): JSX.Element => {
   if (!authLoading && !isLoggedIn) {
     return (
       <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
-        <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
-        <div className="flex flex-1 items-center justify-center">
+        <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+        <div className="flex flex-1 items-center justify-center px-4">
           <div className="text-center">
             <p className="text-white/60 mb-4">Please log in to view your enquiries.</p>
             <button onClick={() => setAuthView("login")} className="px-6 py-3 rounded-full bg-white text-black font-semibold">Log In</button>
@@ -90,10 +88,9 @@ export const EnquiriesPage = (): JSX.Element => {
 
   return (
     <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
-      <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+      <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar */}
         <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
           <ChatSidebar
             enquiries={sidebarItems}
@@ -104,16 +101,13 @@ export const EnquiriesPage = (): JSX.Element => {
           />
         </div>
 
-        {/* Main content */}
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          {/* Notice banner — full width */}
-          <div className="w-full bg-[#1e2022] border-b border-white/5 px-6 py-3 text-sm text-white/70 text-center shrink-0">
+          <div className="w-full bg-[#1e2022] border-b border-white/5 px-3 md:px-6 py-3 text-xs md:text-sm text-white/70 text-center shrink-0">
             <span className="font-semibold text-white">Please note:</span>{" "}
             Expert responses are not instant. You'll receive a response in 3-5 Business days
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
               {!activeEnquiry && !enqLoading && (
                 <div className="text-center text-white/40 py-16">
@@ -124,22 +118,17 @@ export const EnquiriesPage = (): JSX.Element => {
               {activeEnquiry && (
                 <>
                   <div className="flex justify-end">
-                    <div className="max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
                       <p className="text-sm text-white/90 leading-6">{activeEnquiry.question}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">
-                        E
-                      </div>
+                      <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">E</div>
                       <span className="text-sm font-semibold text-yellow-400">Expert</span>
-                      <span className="text-xs text-yellow-400/70">
-                        · {activeEnquiry.status === "answered" ? "Answered" : "Pending response"}
-                      </span>
+                      <span className="text-xs text-yellow-400/70">· {activeEnquiry.status === "answered" ? "Answered" : "Pending response"}</span>
                     </div>
-
                     {activeEnquiry.status === "answered" && activeEnquiry.answer ? (
                       <div className="ml-10">
                         {activeEnquiry.answer.split("\n\n").map((para: string, i: number) => (
@@ -157,19 +146,13 @@ export const EnquiriesPage = (): JSX.Element => {
                   </div>
                 </>
               )}
-
               <div ref={messagesEndRef} />
             </div>
           </div>
 
-          {/* Bottom input */}
-          <div className="border-t border-white/5 px-6 py-4 shrink-0">
+          <div className="border-t border-white/5 px-3 md:px-6 py-3 md:py-4 shrink-0">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-3">
-              <ChatInput
-                onSubmit={handleSubmit}
-                showAudienceTabs={true}
-                isSubmitting={submitMutation.isPending}
-              />
+              <ChatInput onSubmit={handleSubmit} showAudienceTabs={true} isSubmitting={submitMutation.isPending} />
               <p className="text-center text-xs text-white/40 leading-5">
                 By messaging Ask MiGi, you agree to our{" "}
                 <button onClick={() => navigate("/terms")} className="text-white/60 underline underline-offset-2">Terms of Use,</button>{" "}

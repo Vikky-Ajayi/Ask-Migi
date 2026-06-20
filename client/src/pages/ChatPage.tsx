@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
-import { DesktopNav } from "@/components/DesktopNav";
+import { NavBar } from "@/components/NavBar";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { ChatInput } from "@/components/ChatInput";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
@@ -22,29 +22,24 @@ export const ChatPage = (): JSX.Element => {
   const qc = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load all enquiries
   const { data: enquiries = [], isLoading: enqLoading } = useQuery<any[]>({
     queryKey: ["/api/enquiries"],
     enabled: isLoggedIn,
-    refetchInterval: 5000, // Poll every 5s for AI response updates
+    refetchInterval: 5000,
   });
 
-  // Auto-select first enquiry if none selected
   useEffect(() => {
     if (!activeId && enquiries.length > 0) {
       setActiveId(enquiries[0].id);
     }
   }, [enquiries, activeId]);
 
-  // Scroll to bottom when active enquiry changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeId]);
 
-  // Active enquiry details
   const activeEnquiry = enquiries.find((e: any) => e.id === activeId);
 
-  // Submit new question
   const submitMutation = useMutation({
     mutationFn: async ({ question, expertType, country }: { question: string; expertType: string; country: string }) => {
       const res = await apiRequest("POST", "/api/enquiries", {
@@ -79,8 +74,8 @@ export const ChatPage = (): JSX.Element => {
   if (!authLoading && !isLoggedIn) {
     return (
       <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
-        <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
-        <div className="flex flex-1 items-center justify-center">
+        <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+        <div className="flex flex-1 items-center justify-center px-4">
           <div className="text-center">
             <p className="text-white/60 mb-4">Please log in to view your enquiries.</p>
             <button
@@ -104,10 +99,10 @@ export const ChatPage = (): JSX.Element => {
 
   return (
     <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
-      <DesktopNav onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+      <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar */}
+        {/* Left sidebar — desktop only */}
         <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
           <ChatSidebar
             enquiries={sidebarItems}
@@ -118,16 +113,13 @@ export const ChatPage = (): JSX.Element => {
           />
         </div>
 
-        {/* Main content */}
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          {/* Notice banner — full width */}
-          <div className="w-full bg-[#1e2022] border-b border-white/5 px-6 py-3 text-sm text-white/70 text-center shrink-0">
+          <div className="w-full bg-[#1e2022] border-b border-white/5 px-3 md:px-6 py-3 text-xs md:text-sm text-white/70 text-center shrink-0">
             <span className="font-semibold text-white">Please note:</span>{" "}
             Expert responses are not instant. You'll receive a response in 3-5 Business days
           </div>
 
-          {/* Messages area */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
               {!activeEnquiry && !enqLoading && (
                 <div className="text-center text-white/40 py-16">
@@ -137,14 +129,12 @@ export const ChatPage = (): JSX.Element => {
 
               {activeEnquiry && (
                 <>
-                  {/* User message bubble */}
                   <div className="flex justify-end">
-                    <div className="max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
                       <p className="text-sm text-white/90 leading-6">{activeEnquiry.question}</p>
                     </div>
                   </div>
 
-                  {/* Expert / AI reply */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">
@@ -184,8 +174,7 @@ export const ChatPage = (): JSX.Element => {
             </div>
           </div>
 
-          {/* Bottom input */}
-          <div className="border-t border-white/5 px-6 py-4 shrink-0">
+          <div className="border-t border-white/5 px-3 md:px-6 py-3 md:py-4 shrink-0">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-3">
               <ChatInput
                 onSubmit={handleSubmit}

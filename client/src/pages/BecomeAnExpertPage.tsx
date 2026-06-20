@@ -1,30 +1,12 @@
 import { useState } from "react";
-import { DesktopNav } from "@/components/DesktopNav";
+import { NavBar } from "@/components/NavBar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useLocation } from "wouter";
 
 const steps = [
-  {
-    number: "01",
-    title: "Apply Online in Minutes",
-    description:
-      "All you need is a valid ID and any relevant licenses or certifications to get started.",
-    align: "left",
-  },
-  {
-    number: "02",
-    title: "Quick Background Check",
-    description:
-      "We partner with a trusted third-party service to verify your credentials — the process is secure and usually completed in just a few days.",
-    align: "right",
-  },
-  {
-    number: "03",
-    title: "Start Earning Right Away!",
-    description:
-      "Once you're approved, we'll equip you with all the tools and support you need to start helping people and earning money fast.",
-    align: "left",
-  },
+  { number: "01", title: "Apply Online in Minutes", description: "All you need is a valid ID and any relevant licenses or certifications to get started.", align: "left" },
+  { number: "02", title: "Quick Background Check", description: "We partner with a trusted third-party service to verify your credentials — the process is secure and usually completed in just a few days.", align: "right" },
+  { number: "03", title: "Start Earning Right Away!", description: "Once you're approved, we'll equip you with all the tools and support you need to start helping people and earning money fast.", align: "left" },
 ];
 
 export const BecomeAnExpertPage = (): JSX.Element => {
@@ -33,32 +15,28 @@ export const BecomeAnExpertPage = (): JSX.Element => {
 
   return (
     <main className="min-h-screen w-full bg-[#0f1011] text-white flex flex-col">
-      <DesktopNav
-        onLoginClick={() => setAuthView("login")}
-        onSignUpClick={() => setAuthView("register")}
-      />
+      <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
-      {/* Hero section */}
-      <section className="flex flex-col items-center text-center px-6 pt-16 pb-10">
-        <div className="max-w-2xl flex flex-col gap-6">
-          <h1 className="text-5xl font-bold text-white leading-tight tracking-tight">
+      {/* Hero */}
+      <section className="flex flex-col items-center text-center px-4 md:px-6 pt-12 md:pt-16 pb-8 md:pb-10">
+        <div className="max-w-2xl flex flex-col gap-5 md:gap-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight">
             Help Migrants Thrive &amp; Get Paid for your Expertise
           </h1>
-          <p className="text-base text-white/55 leading-7 max-w-lg mx-auto">
+          <p className="text-sm md:text-base text-white/55 leading-7 max-w-lg mx-auto">
             Are you a certified professional with a passion for helping people achieve their goals? Join our platform and earn by sharing your expertise with a global audience in need of guidance.
           </p>
-
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
               onClick={() => setAuthView("register")}
-              className="h-12 px-7 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+              className="h-11 md:h-12 px-6 md:px-7 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
               data-testid="button-create-account"
             >
               Create Account
             </button>
             <button
               onClick={() => setAuthView("login")}
-              className="h-12 px-7 rounded-full border border-white/25 text-white font-medium text-sm hover:bg-white/10 transition-colors"
+              className="h-11 md:h-12 px-6 md:px-7 rounded-full border border-white/25 text-white font-medium text-sm hover:bg-white/10 transition-colors"
               data-testid="button-login"
             >
               Log in
@@ -68,37 +46,26 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Expert photos */}
-      <section className="flex justify-center items-end gap-4 px-6 pb-16">
-        {/* Photo card 1 — tilted left */}
+      <section className="flex justify-center items-end gap-3 md:gap-4 px-4 md:px-6 pb-12 md:pb-16">
         <div
-          className="w-44 h-56 rounded-3xl overflow-hidden border-4 border-white shadow-xl shrink-0"
+          className="w-32 md:w-44 h-44 md:h-56 rounded-3xl overflow-hidden border-4 border-white shadow-xl shrink-0"
           style={{ transform: "rotate(-6deg) translateY(12px)" }}
         >
-          <img
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=600&fit=crop&auto=format"
-            alt="Immigration Expert"
-            className="w-full h-full object-cover"
-          />
+          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=600&fit=crop&auto=format" alt="Immigration Expert" className="w-full h-full object-cover" />
         </div>
-
-        {/* Photo card 2 — tilted right, larger, on top */}
         <div
-          className="w-52 h-64 rounded-3xl overflow-hidden border-4 border-white shadow-xl shrink-0 relative z-10"
+          className="w-40 md:w-52 h-52 md:h-64 rounded-3xl overflow-hidden border-4 border-white shadow-xl shrink-0 relative z-10"
           style={{ transform: "rotate(4deg)" }}
         >
-          <img
-            src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=600&fit=crop&auto=format"
-            alt="Travel Agent"
-            className="w-full h-full object-cover"
-          />
+          <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=600&fit=crop&auto=format" alt="Travel Agent" className="w-full h-full object-cover" />
         </div>
       </section>
 
       {/* Application Process */}
-      <section className="flex flex-col items-center px-6 py-16 bg-[#161618]">
-        <div className="w-full max-w-2xl flex flex-col gap-10">
+      <section className="flex flex-col items-center px-4 md:px-6 py-12 md:py-16 bg-[#161618]">
+        <div className="w-full max-w-2xl flex flex-col gap-8 md:gap-10">
           <div className="text-center flex flex-col gap-3">
-            <h2 className="text-3xl font-bold text-white tracking-tight">The Application Process</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">The Application Process</h2>
             <p className="text-sm text-white/55 leading-6 max-w-lg mx-auto">
               Getting started is easy — and there are no sign-up fees. Just complete the quick application, and we'll support you every step of the way so you can start helping clients and earning money fast.
             </p>
@@ -111,11 +78,11 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                 className={`flex ${step.align === "right" ? "justify-end" : "justify-start"}`}
                 data-testid={`step-${step.number}`}
               >
-                <div className="w-full max-w-[80%] rounded-3xl border border-[#2e3032] bg-[#1a1c1e] px-7 py-6 flex flex-col gap-3">
+                <div className="w-full md:max-w-[80%] rounded-3xl border border-[#2e3032] bg-[#1a1c1e] px-5 md:px-7 py-5 md:py-6 flex flex-col gap-3">
                   <div className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-white/20 text-xs font-bold text-white/70">
                     {step.number}
                   </div>
-                  <h3 className="text-xl font-bold text-white leading-snug">{step.title}</h3>
+                  <h3 className="text-lg md:text-xl font-bold text-white leading-snug">{step.title}</h3>
                   <p className="text-sm text-white/55 leading-6">{step.description}</p>
                 </div>
               </div>
@@ -125,13 +92,11 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#2e3032] px-8 py-8 flex items-center justify-between bg-[#0f1011]">
+      <footer className="border-t border-[#2e3032] px-4 md:px-8 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#0f1011]">
         <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-        <div className="flex items-center gap-5 text-xs text-white/40">
+        <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-white/40">
           {[["Terms of Use", "/terms"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"]].map(([label, path]) => (
-            <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">
-              {label}
-            </button>
+            <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">{label}</button>
           ))}
         </div>
       </footer>
