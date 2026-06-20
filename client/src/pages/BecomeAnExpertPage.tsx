@@ -64,19 +64,21 @@ export const BecomeAnExpertPage = (): JSX.Element => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-8 md:gap-10">
             {steps.map((step) => (
               <div
                 key={step.number}
                 className={`flex ${step.align === "right" ? "justify-end" : "justify-start"}`}
                 data-testid={`step-${step.number}`}
               >
-                <div className="w-full md:max-w-[80%] rounded-3xl border border-[#2e3032] bg-[#1a1c1e] px-5 md:px-7 py-5 md:py-6 flex flex-col gap-3">
-                  <div className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-white/20 text-xs font-bold text-white/70">
-                    {step.number}
+                <div className="w-full md:w-[65%] rounded-2xl bg-[#1a1c1e] px-6 md:px-8 py-6 md:py-8 flex flex-col gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white text-black text-sm font-bold shrink-0">
+                      {step.number}
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight">{step.title}</h3>
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold text-white leading-snug">{step.title}</h3>
-                  <p className="text-sm text-white/55 leading-6">{step.description}</p>
+                  <p className="text-sm text-white/55 leading-6 pl-14">{step.description}</p>
                 </div>
               </div>
             ))}
