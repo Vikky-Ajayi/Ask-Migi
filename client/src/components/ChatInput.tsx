@@ -100,12 +100,12 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
           {/* Left: attach + language */}
           <div className="flex items-center gap-2">
             <button
-              className="h-9 w-9 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-full bg-[#2a2c2e] border border-white/10 text-white/70 hover:text-white hover:bg-[#333537] transition-colors"
               aria-label="Attach file"
               data-testid="button-attach"
               type="button"
             >
-              <Paperclip size={18} />
+              <Paperclip size={16} />
             </button>
 
             <div className="relative">
