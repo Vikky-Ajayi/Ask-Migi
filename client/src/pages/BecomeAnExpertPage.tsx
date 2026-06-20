@@ -56,7 +56,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
 
       {/* Application Process */}
       <section className="flex flex-col items-center px-4 md:px-6 py-12 md:py-16 bg-[#161618]">
-        <div className="w-full max-w-2xl flex flex-col gap-8 md:gap-10">
+        <div className="w-full max-w-[944px] flex flex-col gap-8 md:gap-10">
           <div className="text-center flex flex-col gap-3">
             <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">The Application Process</h2>
             <p className="text-sm text-white/55 leading-6 max-w-lg mx-auto">
@@ -71,12 +71,25 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                 className={`flex ${step.align === "right" ? "justify-end" : "justify-start"}`}
                 data-testid={`step-${step.number}`}
               >
-                <div className="w-full md:w-[65%] rounded-2xl bg-[#1a1c1e] px-6 md:px-8 py-6 md:py-8 flex flex-col gap-3">
+                <div
+                  className="w-full md:w-[869px] md:min-h-[270px] rounded-[24px] border border-white/10 bg-[#1a1c1e] p-6 md:p-[56px] flex flex-col gap-3 md:gap-8"
+                >
                   <div className="flex items-center gap-4">
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white text-black text-sm font-bold shrink-0">
                       {step.number}
                     </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight">{step.title}</h3>
+                    <h3
+                      className="text-2xl text-white"
+                      style={{
+                        fontFamily: "'Roobert TRIAL', sans-serif",
+                        fontWeight: 650,
+                        fontSize: "clamp(1.5rem, 4vw, 40px)",
+                        lineHeight: "100%",
+                        letterSpacing: "-0.06em",
+                      }}
+                    >
+                      {step.title}
+                    </h3>
                   </div>
                   <p className="text-sm text-white/55 leading-6 pl-14">{step.description}</p>
                 </div>
