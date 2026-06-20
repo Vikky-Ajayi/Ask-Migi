@@ -112,11 +112,11 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
               <button
                 onClick={() => setLangOpen((v) => !v)}
                 type="button"
-                className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-[#3a3c3e] text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                className="flex items-center gap-1.5 h-9 px-2 sm:px-3 rounded-full border border-[#3a3c3e] text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
                 data-testid="button-language"
               >
                 <CountryFlag country={selectedCountry} size={20} />
-                <span>{selectedCountry.name}</span>
+                <span className="hidden sm:inline">{selectedCountry.name}</span>
                 <ChevronDown size={13} className={`transition-transform ${langOpen ? "rotate-180" : ""}`} />
               </button>
               {langOpen && (
@@ -144,9 +144,9 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
 
           {/* Right: coins + submit */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 h-9 px-3 rounded-full border border-[#3a3c3e] text-sm text-white/60">
+            <div className="flex items-center gap-1.5 h-9 px-2 sm:px-3 rounded-full border border-[#3a3c3e] text-sm text-white/60">
               <img src={coinImg} alt="coins" className="w-[18px] h-[18px] object-contain" style={{ imageRendering: "auto" }} />
-              <span>3 Coins/question</span>
+              <span className="hidden sm:inline">3 Coins/question</span>
             </div>
             <button
               onClick={handleSubmit}

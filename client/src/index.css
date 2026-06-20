@@ -215,8 +215,13 @@
     letter-spacing: -0.02em;
   }
 
+  html {
+    overflow-x: hidden;
+  }
+
   html, body {
     font-family: 'Roobert TRIAL', sans-serif;
+    max-width: 100%;
   }
 
   body {
@@ -225,5 +230,6 @@
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+    overflow-x: hidden;
   }
 }
