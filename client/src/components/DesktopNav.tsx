@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { ChevronDown, CircleUser, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import coinImg from "@assets/coins_1781943901685.png";
 
@@ -147,15 +147,13 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
           </>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Sign Up — pill with a floating avatar circle inside */}
+            {/* Sign Up — pill with CircleUser icon matching design */}
             <button
               onClick={onSignUpClick}
-              className="flex items-center gap-2 h-9 pl-1.5 pr-4 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors"
+              className="flex items-center gap-2 h-9 px-4 rounded-full bg-[#2a2c2e] border border-white/20 text-sm text-white font-medium hover:bg-[#333537] transition-colors"
               data-testid="nav-signup"
             >
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 border border-white/25 flex-shrink-0">
-                <User size={12} className="text-white" />
-              </span>
+              <CircleUser size={18} className="text-white" />
               Sign Up
             </button>
             {/* Log In — simple outlined pill */}
