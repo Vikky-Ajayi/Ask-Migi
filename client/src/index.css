@@ -213,6 +213,7 @@
   * {
     @apply border-border;
     letter-spacing: -0.02em;
+    font-family: 'Roobert TRIAL', sans-serif !important;
   }
 
   html {
