@@ -46,18 +46,44 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Expert photos */}
-      <section className="flex justify-center items-end gap-3 md:gap-4 px-4 md:px-6 pb-12 md:pb-16">
-        <div
-          className="w-32 md:w-44 h-44 md:h-56 rounded-3xl overflow-hidden border-4 border-white shadow-xl shrink-0"
-          style={{ transform: "rotate(-6deg) translateY(12px)" }}
-        >
-          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=600&fit=crop&auto=format" alt="Immigration Expert" className="w-full h-full object-cover" />
-        </div>
-        <div
-          className="w-40 md:w-52 h-52 md:h-64 rounded-3xl overflow-hidden border-4 border-white shadow-xl shrink-0 relative z-10"
-          style={{ transform: "rotate(4deg)" }}
-        >
-          <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=600&fit=crop&auto=format" alt="Travel Agent" className="w-full h-full object-cover" />
+      <section className="flex justify-center items-center px-4 md:px-6 pb-12 md:pb-16">
+        <div className="relative flex items-center justify-center" style={{ height: "300px", width: "380px" }}>
+          {/* Left card */}
+          <div
+            className="absolute bg-white rounded-[28px] p-[7px] shadow-2xl"
+            style={{
+              transform: "rotate(-8deg)",
+              left: "10px",
+              top: "30px",
+              width: "175px",
+              height: "235px",
+              zIndex: 1,
+            }}
+          >
+            <img
+              src="/expert1.png"
+              alt="Expert"
+              className="w-full h-full object-cover rounded-[22px]"
+            />
+          </div>
+          {/* Right card */}
+          <div
+            className="absolute bg-white rounded-[28px] p-[7px] shadow-2xl"
+            style={{
+              transform: "rotate(6deg)",
+              right: "10px",
+              top: "10px",
+              width: "175px",
+              height: "255px",
+              zIndex: 2,
+            }}
+          >
+            <img
+              src="/expert2.png"
+              alt="Expert"
+              className="w-full h-full object-cover rounded-[22px]"
+            />
+          </div>
         </div>
       </section>
 
