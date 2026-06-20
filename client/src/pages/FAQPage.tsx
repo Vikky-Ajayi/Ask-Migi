@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useLocation } from "wouter";
 import { DesktopNav } from "@/components/DesktopNav";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
@@ -77,10 +77,10 @@ const FAQItem = ({ q, a }: { q: string; a: string }) => {
         data-testid={`faq-item-${q.slice(0, 20).replace(/\s+/g, "-").toLowerCase()}`}
       >
         <span className="text-sm font-semibold text-white leading-5">{q}</span>
-        <ChevronDown
-          size={18}
-          className={`shrink-0 text-white/40 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        {open
+          ? <Minus size={18} className="shrink-0 text-white/40" />
+          : <Plus size={18} className="shrink-0 text-white/40" />
+        }
       </button>
       {open && <p className="pb-5 text-sm text-white/60 leading-6">{a}</p>}
     </div>

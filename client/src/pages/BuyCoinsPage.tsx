@@ -14,7 +14,7 @@ const coinPacks = [
     rawPrice: "99.99",
     description:
       "Perfect if you have one or two quick questions. Ideal for users exploring immigration or travel options and just need basic guidance.",
-    buttonLabel: "Get 5 coins",
+    buttonLabel: "Get 12 coins",
   },
   {
     coins: 12,
@@ -30,7 +30,7 @@ const coinPacks = [
     rawPrice: "399.99",
     description:
       "Designed for users who need detailed advice, follow-up questions, or plan to speak with experts multiple times. Best value for regular, in-depth support.",
-    buttonLabel: "Get 25 coins",
+    buttonLabel: "Get 12 coins",
   },
 ];
 

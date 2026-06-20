@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Mail, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { X, Mail, Eye, EyeOff, CircleCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -462,8 +462,8 @@ const SuccessDialog = ({
       </button>
     </div>
     <div className="flex flex-col items-center gap-4 text-center py-4">
-      <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center">
-        <CheckCircle size={32} className="text-black" />
+      <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center">
+        <CircleCheck size={32} className="text-white" />
       </div>
       <h2 className="text-xl font-semibold text-white">Password reset successful</h2>
       <p className="text-sm text-white/60">You have successfully reset your password. Proceed to log in.</p>
