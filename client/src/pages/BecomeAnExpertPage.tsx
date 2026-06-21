@@ -85,7 +85,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                 className={`flex ${step.align === "right" ? "justify-end" : "justify-start"}`}
                 data-testid={`step-${step.number}`}
               >
-                <div className="w-full md:w-[608px] md:min-h-[135px] rounded-[24px] border border-white/[0.08] bg-[#1e2022] p-5 md:p-[28px] flex flex-col gap-[16px]">
+                <div className="w-full md:w-[608px] md:min-h-[135px] rounded-[24px] border border-white/[0.08] bg-[#1e2022] p-5 md:px-[36px] md:py-[28px] flex flex-col gap-[16px]">
                   {/* Number + Title row */}
                   <div className="flex items-center gap-5">
                     <div className="flex items-center justify-center h-11 w-11 rounded-full bg-[#0f1011] border border-white/20 text-white text-sm font-bold shrink-0">
