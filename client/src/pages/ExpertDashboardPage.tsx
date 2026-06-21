@@ -151,12 +151,12 @@ export const ExpertDashboardPage = () => {
       <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
 
         {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Earnings card */}
-          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Earnings card — grows to fill available space */}
+          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-1">
+            <div className="flex flex-col gap-4">
               <p className="text-sm font-semibold text-white">Earnings</p>
-              <div className="flex items-end gap-8">
+              <div className="flex items-end gap-6 sm:gap-8">
                 <div>
                   <p className="text-[11px] text-white/40 mb-1">All Time</p>
                   <p className="text-2xl font-bold text-white">0</p>
@@ -172,17 +172,17 @@ export const ExpertDashboardPage = () => {
               </div>
             </div>
             <button
-              className="shrink-0 h-10 px-5 rounded-full border border-[#3a3c3e] text-sm text-white/70 font-medium hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
+              className="shrink-0 h-10 px-5 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors whitespace-nowrap"
               data-testid="button-withdraw"
             >
               Withdraw to Bank
             </button>
           </div>
 
-          {/* Questions Answered */}
-          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5">
+          {/* Questions Answered — fixed/natural width, does not grow equally */}
+          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 sm:w-52 shrink-0">
             <p className="text-sm font-semibold text-white mb-4">Questions Answered</p>
-            <div className="flex items-end gap-8">
+            <div className="flex items-end gap-6">
               <div>
                 <p className="text-[11px] text-white/40 mb-1">All Time</p>
                 <p className="text-2xl font-bold text-white">0</p>
