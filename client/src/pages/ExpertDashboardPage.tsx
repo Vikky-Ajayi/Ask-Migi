@@ -161,7 +161,7 @@ export const ExpertDashboardPage = () => {
 
   return (
     <ExpertLayout title="Dashboard" verified={isVerified}>
-      <div className="px-4 md:px-8 py-6 max-w-4xl">
+      <div className="px-4 md:px-8 py-6">
 
         {/* ── UNVERIFIED STATE ─── */}
         {!isVerified && (
@@ -212,13 +212,13 @@ export const ExpertDashboardPage = () => {
 
             {/* Empty state */}
             {services.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 gap-5">
-                <div className="h-16 w-16 rounded-full bg-[#1e2022] flex items-center justify-center">
-                  <FileText size={28} className="text-white/30" />
+              <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl flex flex-col items-center justify-center py-16 gap-5">
+                <div className="h-14 w-14 rounded-full bg-[#2a2c2e] flex items-center justify-center">
+                  <FileText size={26} className="text-white/30" />
                 </div>
                 <div className="text-center">
                   <p className="text-base font-semibold text-white mb-1">You haven't created any services yet</p>
-                  <p className="text-sm text-white/45">Start by creating your first service listing.</p>
+                  <p className="text-sm text-white/45">Start by adding your first services so customers can<br />discover and book you.</p>
                 </div>
                 <button
                   onClick={() => navigate("/expert-services/create")}
