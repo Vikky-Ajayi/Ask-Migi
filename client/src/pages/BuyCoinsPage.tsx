@@ -67,7 +67,7 @@ export const BuyCoinsPage = (): JSX.Element => {
           <p className="mt-4 text-sm md:text-base text-white/50">Coins helps you get answers to your questions</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-5xl">
           {coinPacks.map((pack) => (
             <div
               key={pack.coins}
