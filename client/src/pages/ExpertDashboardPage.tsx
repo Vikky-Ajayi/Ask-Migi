@@ -153,24 +153,26 @@ export const ExpertDashboardPage = () => {
         {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Earnings card */}
-          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-4">Earnings</p>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div>
-                <p className="text-[11px] text-white/40 mb-0.5">All Time</p>
-                <p className="text-2xl font-bold text-white">£0</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-white/40 mb-0.5">Today</p>
-                <p className="text-2xl font-bold text-white">£0</p>
-              </div>
-              <div>
-                <p className="text-[11px] text-white/40 mb-0.5">Available</p>
-                <p className="text-2xl font-bold text-emerald-400">£0</p>
+          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-4 flex-1">
+              <p className="text-sm font-semibold text-white">Earnings</p>
+              <div className="flex items-end gap-8">
+                <div>
+                  <p className="text-[11px] text-white/40 mb-1">All Time</p>
+                  <p className="text-2xl font-bold text-white">0</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-white/40 mb-1">Today</p>
+                  <p className="text-2xl font-bold text-white">0</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-white/40 mb-1">Available</p>
+                  <p className="text-2xl font-bold text-emerald-400">0</p>
+                </div>
               </div>
             </div>
             <button
-              className="h-9 w-full rounded-full border border-[#3a3c3e] text-sm text-white/70 font-medium hover:bg-white/5 hover:text-white transition-colors"
+              className="shrink-0 h-10 px-5 rounded-full border border-[#3a3c3e] text-sm text-white/70 font-medium hover:bg-white/5 hover:text-white transition-colors whitespace-nowrap"
               data-testid="button-withdraw"
             >
               Withdraw to Bank
@@ -179,14 +181,14 @@ export const ExpertDashboardPage = () => {
 
           {/* Questions Answered */}
           <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wide mb-4">Questions Answered</p>
-            <div className="grid grid-cols-2 gap-3">
+            <p className="text-sm font-semibold text-white mb-4">Questions Answered</p>
+            <div className="flex items-end gap-8">
               <div>
-                <p className="text-[11px] text-white/40 mb-0.5">All Time</p>
+                <p className="text-[11px] text-white/40 mb-1">All Time</p>
                 <p className="text-2xl font-bold text-white">0</p>
               </div>
               <div>
-                <p className="text-[11px] text-white/40 mb-0.5">Today</p>
+                <p className="text-[11px] text-white/40 mb-1">Today</p>
                 <p className="text-2xl font-bold text-white">0</p>
               </div>
             </div>
@@ -195,19 +197,24 @@ export const ExpertDashboardPage = () => {
 
         {/* Verification banners */}
         {!isVerified && !isInReview && (
-          <div className="bg-[#0d2a4d] border border-[#1a4a7a] rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-bold text-white">Complete account set up</p>
-              <p className="text-xs text-white/55 mt-0.5 leading-5">
-                Verify your identity to start answering questions and earning
-              </p>
+          <div className="bg-[#0d2040] border border-[#1a3a6a] rounded-2xl px-6 py-5 flex items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 h-9 w-9 rounded-full border border-white/20 flex items-center justify-center mt-0.5">
+                <div className="h-4 w-4 rounded-full border-2 border-white/50" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-white mb-1">Complete Your Verification</p>
+                <p className="text-xs text-white/55 leading-5 max-w-lg">
+                  To start earning by answering immigration-related questions, please complete your profile verification. Verifying your profile ensures trust and credibility within the community. Complete your verification now and start making a difference!
+                </p>
+              </div>
             </div>
             <button
               onClick={() => navigate("/expert-verify")}
-              className="shrink-0 h-9 px-5 rounded-full bg-[#2d7dd2] hover:bg-[#3a8de2] text-white font-semibold text-sm transition-colors"
+              className="shrink-0 h-10 px-5 rounded-full bg-[#2d7dd2] hover:bg-[#3a8de2] text-white font-semibold text-sm transition-colors whitespace-nowrap"
               data-testid="button-complete-setup"
             >
-              Complete set up
+              Complete account set up
             </button>
           </div>
         )}
