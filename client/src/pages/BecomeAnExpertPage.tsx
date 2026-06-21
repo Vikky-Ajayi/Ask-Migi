@@ -63,7 +63,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
             <h2
               className="text-4xl text-white"
               style={{
-                fontFamily: "'Roobert TRIAL', sans-serif",
+                fontFamily: "'Roobert', sans-serif",
                 fontWeight: 700,
                 fontSize: "clamp(2rem, 5vw, 64px)",
                 lineHeight: "105%",
@@ -94,7 +94,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                     <h3
                       className="text-white"
                       style={{
-                        fontFamily: "'Roobert TRIAL', sans-serif",
+                        fontFamily: "'Roobert', sans-serif",
                         fontWeight: 650,
                         fontSize: "clamp(1.5rem, 3.5vw, 40px)",
                         lineHeight: "100%",
