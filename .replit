@@ -44,3 +44,8 @@ waitForPort = 5000
 [agent]
 stack = "FULLSTACK_JS"
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+TOKEN_SECRET = "924140f79a54bb01d357e4a45311f917d5b844dc9b72a0edf62a7f04b9ea6a9d"
