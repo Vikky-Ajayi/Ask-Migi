@@ -49,16 +49,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       firstName: z.string().min(1, "First name required"),
       lastName: z.string().min(1, "Last name required"),
       password: z.string().min(6, "Password must be at least 6 characters"),
+      role: z.enum(["user", "expert"]).optional().default("user"),
     });
     const result = schema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
 
-    const { email, firstName, lastName, password } = result.data;
+    const { email, firstName, lastName, password, role } = result.data;
     const existing = await storage.getUserByEmail(email);
     if (existing) return res.status(409).json({ message: "An account with this email already exists" });
 
     const hashedPw = hashPassword(password);
-    const user = await storage.createUser({ email, firstName, lastName, password: hashedPw });
+    const user = await storage.createUser({ email, firstName, lastName, password: hashedPw, role });
     const token = createAuthToken(user.id);
 
     // Send welcome email (non-blocking)
@@ -312,6 +313,88 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.get("/api/coins/purchases", requireAuth, async (req, res) => {
     const purchases = await storage.getCoinPurchases((req as any).userId);
     return res.json(purchases);
+  });
+
+  // ── Expert Verification ────────────────────────────────────────────────────
+
+  // GET /api/expert/verification
+  app.get("/api/expert/verification", requireAuth, async (req, res) => {
+    const userId = (req as any).userId;
+    const verification = await storage.getExpertVerification(userId);
+    return res.json(verification);
+  });
+
+  // POST /api/expert/verification
+  app.post("/api/expert/verification", requireAuth, async (req, res) => {
+    const schema = z.object({
+      personalInfo: z.record(z.string()).optional(),
+      businessInfo: z.record(z.string()).optional(),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const userId = (req as any).userId;
+    const updated = await storage.updateExpertVerification(userId, {
+      ...result.data,
+      status: "verified",
+      submittedAt: new Date(),
+    });
+    return res.json(updated);
+  });
+
+  // ── Expert Services ────────────────────────────────────────────────────────
+
+  // GET /api/expert/services
+  app.get("/api/expert/services", requireAuth, async (req, res) => {
+    const userId = (req as any).userId;
+    const services = await storage.getExpertServices(userId);
+    return res.json(services);
+  });
+
+  // POST /api/expert/services
+  app.post("/api/expert/services", requireAuth, async (req, res) => {
+    const schema = z.object({
+      businessName: z.string().min(1, "Business name required"),
+      serviceTypes: z.array(z.string()).min(1, "Select at least one service type"),
+      countries: z.array(z.string()).default([]),
+      visaServices: z.array(z.string()).default([]),
+      currency: z.string().default("GBP"),
+      averagePrice: z.string().default(""),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const userId = (req as any).userId;
+    const service = await storage.createExpertService({
+      userId,
+      ...result.data,
+      status: "active",
+      views: 0,
+    });
+    return res.status(201).json(service);
+  });
+
+  // DELETE /api/expert/services/:id
+  app.delete("/api/expert/services/:id", requireAuth, async (req, res) => {
+    const userId = (req as any).userId;
+    const deleted = await storage.deleteExpertService(req.params.id, userId);
+    if (!deleted) return res.status(404).json({ message: "Service not found" });
+    return res.json({ message: "Service deleted" });
+  });
+
+  // POST /api/expert/promote — deduct coins for promotion
+  app.post("/api/expert/promote", requireAuth, async (req, res) => {
+    const schema = z.object({ coins: z.number().int().positive() });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const userId = (req as any).userId;
+    const user = (req as any).user;
+    if (user.coins < result.data.coins) {
+      return res.status(402).json({ message: "Insufficient coins" });
+    }
+    const updated = await storage.updateUserCoins(userId, -result.data.coins);
+    return res.json({ coins: updated?.coins });
   });
 
   return httpServer;

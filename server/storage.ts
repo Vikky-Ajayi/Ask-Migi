@@ -8,7 +8,6 @@ import {
 import { randomUUID } from "crypto";
 import { pbkdf2Sync, randomBytes } from "crypto";
 
-// ─── Password utilities ───────────────────────────────────────────────────────
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
   const hash = pbkdf2Sync(password, salt, 10000, 64, "sha512").toString("hex");
@@ -22,12 +21,36 @@ export function verifyPassword(password: string, stored: string): boolean {
   return hash === newHash;
 }
 
+// ─── Expert Service ───────────────────────────────────────────────────────────
+export interface ExpertService {
+  id: string;
+  userId: string;
+  businessName: string;
+  serviceTypes: string[];
+  countries: string[];
+  visaServices: string[];
+  currency: string;
+  averagePrice: string;
+  status: "active" | "inactive";
+  views: number;
+  createdAt: Date;
+}
+
+// ─── Expert Verification ──────────────────────────────────────────────────────
+export interface ExpertVerificationData {
+  userId: string;
+  status: "unverified" | "pending" | "verified";
+  personalInfo?: Record<string, string>;
+  businessInfo?: Record<string, string>;
+  submittedAt?: Date;
+}
+
 // ─── Storage interface ────────────────────────────────────────────────────────
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: Omit<InsertUser, "password"> & { password: string }): Promise<User>;
+  createUser(user: Omit<InsertUser, "password"> & { password: string; role?: string }): Promise<User>;
   updateUserCoins(userId: string, delta: number): Promise<User | undefined>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<boolean>;
 
@@ -37,7 +60,7 @@ export interface IStorage {
   createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry>;
   updateEnquiryAnswer(id: string, answer: string, answeredBy: string): Promise<Enquiry | undefined>;
 
-  // Experts
+  // Experts (directory)
   getExperts(type?: string): Promise<Expert[]>;
   getExpert(id: string): Promise<Expert | undefined>;
 
@@ -49,6 +72,16 @@ export interface IStorage {
   createPasswordReset(email: string, otp: string): Promise<PasswordReset>;
   getPasswordReset(email: string, otp: string): Promise<PasswordReset | undefined>;
   markPasswordResetUsed(id: string): Promise<void>;
+
+  // Expert Verification
+  getExpertVerification(userId: string): Promise<ExpertVerificationData>;
+  updateExpertVerification(userId: string, data: Partial<ExpertVerificationData>): Promise<ExpertVerificationData>;
+
+  // Expert Services (owned by expert users)
+  getExpertServices(userId: string): Promise<ExpertService[]>;
+  createExpertService(data: Omit<ExpertService, "id" | "createdAt">): Promise<ExpertService>;
+  deleteExpertService(id: string, userId: string): Promise<boolean>;
+  updateExpertServiceViews(id: string, delta: number): Promise<void>;
 }
 
 // ─── In-memory storage ────────────────────────────────────────────────────────
@@ -58,13 +91,14 @@ export class MemStorage implements IStorage {
   private experts = new Map<string, Expert>();
   private coinPurchases = new Map<string, CoinPurchase>();
   private passwordResets = new Map<string, PasswordReset>();
+  private expertVerifications = new Map<string, ExpertVerificationData>();
+  private expertServices = new Map<string, ExpertService>();
 
   constructor() {
     this.seed();
   }
 
   private seed() {
-    // Seed experts
     const expertData: Array<{
       name: string; location: string; expertType: string;
       countries: string[]; visaServices: string[]; services: string[]; bio: string;
@@ -127,16 +161,10 @@ export class MemStorage implements IStorage {
 
     for (const data of expertData) {
       const id = randomUUID();
-      const expert: Expert = {
-        id,
-        ...data,
-        bio: data.bio ?? null,
-        createdAt: new Date(),
-      };
+      const expert: Expert = { id, ...data, bio: data.bio ?? null, createdAt: new Date() };
       this.experts.set(id, expert);
     }
 
-    // Seed a demo user with coins
     const demoId = randomUUID();
     const demoUser: User = {
       id: demoId,
@@ -150,7 +178,6 @@ export class MemStorage implements IStorage {
     };
     this.users.set(demoId, demoUser);
 
-    // Seed some enquiries for the demo user
     const enquiryData = [
       { question: "How can I move to the United Kingdom from Nigeria?", status: "answered", answer: "To move to the UK from Nigeria, you'll need to apply for the appropriate visa based on your purpose of travel. For work, the Skilled Worker visa is most common — you'll need a job offer from a licensed sponsor. For study, apply for a Student visa..." },
       { question: "How can I move to the United States for work?", status: "pending", answer: null },
@@ -195,7 +222,7 @@ export class MemStorage implements IStorage {
       firstName: data.firstName,
       lastName: data.lastName,
       password: data.password,
-      coins: data.coins ?? 5, // welcome coins
+      coins: data.coins ?? 5,
       role: data.role ?? "user",
       createdAt: new Date(),
     };
@@ -256,7 +283,7 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  // ── Experts ──────────────────────────────────────────────────────────────
+  // ── Experts (directory) ──────────────────────────────────────────────────
 
   async getExperts(type?: string): Promise<Expert[]> {
     const all = Array.from(this.experts.values());
@@ -299,7 +326,7 @@ export class MemStorage implements IStorage {
       email,
       otp,
       used: false,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 min
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       createdAt: new Date(),
     };
     this.passwordResets.set(id, reset);
@@ -316,12 +343,52 @@ export class MemStorage implements IStorage {
     const reset = this.passwordResets.get(id);
     if (reset) this.passwordResets.set(id, { ...reset, used: true });
   }
+
+  // ── Expert Verification ──────────────────────────────────────────────────
+
+  async getExpertVerification(userId: string): Promise<ExpertVerificationData> {
+    return this.expertVerifications.get(userId) ?? { userId, status: "unverified" };
+  }
+
+  async updateExpertVerification(userId: string, data: Partial<ExpertVerificationData>): Promise<ExpertVerificationData> {
+    const existing = this.expertVerifications.get(userId) ?? { userId, status: "unverified" as const };
+    const updated: ExpertVerificationData = { ...existing, ...data, userId };
+    this.expertVerifications.set(userId, updated);
+    return updated;
+  }
+
+  // ── Expert Services ──────────────────────────────────────────────────────
+
+  async getExpertServices(userId: string): Promise<ExpertService[]> {
+    return Array.from(this.expertServices.values())
+      .filter((s) => s.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async createExpertService(data: Omit<ExpertService, "id" | "createdAt">): Promise<ExpertService> {
+    const id = randomUUID();
+    const service: ExpertService = { ...data, id, createdAt: new Date() };
+    this.expertServices.set(id, service);
+    return service;
+  }
+
+  async deleteExpertService(id: string, userId: string): Promise<boolean> {
+    const service = this.expertServices.get(id);
+    if (!service || service.userId !== userId) return false;
+    this.expertServices.delete(id);
+    return true;
+  }
+
+  async updateExpertServiceViews(id: string, delta: number): Promise<void> {
+    const service = this.expertServices.get(id);
+    if (service) this.expertServices.set(id, { ...service, views: service.views + delta });
+  }
 }
 
 export const storage = new MemStorage();
 
-// ── Auth token store (in-memory session management) ──────────────────────────
-const authTokens = new Map<string, string>(); // token → userId
+// ── Auth token store ──────────────────────────────────────────────────────────
+const authTokens = new Map<string, string>();
 
 export function createAuthToken(userId: string): string {
   const token = randomUUID();

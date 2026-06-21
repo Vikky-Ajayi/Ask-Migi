@@ -28,7 +28,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
-              onClick={() => setAuthView("register")}
+              onClick={() => { setAuthView("register"); }}
               className="h-11 md:h-12 px-6 md:px-7 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
               data-testid="button-create-account"
             >
@@ -124,7 +124,13 @@ export const BecomeAnExpertPage = (): JSX.Element => {
         </div>
       </footer>
 
-      <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
+      <AuthSheets
+        view={authView}
+        onViewChange={setAuthView}
+        onClose={() => setAuthView(null)}
+        registerRole="expert"
+        onSuccess={() => navigate("/expert-dashboard")}
+      />
     </main>
   );
 };

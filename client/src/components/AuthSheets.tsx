@@ -9,9 +9,11 @@ interface AuthSheetsProps {
   view: AuthView;
   onViewChange: (view: AuthView) => void;
   onClose: () => void;
+  registerRole?: string;
+  onSuccess?: () => void;
 }
 
-export const AuthSheets = ({ view, onViewChange, onClose }: AuthSheetsProps) => {
+export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSuccess }: AuthSheetsProps) => {
   const [rendered, setRendered] = useState<AuthView>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
 
@@ -60,7 +62,7 @@ export const AuthSheets = ({ view, onViewChange, onClose }: AuthSheetsProps) => 
         style={{ opacity: sheetVisible ? 1 : 0, transition: "opacity 0.25s" }}
       >
         {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} />}
-        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} registerRole={registerRole} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
@@ -77,7 +79,7 @@ export const AuthSheets = ({ view, onViewChange, onClose }: AuthSheetsProps) => 
         }}
       >
         {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
-        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile registerRole={registerRole} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
@@ -285,10 +287,14 @@ const RegisterDialog = ({
   onViewChange,
   onClose,
   mobile,
+  registerRole,
+  onSuccess,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
   mobile?: boolean;
+  registerRole?: string;
+  onSuccess?: () => void;
 }) => {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -306,9 +312,14 @@ const RegisterDialog = ({
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true);
     try {
-      await register({ email, firstName: first, lastName: last, password });
+      await register({ email, firstName: first, lastName: last, password, role: registerRole ?? "user" });
       toast({ title: "Account created!", description: "Welcome to Ask MiGi. You've received 5 welcome coins!" });
-      onClose();
+      if (onSuccess) {
+        onClose();
+        onSuccess();
+      } else {
+        onClose();
+      }
     } catch (e: any) {
       setError(e.message || "Registration failed. Please try again.");
     } finally {
