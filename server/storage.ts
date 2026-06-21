@@ -8,7 +8,7 @@ import {
   expertVerifications, expertServices,
 } from "@shared/schema";
 import { randomUUID, pbkdf2Sync, randomBytes, createHmac } from "crypto";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
 
 export function hashPassword(password: string): string {
@@ -141,7 +141,7 @@ class DatabaseStorage implements IStorage {
 
   async getAllPendingEnquiries(): Promise<Enquiry[]> {
     return db.select().from(enquiries)
-      .where(eq(enquiries.status, "pending"))
+      .where(inArray(enquiries.status, ["pending", "ai_answered"]))
       .orderBy(desc(enquiries.createdAt));
   }
 
@@ -161,9 +161,9 @@ class DatabaseStorage implements IStorage {
     return enquiry;
   }
 
-  async updateEnquiryAnswer(id: string, answer: string, answeredBy: string): Promise<Enquiry | undefined> {
+  async updateEnquiryAnswer(id: string, answer: string, answeredBy: string, status: string = "answered"): Promise<Enquiry | undefined> {
     const [enquiry] = await db.update(enquiries)
-      .set({ answer, answeredBy, status: "answered" })
+      .set({ answer, answeredBy, status })
       .where(eq(enquiries.id, id))
       .returning();
     return enquiry;

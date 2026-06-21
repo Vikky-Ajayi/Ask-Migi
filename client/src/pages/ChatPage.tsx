@@ -158,11 +158,11 @@ export const ChatPage = (): JSX.Element => {
                       </div>
                       <span className="text-sm font-semibold text-yellow-400">Expert</span>
                       <span className="text-xs text-yellow-400/70">
-                        · {activeEnquiry.status === "answered" ? "Answered" : "Pending response"}
+                        · {activeEnquiry.status === "answered" ? "Answered" : activeEnquiry.status === "ai_answered" ? "Initial response" : "Pending response"}
                       </span>
                     </div>
 
-                    {activeEnquiry.status === "answered" && activeEnquiry.answer ? (
+                    {(activeEnquiry.status === "answered" || activeEnquiry.status === "ai_answered") && activeEnquiry.answer ? (
                       <div className="ml-10">
                         {activeEnquiry.answer.split("\n\n").map((para: string, i: number) => (
                           <p key={i} className="text-sm text-white/80 leading-6 mb-3 last:mb-0">
@@ -173,6 +173,13 @@ export const ChatPage = (): JSX.Element => {
                           <p className="text-xs text-white/30 mt-3 italic">
                             — {activeEnquiry.answeredBy}
                           </p>
+                        )}
+                        {activeEnquiry.status === "ai_answered" && (
+                          <div className="mt-4 px-4 py-3 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
+                            <p className="text-xs text-yellow-400/90 leading-5">
+                              <span className="font-semibold">Please note:</span> This is an initial AI-generated response to get you started. One of our immigration experts will review your question and provide a more in-depth, personalised response shortly.
+                            </p>
+                          </div>
                         )}
                       </div>
                     ) : (

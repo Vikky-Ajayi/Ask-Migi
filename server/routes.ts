@@ -227,7 +227,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     // Generate AI response asynchronously (don't block the HTTP response)
     generateAIResponse(result.data.question, result.data.expertType, result.data.country)
       .then(async (aiAnswer) => {
-        const updated = await storage.updateEnquiryAnswer(enquiry.id, aiAnswer, "AI + Expert Review");
+        const updated = await storage.updateEnquiryAnswer(enquiry.id, aiAnswer, "AI + Expert Review", "ai_answered");
         // Send notification email to user
         if (updated) {
           sendExpertReplyEmail(user.email, user.firstName, result.data.question, enquiry.id).catch(
