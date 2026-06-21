@@ -13,7 +13,7 @@ const coinPacks = [
     coins: 5,
     price: "$99.99",
     rawPrice: "99.99",
-    description: "Perfect if you have one or two quick questions. Ideal for users exploring immigration or travel options and just need basic guidance.",
+    description: "Perfect for one or two quick questions. Ideal for users exploring immigration or travel options.",
     buttonLabel: "Get 12 coins",
   },
   {
@@ -67,7 +67,7 @@ export const BuyCoinsPage = (): JSX.Element => {
           <p className="mt-4 text-sm md:text-base text-white/50">Coins helps you get answers to your questions</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-6xl">
           {coinPacks.map((pack) => (
             <div
               key={pack.coins}
@@ -83,7 +83,7 @@ export const BuyCoinsPage = (): JSX.Element => {
 
               <p className="text-5xl font-bold text-white leading-none text-center">{pack.price}</p>
 
-              <p className="text-sm text-white/55 leading-6 flex-1 text-center">{pack.description}</p>
+              <p className="flex-1 text-center text-white/55" style={{ fontSize: "18px", fontWeight: 500, lineHeight: "150%", letterSpacing: "-0.02em" }}>{pack.description}</p>
 
               <button
                 onClick={() => handlePurchase(pack)}
