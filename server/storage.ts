@@ -5,8 +5,7 @@ import {
   type CoinPurchase, type InsertCoinPurchase,
   type PasswordReset,
 } from "@shared/schema";
-import { randomUUID } from "crypto";
-import { pbkdf2Sync, randomBytes } from "crypto";
+import { randomUUID, pbkdf2Sync, randomBytes, createHmac } from "crypto";
 
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -387,19 +386,32 @@ export class MemStorage implements IStorage {
 
 export const storage = new MemStorage();
 
-// ── Auth token store ──────────────────────────────────────────────────────────
-const authTokens = new Map<string, string>();
+// ── Auth token store (HMAC-signed, survives restarts) ─────────────────────────
+const TOKEN_SECRET = process.env.TOKEN_SECRET || "askmigi-dev-secret-changeme";
+const invalidatedTokens = new Set<string>();
 
 export function createAuthToken(userId: string): string {
-  const token = randomUUID();
-  authTokens.set(token, userId);
-  return token;
+  const nonce = randomUUID();
+  const payload = `${userId}.${nonce}`;
+  const sig = createHmac("sha256", TOKEN_SECRET).update(payload).digest("hex");
+  return `${payload}.${sig}`;
 }
 
 export function getUserIdFromToken(token: string): string | undefined {
-  return authTokens.get(token);
+  if (invalidatedTokens.has(token)) return undefined;
+  // Token format: "userId.nonce.sig" — UUIDs contain no dots, so exactly 3 parts
+  const lastDot = token.lastIndexOf(".");
+  if (lastDot === -1) return undefined;
+  const payload = token.slice(0, lastDot);
+  const sig = token.slice(lastDot + 1);
+  const expected = createHmac("sha256", TOKEN_SECRET).update(payload).digest("hex");
+  if (sig !== expected) return undefined;
+  // payload = "userId.nonce" — userId is everything before the first dot
+  const firstDot = payload.indexOf(".");
+  if (firstDot === -1) return undefined;
+  return payload.slice(0, firstDot);
 }
 
 export function deleteAuthToken(token: string): void {
-  authTokens.delete(token);
+  invalidatedTokens.add(token);
 }
