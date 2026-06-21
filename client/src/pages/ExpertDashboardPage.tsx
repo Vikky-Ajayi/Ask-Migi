@@ -148,7 +148,7 @@ export const ExpertDashboardPage = () => {
 
   return (
     <ExpertLayout title="Dashboard" verified={isVerified} pendingCount={pendingCount}>
-      <div className="px-4 md:px-8 py-6 flex flex-col gap-5 max-w-4xl">
+      <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
 
         {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
