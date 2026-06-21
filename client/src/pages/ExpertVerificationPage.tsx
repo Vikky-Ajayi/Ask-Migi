@@ -104,7 +104,7 @@ export const ExpertVerificationPage = () => {
 
   return (
     <ExpertLayout title="Verification" verified={false}>
-      <div className="px-4 md:px-8 py-6 max-w-2xl">
+      <div className="px-4 md:px-8 py-6">
         <button
           onClick={() => step === 1 ? navigate("/expert-dashboard") : setStep(1)}
           className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
