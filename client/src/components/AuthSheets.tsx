@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { X, Mail, Eye, EyeOff, CircleCheck } from "lucide-react";
+import { X, Mail, Eye, EyeOff, CircleCheck, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,7 +62,9 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
         style={{ opacity: sheetVisible ? 1 : 0, transition: "opacity 0.25s" }}
       >
         {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} onSuccess={onSuccess} />}
-        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} registerRole={registerRole} onSuccess={onSuccess} />}
+        {rendered === "register" && registerRole === "expert"
+          ? <ExpertRegisterDialog onViewChange={onViewChange} onClose={handleClose} onSuccess={onSuccess} />
+          : rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} registerRole={registerRole} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
@@ -79,7 +81,9 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
         }}
       >
         {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} mobile onSuccess={onSuccess} />}
-        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile registerRole={registerRole} onSuccess={onSuccess} />}
+        {rendered === "register" && registerRole === "expert"
+          ? <ExpertRegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile onSuccess={onSuccess} />
+          : rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile registerRole={registerRole} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
@@ -285,6 +289,180 @@ const LoginDialog = ({
         Forgot Password?
       </button>
       {error && <p className="text-sm text-red-400 text-center mb-3">{error}</p>}
+    </DialogWrapper>
+  );
+};
+
+/* ─── Expert Register ──────────────────────────────────────────────────────── */
+const SPECIALTIES = ["Immigration Expert", "Travel Agent", "Tour Guide"];
+
+const COUNTRIES_LIST = [
+  "United Kingdom", "United States", "Canada", "Australia", "Germany", "France",
+  "Spain", "Italy", "Netherlands", "Ireland", "Sweden", "Norway", "Denmark",
+  "Portugal", "Switzerland", "Belgium", "Austria", "New Zealand", "UAE",
+  "Saudi Arabia", "Qatar", "Nigeria", "Ghana", "Kenya", "South Africa",
+  "India", "Pakistan", "Bangladesh", "Philippines", "Malaysia", "Singapore",
+  "China", "Japan", "Brazil", "Mexico", "Jamaica", "Trinidad and Tobago",
+];
+
+const SelectInput = ({
+  placeholder,
+  options,
+  value,
+  onChange,
+  testId,
+}: {
+  placeholder: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+  testId?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full h-12 rounded-xl bg-[#242628] px-4 text-sm text-left flex items-center justify-between border border-transparent focus:border-white/20 focus:outline-none"
+        data-testid={testId}
+      >
+        <span className={value ? "text-white" : "text-white/40"}>{value || placeholder}</span>
+        <ChevronDown size={15} className={`text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e2022] border border-[#2e3032] rounded-xl overflow-y-auto z-20 shadow-xl max-h-48">
+            {options.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { onChange(opt); setOpen(false); }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${
+                  value === opt ? "text-white font-medium" : "text-white/70"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const ExpertRegisterDialog = ({
+  onViewChange,
+  onClose,
+  mobile,
+  onSuccess,
+}: {
+  onViewChange: (v: AuthView) => void;
+  onClose: () => void;
+  mobile?: boolean;
+  onSuccess?: () => void;
+}) => {
+  const [specialty, setSpecialty] = useState("");
+  const [country, setCountry] = useState("");
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { register } = useAuth();
+  const { toast } = useToast();
+
+  const handleRegister = async () => {
+    setError("");
+    if (!specialty || !country || !first || !last || !email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setLoading(true);
+    try {
+      await register({ email, firstName: first, lastName: last, password, role: "expert" });
+      toast({ title: "Account created!", description: "Welcome to Ask MiGi. Your expert application is being reviewed." });
+      if (onSuccess) { onClose(); onSuccess(); } else { onClose(); }
+    } catch (e: any) {
+      setError(e.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DialogWrapper
+      title="Create Account"
+      onClose={onClose}
+      mobile={mobile}
+      footer={
+        <div className="flex flex-col gap-4">
+          <PrimaryButton onClick={handleRegister} loading={loading} testId="button-create-expert-account">
+            Create Account
+          </PrimaryButton>
+          <p className="text-center text-sm text-white/60">
+            Already have an account?{" "}
+            <button
+              onClick={() => onViewChange("login")}
+              className="text-white font-semibold underline underline-offset-2"
+              data-testid="link-login-expert"
+            >
+              Log in
+            </button>
+          </p>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <SelectInput
+          placeholder="Choose your specialty"
+          options={SPECIALTIES}
+          value={specialty}
+          onChange={setSpecialty}
+          testId="select-specialty"
+        />
+        <SelectInput
+          placeholder="Choose country of specialty"
+          options={COUNTRIES_LIST}
+          value={country}
+          onChange={setCountry}
+          testId="select-country"
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <AuthInput placeholder="First name" value={first} onChange={setFirst} testId="input-expert-first-name" />
+          <AuthInput placeholder="Last name" value={last} onChange={setLast} testId="input-expert-last-name" />
+        </div>
+        <div className="flex gap-2">
+          <div className="h-12 flex items-center gap-1.5 px-3 rounded-xl bg-[#242628] text-sm text-white shrink-0">
+            🇬🇧 +44
+          </div>
+          <input
+            type="tel"
+            placeholder="Phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="flex-1 h-12 rounded-xl bg-[#242628] px-4 text-sm text-white placeholder:text-white/40 border border-transparent focus:border-white/20 focus:outline-none"
+            data-testid="input-expert-phone"
+          />
+        </div>
+        <AuthInput placeholder="Email" type="email" value={email} onChange={setEmail} testId="input-expert-email" />
+        <AuthInput
+          placeholder="Password"
+          type={showPw ? "text" : "password"}
+          value={password}
+          onChange={setPassword}
+          showToggle
+          onToggle={() => setShowPw((v) => !v)}
+          testId="input-expert-password"
+        />
+      </div>
+      {error && <p className="text-sm text-red-400 text-center mt-3">{error}</p>}
     </DialogWrapper>
   );
 };

@@ -55,16 +55,25 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
             Become an Expert <ChevronDown size={14} className={`transition-transform ${expertOpen ? "rotate-180" : ""}`} />
           </button>
           {expertOpen && (
-            <div className="absolute top-full left-0 mt-2 w-48 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
-              {["Travel Agents", "Immigration Experts", "Tour Guides"].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => { navigate("/become-an-expert"); setExpertOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
-                >
-                  {item}
-                </button>
-              ))}
+            <div className="absolute top-full left-0 mt-2 w-52 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
+              <button
+                onClick={() => { navigate("/become-an-expert"); setExpertOpen(false); }}
+                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
+              >
+                Immigration Experts
+              </button>
+              <button
+                onClick={() => setExpertOpen(false)}
+                className="w-full text-left px-4 py-2.5 text-sm text-white/30 cursor-default"
+              >
+                Travel Agents
+              </button>
+              <button
+                onClick={() => setExpertOpen(false)}
+                className="w-full text-left px-4 py-2.5 text-sm text-white/30 cursor-default"
+              >
+                Tour Guides
+              </button>
             </div>
           )}
         </div>

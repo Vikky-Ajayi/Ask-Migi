@@ -2,15 +2,16 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import coinImg from "@assets/coins_1781943901685.png";
-import { LayoutDashboard, Layers, LogOut, Menu, X, User, ChevronDown, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Clock, LogOut, Menu, X, User, ChevronDown, HelpCircle, CircleHelp } from "lucide-react";
 
 interface ExpertLayoutProps {
   children: React.ReactNode;
   title: string;
   verified?: boolean;
+  pendingCount?: number;
 }
 
-export const ExpertLayout = ({ children, title, verified = false }: ExpertLayoutProps) => {
+export const ExpertLayout = ({ children, title, verified = false, pendingCount = 0 }: ExpertLayoutProps) => {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
   const [location] = useLocation();
@@ -18,8 +19,9 @@ export const ExpertLayout = ({ children, title, verified = false }: ExpertLayout
   const [helpOpen, setHelpOpen] = useState(false);
 
   const navItems = [
-    { label: "Dashboard", path: "/expert-dashboard", icon: <LayoutDashboard size={15} /> },
-    ...(verified ? [{ label: "My Services", path: "/expert-services", icon: <Layers size={15} /> }] : []),
+    { label: "Dashboard", path: "/expert-dashboard", icon: <LayoutDashboard size={15} />, badge: 0 },
+    { label: "Questions", path: "/expert-questions", icon: <CircleHelp size={15} />, badge: pendingCount },
+    { label: "Earnings History", path: "/expert-earnings", icon: <Clock size={15} />, badge: 0 },
   ];
 
   const handleLogout = () => {
@@ -37,20 +39,29 @@ export const ExpertLayout = ({ children, title, verified = false }: ExpertLayout
         <img className="h-[22px]" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
       </div>
       <nav className="flex flex-col gap-0.5 px-2 flex-1">
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => { navigate(item.path); onNavigate?.(); }}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              location === item.path
-                ? "bg-white/10 text-white"
-                : "text-white/55 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            {item.icon}
-            {item.label}
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const active = location === item.path || (item.path === "/expert-dashboard" && location === "/expert-dashboard");
+          return (
+            <button
+              key={item.path}
+              onClick={() => { navigate(item.path); onNavigate?.(); }}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                active
+                  ? "bg-white/10 text-white"
+                  : "text-white/55 hover:text-white hover:bg-white/5"
+              }`}
+              data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              {item.icon}
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.badge > 0 && (
+                <span className="h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
       <div className="px-2 pb-4">
         <div className="flex items-center gap-2.5 px-3 py-2.5">
@@ -65,6 +76,7 @@ export const ExpertLayout = ({ children, title, verified = false }: ExpertLayout
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/55 hover:text-white transition-colors rounded-xl hover:bg-white/5"
+          data-testid="button-logout"
         >
           <LogOut size={15} />
           Log out

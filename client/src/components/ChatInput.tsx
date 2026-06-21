@@ -5,6 +5,7 @@ import ukFlagImg from "@assets/emojione_flag-for-united-kingdom_1781943901686.pn
 
 interface ChatInputProps {
   onSubmit?: (question: string, expertType: string, country: string) => void;
+  onTabClick?: (tab: string) => void;
   showAudienceTabs?: boolean;
   isSubmitting?: boolean;
 }
@@ -38,7 +39,7 @@ const CountryFlag = ({ country, size = 20 }: { country: typeof countries[0]; siz
   return <span style={{ fontSize: size * 0.85 }}>{country.flag}</span>;
 };
 
-export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = false }: ChatInputProps) => {
+export const ChatInput = ({ onSubmit, onTabClick, showAudienceTabs = true, isSubmitting = false }: ChatInputProps) => {
   const [question, setQuestion] = useState("");
   const [selectedAudience, setSelectedAudience] = useState("Immigration Experts");
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
@@ -67,7 +68,13 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
             return (
               <button
                 key={opt}
-                onClick={() => setSelectedAudience(opt)}
+                onClick={() => {
+                  if (onTabClick) {
+                    onTabClick(opt);
+                  } else {
+                    setSelectedAudience(opt);
+                  }
+                }}
                 className={`h-9 rounded-full px-4 text-sm font-medium transition-colors ${
                   active ? "bg-white text-black" : "border border-[#3a3c3e] text-white/70 hover:text-white hover:bg-white/5"
                 }`}

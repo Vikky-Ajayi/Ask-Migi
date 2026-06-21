@@ -92,7 +92,14 @@ export const LandingPage = (): JSX.Element => {
               </p>
             </div>
 
-            <ChatInput onSubmit={handleQuestionSubmit} showAudienceTabs={true} />
+            <ChatInput
+              onSubmit={handleQuestionSubmit}
+              showAudienceTabs={true}
+              onTabClick={(tab) => {
+                if (tab === "Travel agents") navigate("/travel-agents");
+                else if (tab === "Tour Guides") navigate("/travel-agents?type=tour");
+              }}
+            />
 
             <p className="text-center text-xs md:text-sm text-white/50 leading-6">
               By messaging Ask MiGi, you agree to our{" "}

@@ -272,6 +272,38 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json(updated);
   });
 
+  // ── Expert Questions Feed ──────────────────────────────────────────────────
+
+  // GET /api/expert/questions — all pending enquiries for the live feed
+  app.get("/api/expert/questions", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (user.role !== "expert") return res.status(403).json({ message: "Experts only" });
+    const all = await storage.getAllPendingEnquiries();
+    return res.json(all);
+  });
+
+  // PATCH /api/expert/questions/:id/answer — expert submits an answer
+  app.patch("/api/expert/questions/:id/answer", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (user.role !== "expert") return res.status(403).json({ message: "Experts only" });
+    const schema = z.object({ answer: z.string().min(10, "Answer too short") });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const enquiry = await storage.getEnquiry(req.params.id);
+    if (!enquiry) return res.status(404).json({ message: "Not found" });
+    if (enquiry.status === "answered") return res.status(400).json({ message: "Already answered" });
+
+    const answeredBy = `${user.firstName} ${user.lastName}`;
+    const updated = await storage.updateEnquiryAnswer(req.params.id, result.data.answer, answeredBy);
+
+    const enquiryUser = await storage.getUser(enquiry.userId);
+    if (enquiryUser) {
+      sendExpertReplyEmail(enquiryUser.email, enquiryUser.firstName, enquiry.question, enquiry.id).catch(() => {});
+    }
+    return res.json(updated);
+  });
+
   // ── Experts ────────────────────────────────────────────────────────────────
 
   // GET /api/experts?type=travel

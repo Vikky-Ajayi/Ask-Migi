@@ -59,6 +59,7 @@ export interface IStorage {
 
   // Enquiries
   getEnquiries(userId: string): Promise<Enquiry[]>;
+  getAllPendingEnquiries(): Promise<Enquiry[]>;
   getEnquiry(id: string): Promise<Enquiry | undefined>;
   createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry>;
   updateEnquiryAnswer(id: string, answer: string, answeredBy: string): Promise<Enquiry | undefined>;
@@ -135,6 +136,12 @@ class DatabaseStorage implements IStorage {
   async getEnquiries(userId: string): Promise<Enquiry[]> {
     return db.select().from(enquiries)
       .where(eq(enquiries.userId, userId))
+      .orderBy(desc(enquiries.createdAt));
+  }
+
+  async getAllPendingEnquiries(): Promise<Enquiry[]> {
+    return db.select().from(enquiries)
+      .where(eq(enquiries.status, "pending"))
       .orderBy(desc(enquiries.createdAt));
   }
 
