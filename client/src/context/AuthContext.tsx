@@ -16,7 +16,7 @@ interface AuthContextType {
   token: string | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthUser>;
   register: (data: { email: string; firstName: string; lastName: string; password: string; role?: string }) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<AuthUser> => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -85,6 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setToken(data.token);
     setUser(data.user);
     queryClient.clear();
+    return data.user as AuthUser;
   };
 
   const register = async (formData: { email: string; firstName: string; lastName: string; password: string; role?: string }) => {

@@ -61,7 +61,7 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
         className="fixed inset-0 z-50 hidden md:flex items-center justify-center p-4"
         style={{ opacity: sheetVisible ? 1 : 0, transition: "opacity 0.25s" }}
       >
-        {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} onSuccess={onSuccess} />}
         {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} registerRole={registerRole} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} />}
@@ -78,7 +78,7 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
           transition: "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
-        {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} mobile onSuccess={onSuccess} />}
         {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile registerRole={registerRole} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
@@ -213,10 +213,12 @@ const LoginDialog = ({
   onViewChange,
   onClose,
   mobile,
+  onSuccess,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
   mobile?: boolean;
+  onSuccess?: () => void;
 }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -231,9 +233,14 @@ const LoginDialog = ({
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setLoading(true);
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       toast({ title: "Welcome back!", description: "You've been logged in successfully." });
-      onClose();
+      if (onSuccess && loggedInUser.role === "expert") {
+        onClose();
+        onSuccess();
+      } else {
+        onClose();
+      }
     } catch (e: any) {
       setError(e.message || "Login failed. Please try again.");
     } finally {
