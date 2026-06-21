@@ -7,9 +7,10 @@ import coinImg from "@assets/coins_1781943901685.png";
 interface DesktopNavProps {
   onLoginClick?: () => void;
   onSignUpClick?: () => void;
+  onSettingsClick?: () => void;
 }
 
-export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => {
+export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: DesktopNavProps) => {
   const { user, isLoggedIn, logout } = useAuth();
   const [, navigate] = useLocation();
   const [expertOpen, setExpertOpen] = useState(false);
@@ -126,7 +127,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick }: DesktopNavProps) => 
               {profileOpen && (
                 <div className="absolute top-full right-0 mt-2 w-36 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
                   <button
-                    onClick={() => { navigate("/settings"); setProfileOpen(false); }}
+                    onClick={() => { onSettingsClick?.(); setProfileOpen(false); }}
                     className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2.5"
                     data-testid="nav-settings"
                   >

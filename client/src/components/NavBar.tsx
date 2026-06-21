@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Menu, CircleUser } from "lucide-react";
 import { DesktopNav } from "./DesktopNav";
 import { Sidebar } from "./Sidebar";
+import { SettingsModal } from "./SettingsModal";
 import { useAuth } from "@/context/AuthContext";
 
 interface NavBarProps {
@@ -12,13 +13,18 @@ interface NavBarProps {
 
 export const NavBar = ({ onLoginClick, onSignUpClick }: NavBarProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { isLoggedIn } = useAuth();
   const [, navigate] = useLocation();
 
   return (
     <>
       <div className="hidden md:block">
-        <DesktopNav onLoginClick={onLoginClick} onSignUpClick={onSignUpClick} />
+        <DesktopNav
+          onLoginClick={onLoginClick}
+          onSignUpClick={onSignUpClick}
+          onSettingsClick={() => setSettingsOpen(true)}
+        />
       </div>
 
       <header className="md:hidden w-full flex items-center justify-between px-4 py-3 bg-[#161618] border-b border-white/5 sticky top-0 z-30">
@@ -36,7 +42,7 @@ export const NavBar = ({ onLoginClick, onSignUpClick }: NavBarProps) => {
 
         {isLoggedIn ? (
           <button
-            onClick={() => navigate("/settings")}
+            onClick={() => setSettingsOpen(true)}
             className="h-9 w-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-white/10 transition-colors"
           >
             <CircleUser size={18} className="text-white/70" />
@@ -62,6 +68,8 @@ export const NavBar = ({ onLoginClick, onSignUpClick }: NavBarProps) => {
           else onSignUpClick?.();
         }}
       />
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 };

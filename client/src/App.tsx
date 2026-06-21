@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,9 +15,14 @@ import { EnquiriesPage } from "@/pages/EnquiriesPage";
 import { FAQPage } from "@/pages/FAQPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { PolicyPage } from "@/pages/PolicyPage";
-import { SettingsPage } from "@/pages/SettingsPage";
 import { ExpertWelcomePage } from "@/pages/ExpertWelcomePage";
 import { BecomeAnExpertPage } from "@/pages/BecomeAnExpertPage";
+
+const RedirectHome = () => {
+  const [, navigate] = useLocation();
+  useEffect(() => { navigate("/"); }, [navigate]);
+  return null;
+};
 
 function Router() {
   return (
@@ -28,7 +34,7 @@ function Router() {
       <Route path="/experts" component={ExpertsPage} />
       <Route path="/faq" component={FAQPage} />
       <Route path="/contact" component={ContactPage} />
-      <Route path="/settings" component={SettingsPage} />
+      <Route path="/settings" component={RedirectHome} />
       <Route path="/expert-welcome" component={ExpertWelcomePage} />
       <Route path="/become-an-expert" component={BecomeAnExpertPage} />
       <Route path="/disclaimer">
