@@ -197,7 +197,7 @@ export const ExpertDashboardPage = () => {
 
         {/* Verification banners */}
         {!isVerified && !isInReview && (
-          <div className="bg-[#0d2040] border border-[#1a3a6a] rounded-2xl px-6 py-5 flex items-center justify-between gap-6">
+          <div className="bg-[#0d2040] border border-[#1a3a6a] rounded-2xl px-5 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="shrink-0 h-9 w-9 rounded-full border border-white/20 flex items-center justify-center mt-0.5">
                 <div className="h-4 w-4 rounded-full border-2 border-white/50" />
@@ -205,13 +205,13 @@ export const ExpertDashboardPage = () => {
               <div>
                 <p className="text-base font-bold text-white mb-1">Complete Your Verification</p>
                 <p className="text-xs text-white/55 leading-5 max-w-lg">
-                  To start earning by answering immigration-related questions, please complete your profile verification. Verifying your profile ensures trust and credibility within the community. Complete your verification now and start making a difference!
+                  To start earning by answering immigration-related questions, please complete your profile verification. Verifying your profile ensures trust and credibility within the community.
                 </p>
               </div>
             </div>
             <button
               onClick={() => navigate("/expert-verify")}
-              className="shrink-0 h-10 px-5 rounded-full bg-[#2d7dd2] hover:bg-[#3a8de2] text-white font-semibold text-sm transition-colors whitespace-nowrap"
+              className="shrink-0 h-10 px-5 rounded-full bg-[#2d7dd2] hover:bg-[#3a8de2] text-white font-semibold text-sm transition-colors whitespace-nowrap self-start sm:self-auto"
               data-testid="button-complete-setup"
             >
               Complete account set up
