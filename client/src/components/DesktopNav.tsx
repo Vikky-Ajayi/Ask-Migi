@@ -63,14 +63,14 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
                 Immigration Experts
               </button>
               <button
-                onClick={() => setExpertOpen(false)}
-                className="w-full text-left px-4 py-2.5 text-sm text-white/30 cursor-default"
+                onClick={() => { navigate("/travel-agents"); setExpertOpen(false); }}
+                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
               >
                 Travel Agents
               </button>
               <button
-                onClick={() => setExpertOpen(false)}
-                className="w-full text-left px-4 py-2.5 text-sm text-white/30 cursor-default"
+                onClick={() => { navigate("/travel-agents?type=tour"); setExpertOpen(false); }}
+                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
               >
                 Tour Guides
               </button>
