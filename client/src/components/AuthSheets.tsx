@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Mail, Eye, EyeOff, CircleCheck, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import ukFlagImg from "@assets/emojione_flag-for-united-kingdom_1781943901686.png";
 
 export type AuthView = "login" | "register" | "forgot" | "otp" | "new-password" | "success" | null;
 
@@ -440,7 +441,8 @@ const ExpertRegisterDialog = ({
         </div>
         <div className="flex gap-2">
           <div className="h-12 flex items-center gap-1.5 px-3 rounded-xl bg-[#242628] text-sm text-white shrink-0">
-            🇬🇧 +44
+            <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
+            +44
           </div>
           <input
             type="tel"
