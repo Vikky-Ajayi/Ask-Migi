@@ -1,32 +1,44 @@
 @font-face {
-  font-family: 'Roobert';
+  font-family: 'Roobert TRIAL';
+  font-style: normal;
+  font-weight: 300;
+  src: url('/fonts/RoobertTRIAL-Light.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Roobert TRIAL';
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/RoobertRegular.woff') format('woff');
+  src: url('/fonts/RoobertTRIAL-Regular.otf') format('opentype');
 }
 @font-face {
-  font-family: 'Roobert';
+  font-family: 'Roobert TRIAL';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/fonts/RoobertTRIAL-RegularItalic.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Roobert TRIAL';
   font-style: normal;
   font-weight: 500;
-  src: url('/fonts/RoobertMedium.woff') format('woff');
+  src: url('/fonts/RoobertTRIAL-Medium.otf') format('opentype');
 }
 @font-face {
-  font-family: 'Roobert';
+  font-family: 'Roobert TRIAL';
   font-style: normal;
   font-weight: 600;
-  src: url('/fonts/RoobertSemiBold.woff') format('woff');
+  src: url('/fonts/RoobertTRIAL-SemiBold.otf') format('opentype');
 }
 @font-face {
-  font-family: 'Roobert';
+  font-family: 'Roobert TRIAL';
   font-style: normal;
   font-weight: 700;
-  src: url('/fonts/RoobertBold.woff') format('woff');
+  src: url('/fonts/RoobertTRIAL-Bold.otf') format('opentype');
 }
 @font-face {
-  font-family: 'Roobert';
+  font-family: 'Roobert TRIAL';
   font-style: normal;
   font-weight: 900;
-  src: url('/fonts/RoobertHeavy.woff') format('woff');
+  src: url('/fonts/RoobertTRIAL-Heavy.otf') format('opentype');
 }
 
 @tailwind components;
@@ -244,7 +256,7 @@
   * {
     @apply border-border;
     letter-spacing: -0.02em;
-    font-family: 'Roobert', sans-serif !important;
+    font-family: 'Roobert TRIAL', sans-serif !important;
   }
 
   html {
@@ -252,13 +264,13 @@
   }
 
   html, body {
-    font-family: 'Roobert', sans-serif;
+    font-family: 'Roobert TRIAL', sans-serif;
     max-width: 100%;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Roobert', sans-serif;
+    font-family: 'Roobert TRIAL', sans-serif;
     font-feature-settings:
       "rlig" 1,
       "calt" 1;

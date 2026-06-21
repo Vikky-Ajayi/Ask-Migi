@@ -58,7 +58,7 @@ module.exports = {
       fontFamily: {
         "caption1-medium": "var(--caption1-medium-font-family)",
         sans: [
-          "'Roobert'",
+          "'Roobert TRIAL'",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
