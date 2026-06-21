@@ -22,7 +22,7 @@ export const ContactPage = (): JSX.Element => {
           <div>
             <a
               href="mailto:support@askmigi.com"
-              className="inline-flex h-12 items-center justify-center rounded-full border border-white/30 px-8 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-8 text-sm font-medium text-black hover:bg-white/90 transition-colors"
               data-testid="link-email"
             >
               Email: support@askmigi.com
