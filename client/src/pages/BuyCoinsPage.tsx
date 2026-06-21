@@ -83,7 +83,7 @@ export const BuyCoinsPage = (): JSX.Element => {
 
               <p className="text-5xl font-bold text-white leading-none text-center">{pack.price}</p>
 
-              <p className="flex-1 text-center text-white/55" style={{ fontSize: "14px", fontWeight: 400, lineHeight: "150%", letterSpacing: "-0.02em" }}>{pack.description}</p>
+              <p className="flex-1 text-center text-white/55" style={{ fontSize: "15px", fontWeight: 400, lineHeight: "150%", letterSpacing: "-0.02em" }}>{pack.description}</p>
 
               <button
                 onClick={() => handlePurchase(pack)}
