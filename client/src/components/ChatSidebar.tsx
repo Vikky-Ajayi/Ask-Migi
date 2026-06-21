@@ -89,7 +89,7 @@ export const ChatSidebar = ({
                       : "bg-white/5 text-white/40 border border-white/10"
                   }`}
                 >
-                  {enq.status === "answered" ? "✓ Answered" : "⏳ Pending"}
+                  {enq.status === "answered" ? "✅ Answered" : "⏳ Pending"}
                 </span>
               </button>
             ))}

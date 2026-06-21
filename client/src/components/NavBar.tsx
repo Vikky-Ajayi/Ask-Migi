@@ -9,9 +9,10 @@ import { useAuth } from "@/context/AuthContext";
 interface NavBarProps {
   onLoginClick?: () => void;
   onSignUpClick?: () => void;
+  onMenuClick?: () => void;
 }
 
-export const NavBar = ({ onLoginClick, onSignUpClick }: NavBarProps) => {
+export const NavBar = ({ onLoginClick, onSignUpClick, onMenuClick }: NavBarProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { isLoggedIn } = useAuth();
@@ -29,7 +30,7 @@ export const NavBar = ({ onLoginClick, onSignUpClick }: NavBarProps) => {
 
       <header className="md:hidden w-full flex items-center justify-between px-4 py-3 bg-[#161618] border-b border-white/5 sticky top-0 z-30">
         <button
-          onClick={() => setSidebarOpen(true)}
+          onClick={onMenuClick ?? (() => setSidebarOpen(true))}
           className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
           aria-label="Open menu"
         >

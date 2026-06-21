@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { NavBar } from "@/components/NavBar";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
+import { MobileEnquirySidebar } from "@/components/MobileEnquirySidebar";
 import { ChatInput } from "@/components/ChatInput";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +18,9 @@ export const ChatPage = (): JSX.Element => {
 
   const [authView, setAuthView] = useState<AuthView>(null);
   const [activeId, setActiveId] = useState<string>(initialId);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const hasAutoOpened = useRef(false);
+
   const { isLoggedIn, isLoading: authLoading, refreshUser } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -27,6 +31,14 @@ export const ChatPage = (): JSX.Element => {
     enabled: isLoggedIn,
     refetchInterval: 5000,
   });
+
+  /* Auto-open the mobile sidebar the first time enquiries appear */
+  useEffect(() => {
+    if (!hasAutoOpened.current && enquiries.length > 0 && window.innerWidth < 768) {
+      hasAutoOpened.current = true;
+      setMobileSidebarOpen(true);
+    }
+  }, [enquiries]);
 
   useEffect(() => {
     if (!activeId && enquiries.length > 0) {
@@ -99,7 +111,11 @@ export const ChatPage = (): JSX.Element => {
 
   return (
     <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
-      <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+      <NavBar
+        onLoginClick={() => setAuthView("login")}
+        onSignUpClick={() => setAuthView("register")}
+        onMenuClick={() => setMobileSidebarOpen(true)}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar — desktop only */}
@@ -193,6 +209,16 @@ export const ChatPage = (): JSX.Element => {
           </div>
         </div>
       </div>
+
+      {/* Mobile: enquiry sidebar */}
+      <MobileEnquirySidebar
+        open={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+        enquiries={sidebarItems}
+        activeId={activeId}
+        onSelect={setActiveId}
+        onNewQuestion={() => navigate("/")}
+      />
 
       <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
     </main>
