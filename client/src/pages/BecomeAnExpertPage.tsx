@@ -55,35 +55,48 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Application Process */}
-      <section className="flex flex-col items-center px-4 md:px-6 py-12 md:py-16 bg-[#161618]">
-        <div className="w-full max-w-[944px] flex flex-col gap-8 md:gap-10">
-          <div className="text-center flex flex-col gap-3">
-            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">The Application Process</h2>
-            <p className="text-sm text-white/55 leading-6 max-w-lg mx-auto">
+      <section className="flex flex-col items-center px-4 md:px-8 py-12 md:py-20 bg-[#161618]">
+        <div className="w-full max-w-[1400px] flex flex-col gap-10 md:gap-16">
+
+          {/* Section header */}
+          <div className="text-center flex flex-col gap-4">
+            <h2
+              className="text-4xl text-white"
+              style={{
+                fontFamily: "'Roobert TRIAL', sans-serif",
+                fontWeight: 700,
+                fontSize: "clamp(2rem, 5vw, 64px)",
+                lineHeight: "105%",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              The Application Process
+            </h2>
+            <p className="text-sm md:text-base text-white/55 leading-7 max-w-xl mx-auto">
               Getting started is easy — and there are no sign-up fees. Just complete the quick application, and we'll support you every step of the way so you can start helping clients and earning money fast.
             </p>
           </div>
 
-          <div className="flex flex-col gap-8 md:gap-10">
+          {/* Steps */}
+          <div className="flex flex-col gap-6 md:gap-8">
             {steps.map((step) => (
               <div
                 key={step.number}
                 className={`flex ${step.align === "right" ? "justify-end" : "justify-start"}`}
                 data-testid={`step-${step.number}`}
               >
-                <div
-                  className="w-full md:w-[869px] md:min-h-[270px] rounded-[24px] border border-white/10 bg-[#1a1c1e] p-6 md:p-[56px] flex flex-col gap-3 md:gap-8"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white text-black text-sm font-bold shrink-0">
+                <div className="w-full md:w-[869px] md:min-h-[270px] rounded-[24px] border border-white/[0.08] bg-[#1e2022] p-6 md:p-[56px] flex flex-col gap-[32px]">
+                  {/* Number + Title row */}
+                  <div className="flex items-center gap-5">
+                    <div className="flex items-center justify-center h-11 w-11 rounded-full bg-[#0f1011] border border-white/20 text-white text-sm font-bold shrink-0">
                       {step.number}
                     </div>
                     <h3
-                      className="text-2xl text-white"
+                      className="text-white"
                       style={{
                         fontFamily: "'Roobert TRIAL', sans-serif",
                         fontWeight: 650,
-                        fontSize: "clamp(1.5rem, 4vw, 40px)",
+                        fontSize: "clamp(1.5rem, 3.5vw, 40px)",
                         lineHeight: "100%",
                         letterSpacing: "-0.06em",
                       }}
@@ -91,11 +104,13 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                       {step.title}
                     </h3>
                   </div>
-                  <p className="text-sm text-white/55 leading-6 pl-14">{step.description}</p>
+                  {/* Description */}
+                  <p className="text-sm md:text-[15px] text-white/55 leading-6">{step.description}</p>
                 </div>
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
