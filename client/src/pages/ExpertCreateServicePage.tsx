@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 import { ExpertLayout } from "@/components/ExpertLayout";
+import { PromoteModal } from "@/components/PromoteModal";
 import { ArrowLeft, Check, ChevronDown, X } from "lucide-react";
 
 const SERVICE_TYPES = [
@@ -165,25 +167,42 @@ function CountryMultiSelect({
   );
 }
 
-function SuccessModal({ businessName, onClose }: { businessName: string; onClose: () => void }) {
+function SuccessModal({ onClose, onPromote }: { onClose: () => void; onPromote: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-[#0f1011] border border-[#2e3032] rounded-2xl p-7 shadow-2xl flex flex-col items-center text-center gap-5">
-        <div className="h-16 w-16 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-          <Check size={28} className="text-emerald-400" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-white mb-1">Service Created!</h2>
-          <p className="text-sm text-white/55 leading-6">
-            <span className="font-semibold text-white">{businessName || "Your service"}</span> has been created and is now active on the platform.
-          </p>
-        </div>
+      <div className="w-full max-w-sm bg-[#0f1011] border border-[#2e3032] rounded-2xl p-7 shadow-2xl flex flex-col items-center text-center gap-5 relative">
         <button
           onClick={onClose}
-          className="w-full h-11 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+          className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-[#1e2022] text-white/50 hover:text-white transition-colors"
         >
-          View Dashboard
+          <X size={15} />
         </button>
+
+        <div className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg mt-2">
+          <Check size={36} strokeWidth={2.5} className="text-black" />
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold text-white mb-2">Service Created Successfully</h2>
+          <p className="text-sm text-white/55 leading-6">
+            Your travel agency service is live! Promote it to boost visibility and start getting bookings faster.
+          </p>
+        </div>
+
+        <div className="w-full flex flex-col gap-3">
+          <button
+            onClick={onClose}
+            className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+          >
+            Proceed Without Promotion
+          </button>
+          <button
+            onClick={onPromote}
+            className="w-full h-12 rounded-full bg-[#1a1c1e] border border-[#2e3032] text-white font-semibold text-sm hover:bg-[#2a2c2e] transition-colors"
+          >
+            Promote with coins
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -192,10 +211,12 @@ function SuccessModal({ businessName, onClose }: { businessName: string; onClose
 export const ExpertCreateServicePage = () => {
   const [, navigate] = useLocation();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [promoteOpen, setPromoteOpen] = useState(false);
 
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
@@ -424,10 +445,18 @@ export const ExpertCreateServicePage = () => {
         </div>
       </div>
 
-      {success && (
+      {success && !promoteOpen && (
         <SuccessModal
-          businessName={businessName}
           onClose={() => navigate("/expert-dashboard")}
+          onPromote={() => setPromoteOpen(true)}
+        />
+      )}
+
+      {promoteOpen && (
+        <PromoteModal
+          onClose={() => navigate("/expert-dashboard")}
+          coins={user?.coins ?? 0}
+          onSuccess={() => navigate("/expert-dashboard")}
         />
       )}
     </ExpertLayout>

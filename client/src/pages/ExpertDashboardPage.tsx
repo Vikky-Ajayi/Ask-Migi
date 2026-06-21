@@ -3,95 +3,8 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 import { ExpertLayout } from "@/components/ExpertLayout";
-import coinImg from "@assets/coins_1781943901685.png";
-import { Shield, Rocket, FileText, Eye, Trash2, Pencil, X, Check } from "lucide-react";
-
-const PROMOTE_OPTIONS = [
-  { label: "One Week promotion", days: 7, coins: 5 },
-  { label: "Two Weeks promotion", days: 14, coins: 9 },
-  { label: "One Month promotion", days: 30, coins: 16 },
-];
-
-function PromoteModal({ onClose, coins }: { onClose: () => void; coins: number }) {
-  const [selected, setSelected] = useState(0);
-  const { refreshUser } = useAuth();
-  const { toast } = useToastShim();
-  const [loading, setLoading] = useState(false);
-
-  const handlePay = async () => {
-    const opt = PROMOTE_OPTIONS[selected];
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("askmigi_token");
-      const res = await fetch("/api/expert/promote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ coins: opt.coins }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        toast(err.message || "Failed to promote", "error");
-        return;
-      }
-      await refreshUser();
-      toast(`Business promoted for ${opt.days} days!`, "success");
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-[#0f1011] border border-[#2e3032] rounded-2xl p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">Promote Business</h2>
-          <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors">
-            <X size={15} />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-2 mb-6">
-          {PROMOTE_OPTIONS.map((opt, i) => (
-            <button
-              key={i}
-              onClick={() => setSelected(i)}
-              className={`flex items-center justify-between px-4 py-3.5 rounded-xl border transition-colors text-left ${
-                selected === i
-                  ? "border-white/40 bg-white/5"
-                  : "border-[#2e3032] hover:border-white/20 hover:bg-white/3"
-              }`}
-            >
-              <div>
-                <p className="text-sm font-semibold text-white">{opt.label}</p>
-                <p className="text-xs text-white/40 mt-0.5">({opt.days} days)</p>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {selected === i && <Check size={12} className="text-white/60" />}
-                <img src={coinImg} alt="" className="w-4 h-4 object-contain" />
-                <span className="text-sm font-bold text-white">{opt.coins} coins</span>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <p className={`text-xs text-center mb-4 ${coins < PROMOTE_OPTIONS[selected].coins ? "text-red-400" : "text-white/40"}`}>
-          {coins < PROMOTE_OPTIONS[selected].coins
-            ? `You need ${PROMOTE_OPTIONS[selected].coins - coins} more coins`
-            : `You have ${coins} coins`}
-        </p>
-
-        <button
-          onClick={handlePay}
-          disabled={loading || coins < PROMOTE_OPTIONS[selected].coins}
-          className="w-full h-12 rounded-full bg-white text-black font-bold text-sm hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Processing…" : `PAY ${PROMOTE_OPTIONS[selected].coins} coins`}
-        </button>
-      </div>
-    </div>
-  );
-}
+import { PromoteModal } from "@/components/PromoteModal";
+import { Shield, Rocket, FileText, Eye, Trash2 } from "lucide-react";
 
 function useToastShim() {
   return {
@@ -269,87 +182,94 @@ function ServiceCard({ service, onDelete, deleting }: { service: any; onDelete: 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div className="bg-[#161618] border border-[#2e3032] rounded-2xl p-5 flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-bold text-white">{service.businessName}</h3>
-        </div>
-        <span className="shrink-0 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
+    <div className="bg-[#161618] border border-[#2e3032] rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#2e3032]">
+        <h3 className="text-lg font-bold text-white">{service.businessName || "My Service"}</h3>
+        <span className="shrink-0 px-3 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold">
           Active
         </span>
       </div>
 
-      {service.countries?.length > 0 && (
-        <div>
-          <p className="text-xs text-white/40 font-medium mb-2 uppercase tracking-wide">Countries Covered</p>
-          <div className="flex flex-wrap gap-1.5">
-            {service.countries.map((c: string) => (
-              <span key={c} className="px-2.5 py-1 rounded-full bg-[#1e2022] border border-[#2e3032] text-xs text-white/70">{c}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {service.visaServices?.length > 0 && (
-        <div>
-          <p className="text-xs text-white/40 font-medium mb-2 uppercase tracking-wide">Visa Services</p>
-          <div className="flex flex-wrap gap-1.5">
-            {service.visaServices.map((v: string) => (
-              <span key={v} className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">{v}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {service.serviceTypes?.length > 0 && (
-        <div>
-          <p className="text-xs text-white/40 font-medium mb-2 uppercase tracking-wide">Services Available</p>
-          <div className="flex flex-wrap gap-1.5">
-            {service.serviceTypes.map((s: string) => (
-              <span key={s} className="px-2.5 py-1 rounded-full bg-[#1e2022] border border-[#2e3032] text-xs text-white/70">{s}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between pt-2 border-t border-[#2e3032]">
-        <div className="flex items-center gap-1.5 text-white/40">
-          <Eye size={14} />
-          <span className="text-xs">{service.views} views</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {!confirmDelete ? (
-            <>
-              <button className="h-8 w-8 flex items-center justify-center rounded-xl bg-[#1e2022] text-white/50 hover:text-white transition-colors">
-                <Pencil size={14} />
-              </button>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="h-8 w-8 flex items-center justify-center rounded-xl bg-[#1e2022] text-white/50 hover:text-red-400 transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/60">Delete?</span>
-              <button
-                onClick={onDelete}
-                disabled={deleting}
-                className="h-7 px-3 rounded-lg bg-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/30 transition-colors disabled:opacity-50"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="h-7 px-3 rounded-lg bg-[#1e2022] text-white/60 text-xs font-semibold hover:bg-[#2e3032] transition-colors"
-              >
-                No
-              </button>
+      {/* Body */}
+      <div className="px-5 py-4 flex flex-col gap-4">
+        {service.countries?.length > 0 && (
+          <div>
+            <p className="text-sm text-white/50 mb-2">Countries Covered</p>
+            <div className="flex flex-wrap gap-2">
+              {service.countries.map((c: string) => (
+                <span key={c} className="px-3 py-1.5 rounded-full bg-[#1c3060] text-white text-xs font-medium">{c}</span>
+              ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {service.visaServices?.length > 0 && (
+          <div>
+            <p className="text-sm text-white/50 mb-2">Visa Services</p>
+            <div className="flex flex-wrap gap-2">
+              {service.visaServices.map((v: string) => (
+                <span key={v} className="px-3 py-1.5 rounded-full bg-[#0e3a26] text-white text-xs font-medium">{v}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {service.serviceTypes?.length > 0 && (
+          <div>
+            <p className="text-sm text-white/50 mb-2">Services Available</p>
+            <div className="flex flex-wrap gap-2">
+              {service.serviceTypes.map((s: string) => (
+                <span key={s} className="px-3 py-1.5 rounded-full border border-[#3a3c3e] text-white/70 text-xs">{s}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Views box */}
+        <div className="w-36 bg-[#1e2022] rounded-xl p-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-white/40">Views</span>
+            <Eye size={14} className="text-white/30" />
+          </div>
+          <p className="text-2xl font-bold text-white">{service.views ?? 0}</p>
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-end gap-2 px-5 py-4">
+        {!confirmDelete ? (
+          <>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="h-9 px-5 rounded-full bg-[#1e0a0a] border border-red-900/60 text-red-400 text-sm font-semibold hover:bg-[#2e1010] transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 size={13} />
+              Delete
+            </button>
+            <button className="h-9 px-5 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors">
+              Edit Service
+            </button>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/60">Are you sure?</span>
+            <button
+              onClick={onDelete}
+              disabled={deleting}
+              className="h-9 px-4 rounded-full bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-50"
+            >
+              {deleting ? "Deleting…" : "Yes"}
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="h-9 px-4 rounded-full bg-[#1e2022] border border-[#2e3032] text-white/60 text-sm font-semibold hover:bg-[#2e3032] transition-colors"
+            >
+              No
+            </button>
+          </div>
+          )}
+        </div>
     </div>
   );
 }
