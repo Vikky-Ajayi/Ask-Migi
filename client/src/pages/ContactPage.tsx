@@ -12,25 +12,24 @@ export const ContactPage = (): JSX.Element => {
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 md:px-6 py-12 md:py-16 text-center">
-        <div className="w-full max-w-lg flex flex-col gap-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight tracking-tight">
-            Got Questions?<br />We're Here to Help!
+        <div className="w-full max-w-2xl flex flex-col gap-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight">
+            Got Questions? We're Here to Help!
           </h1>
-          <p className="text-sm md:text-base text-white/55 leading-7 max-w-sm mx-auto">
+          <p className="text-sm md:text-base text-white/55 leading-7 max-w-xl mx-auto">
             At AskMigi, your curiosity fuels everything we do. Whether you've got a burning question, need support, or just want to say hello, we'd love to hear from you!
           </p>
           <div>
             <a
               href="mailto:support@askmigi.com"
-              className="inline-flex h-12 items-center justify-center rounded-full border border-white/20 bg-white/8 px-6 md:px-8 text-sm font-medium text-white hover:bg-white/15 transition-colors"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-white/30 px-8 text-sm font-medium text-white hover:bg-white/10 transition-colors"
               data-testid="link-email"
             >
               Email: support@askmigi.com
             </a>
           </div>
-          <p className="text-sm text-white/55 leading-6">
-            Your questions, answered. Your voice, heard. Your journey, supported.
-            <br />
+          <p className="text-sm text-white/55 leading-7">
+            Your questions, answered. Your voice, heard. Your journey, supported.<br />
             Let's chat!
           </p>
         </div>
