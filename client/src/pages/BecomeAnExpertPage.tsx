@@ -78,7 +78,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
           </div>
 
           {/* Steps */}
-          <div className="flex flex-col gap-6 md:gap-8">
+          <div className="flex flex-col gap-6 md:gap-8 md:px-[51px]">
             {steps.map((step) => (
               <div
                 key={step.number}
