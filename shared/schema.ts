@@ -99,3 +99,31 @@ export const passwordResets = pgTable("password_resets", {
 });
 
 export type PasswordReset = typeof passwordResets.$inferSelect;
+
+// ─── Expert Verifications ─────────────────────────────────────────────────────
+export const expertVerifications = pgTable("expert_verifications", {
+  userId: varchar("user_id").primaryKey(),
+  status: text("status").notNull().default("unverified"), // unverified | pending | verified
+  personalInfo: text("personal_info"), // JSON string
+  businessInfo: text("business_info"), // JSON string
+  submittedAt: timestamp("submitted_at"),
+});
+
+export type ExpertVerification = typeof expertVerifications.$inferSelect;
+
+// ─── Expert Services ──────────────────────────────────────────────────────────
+export const expertServices = pgTable("expert_services", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  businessName: text("business_name").notNull(),
+  serviceTypes: text("service_types").array().notNull().default(sql`ARRAY[]::text[]`),
+  countries: text("countries").array().notNull().default(sql`ARRAY[]::text[]`),
+  visaServices: text("visa_services").array().notNull().default(sql`ARRAY[]::text[]`),
+  currency: text("currency").notNull().default("GBP"),
+  averagePrice: text("average_price").notNull().default(""),
+  status: text("status").notNull().default("active"), // active | inactive
+  views: integer("views").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type ExpertService = typeof expertServices.$inferSelect;
