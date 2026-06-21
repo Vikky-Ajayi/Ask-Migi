@@ -362,7 +362,7 @@ export const ExpertVerificationPage = () => {
 
   return (
     <ExpertLayout title="Dashboard" verified={false}>
-      <div className="px-4 md:px-8 py-6 max-w-4xl relative">
+      <div className="px-4 md:px-8 py-6 relative">
         {/* Back */}
         <button
           onClick={() => step === 1 ? navigate("/expert-dashboard") : setStep((s) => s - 1)}
