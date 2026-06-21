@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Eye, EyeOff, User, Lock } from "lucide-react";
 import coinImg from "@assets/coins_1781943901685.png";
 import { useAuth } from "@/context/AuthContext";
@@ -38,6 +38,8 @@ const PasswordInput = ({
 );
 
 export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
+  const [rendered, setRendered] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
   const [tab, setTab] = useState<SettingsTab>("profile");
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -50,7 +52,24 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  if (!open) return null;
+  /* Open: mount, then slide in on next frame */
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setSheetVisible(true));
+      });
+    } else {
+      setSheetVisible(false);
+      const t = setTimeout(() => setRendered(false), 320);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  const handleClose = useCallback(() => {
+    setSheetVisible(false);
+    setTimeout(onClose, 320);
+  }, [onClose]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +88,8 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
       setLoading(false);
     }
   };
+
+  if (!rendered) return null;
 
   const tabs = (
     <div className="flex gap-2 pb-4">
@@ -128,21 +149,26 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300"
+        style={{ opacity: sheetVisible ? 1 : 0 }}
+        onClick={handleClose}
         data-testid="settings-backdrop"
       />
 
-      {/* ── Mobile: bottom sheet ── */}
+      {/* ── Mobile: bottom sheet with slide-up animation ── */}
       <div
         className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-[#1a1c1e] rounded-t-2xl flex flex-col overflow-hidden"
-        style={{ top: 60 }}
+        style={{
+          top: 60,
+          transform: sheetVisible ? "translateY(0)" : "translateY(100%)",
+          transition: "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-6 pb-4">
           <h2 className="text-2xl font-bold text-white tracking-tight">Settings</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
             data-testid="button-close-settings"
           >
@@ -156,8 +182,11 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
         </div>
       </div>
 
-      {/* ── Desktop: centered card ── */}
-      <div className="fixed inset-0 z-50 hidden md:flex items-center justify-center p-4">
+      {/* ── Desktop: centered card with fade-in ── */}
+      <div
+        className="fixed inset-0 z-50 hidden md:flex items-center justify-center p-4"
+        style={{ opacity: sheetVisible ? 1 : 0, transition: "opacity 0.25s" }}
+      >
         <div
           className="w-full max-w-sm bg-[#1a1c1e] rounded-3xl border border-white/10 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
@@ -165,7 +194,7 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
           <div className="flex items-center justify-between px-6 pt-6 pb-4">
             <h2 className="text-xl font-semibold text-white">Settings</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
               data-testid="button-close-settings"
             >

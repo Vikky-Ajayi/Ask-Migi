@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, Mail, Eye, EyeOff, CircleCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,22 +12,76 @@ interface AuthSheetsProps {
 }
 
 export const AuthSheets = ({ view, onViewChange, onClose }: AuthSheetsProps) => {
-  if (!view) return null;
+  const [rendered, setRendered] = useState<AuthView>(null);
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  /* Open: set rendered view, then on next frame slide in */
+  useEffect(() => {
+    if (view) {
+      setRendered(view);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setSheetVisible(true));
+      });
+    } else {
+      /* Close: slide out, then unrender after transition */
+      setSheetVisible(false);
+      const t = setTimeout(() => setRendered(null), 320);
+      return () => clearTimeout(t);
+    }
+  }, [view]);
+
+  /* When view changes between states, keep sheet visible */
+  useEffect(() => {
+    if (view && rendered && view !== rendered) {
+      setRendered(view);
+    }
+  }, [view, rendered]);
+
+  const handleClose = useCallback(() => {
+    setSheetVisible(false);
+    setTimeout(onClose, 320);
+  }, [onClose]);
+
+  if (!rendered) return null;
+
   return (
     <>
+      {/* Backdrop — fades with opacity transition */}
       <div
-        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300"
+        style={{ opacity: sheetVisible ? 1 : 0 }}
+        onClick={handleClose}
         data-testid="auth-backdrop"
       />
+
       {/* Desktop: flex-centered container */}
-      <div className="fixed inset-0 z-50 md:flex md:items-center md:justify-center md:p-4">
-        {view === "login" && <LoginDialog onViewChange={onViewChange} onClose={onClose} />}
-        {view === "register" && <RegisterDialog onViewChange={onViewChange} onClose={onClose} />}
-        {view === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={onClose} />}
-        {view === "otp" && <OTPDialog onViewChange={onViewChange} onClose={onClose} />}
-        {view === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={onClose} />}
-        {view === "success" && <SuccessDialog onClose={onClose} onViewChange={onViewChange} />}
+      <div
+        className="fixed inset-0 z-50 hidden md:flex items-center justify-center p-4"
+        style={{ opacity: sheetVisible ? 1 : 0, transition: "opacity 0.25s" }}
+      >
+        {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
+        {rendered === "success" && <SuccessDialog onClose={handleClose} onViewChange={onViewChange} />}
+      </div>
+
+      {/* Mobile: bottom sheet with slide-up animation */}
+      <div
+        className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-[#1a1c1e] rounded-t-2xl flex flex-col overflow-hidden"
+        style={{
+          top: 60,
+          transform: sheetVisible ? "translateY(0)" : "translateY(100%)",
+          transition: "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+        }}
+      >
+        {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
+        {rendered === "success" && <SuccessDialog onClose={handleClose} onViewChange={onViewChange} mobile />}
       </div>
     </>
   );
@@ -104,40 +158,36 @@ const DialogWrapper = ({
   footer,
   onClose,
   title,
+  mobile,
 }: {
   children: React.ReactNode;
   footer: React.ReactNode;
   onClose: () => void;
   title: string;
-}) => (
-  <>
-    {/* ── Mobile: bottom sheet ── */}
-    <div
-      className="md:hidden fixed inset-x-0 bottom-0 bg-[#1a1c1e] rounded-t-2xl flex flex-col overflow-hidden"
-      style={{ top: 60 }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex items-center justify-between px-5 pt-6 pb-5">
-        <h2 className="text-2xl font-bold text-white tracking-tight">{title}</h2>
-        <button
-          onClick={onClose}
-          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
-          data-testid="button-close-sheet"
-        >
-          <X size={15} />
-        </button>
+  mobile?: boolean;
+}) => {
+  if (mobile) {
+    return (
+      <div className="flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 pt-6 pb-5">
+          <h2 className="text-2xl font-bold text-white tracking-tight">{title}</h2>
+          <button
+            onClick={onClose}
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
+            data-testid="button-close-sheet"
+          >
+            <X size={15} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5">{children}</div>
+        <div className="px-5 pb-10 pt-3">{footer}</div>
       </div>
-      <div className="flex-1 overflow-y-auto px-5">
-        {children}
-      </div>
-      <div className="px-5 pb-10 pt-3">
-        {footer}
-      </div>
-    </div>
+    );
+  }
 
-    {/* ── Desktop: centered card ── */}
+  return (
     <div
-      className="hidden md:block w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 pt-6 pb-8 border border-white/10 shadow-2xl"
+      className="w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 pt-6 pb-8 border border-white/10 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between mb-6">
@@ -153,16 +203,18 @@ const DialogWrapper = ({
       {children}
       <div className="mt-4">{footer}</div>
     </div>
-  </>
-);
+  );
+};
 
 /* ─── Login ─────────────────────────────────────────────────────────────────── */
 const LoginDialog = ({
   onViewChange,
   onClose,
+  mobile,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
+  mobile?: boolean;
 }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -191,6 +243,7 @@ const LoginDialog = ({
     <DialogWrapper
       title="Log in"
       onClose={onClose}
+      mobile={mobile}
       footer={
         <div className="flex flex-col gap-4">
           <PrimaryButton onClick={handleLogin} loading={loading} testId="button-login">Log in</PrimaryButton>
@@ -231,9 +284,11 @@ const LoginDialog = ({
 const RegisterDialog = ({
   onViewChange,
   onClose,
+  mobile,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
+  mobile?: boolean;
 }) => {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -265,6 +320,7 @@ const RegisterDialog = ({
     <DialogWrapper
       title="Create An Account"
       onClose={onClose}
+      mobile={mobile}
       footer={
         <div className="flex flex-col gap-4">
           <PrimaryButton onClick={handleRegister} loading={loading} testId="button-create-account">Create Account</PrimaryButton>
@@ -300,9 +356,11 @@ const RegisterDialog = ({
 const ForgotPasswordDialog = ({
   onViewChange,
   onClose,
+  mobile,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
+  mobile?: boolean;
 }) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -333,6 +391,7 @@ const ForgotPasswordDialog = ({
     <DialogWrapper
       title="Forgot Password?"
       onClose={onClose}
+      mobile={mobile}
       footer={
         <PrimaryButton onClick={handleRequest} loading={loading} testId="button-request-reset">
           Request Password Reset
@@ -354,9 +413,11 @@ const ForgotPasswordDialog = ({
 const OTPDialog = ({
   onViewChange,
   onClose,
+  mobile,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
+  mobile?: boolean;
 }) => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -392,6 +453,7 @@ const OTPDialog = ({
     <DialogWrapper
       title="Enter OTP"
       onClose={onClose}
+      mobile={mobile}
       footer={
         <div className="flex flex-col gap-4">
           <p className="text-center text-sm text-white/60">
@@ -423,9 +485,11 @@ const OTPDialog = ({
 const NewPasswordDialog = ({
   onViewChange,
   onClose,
+  mobile,
 }: {
   onViewChange: (v: AuthView) => void;
   onClose: () => void;
+  mobile?: boolean;
 }) => {
   const [pw, setPw] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -468,6 +532,7 @@ const NewPasswordDialog = ({
     <DialogWrapper
       title="New Password"
       onClose={onClose}
+      mobile={mobile}
       footer={
         <PrimaryButton onClick={handleReset} loading={loading} testId="button-continue-newpw">Continue</PrimaryButton>
       }
@@ -501,48 +566,48 @@ const NewPasswordDialog = ({
 const SuccessDialog = ({
   onClose,
   onViewChange,
+  mobile,
 }: {
   onClose: () => void;
   onViewChange: (v: AuthView) => void;
-}) => (
-  <>
-    {/* Mobile: bottom sheet */}
-    <div
-      className="md:hidden fixed inset-x-0 bottom-0 bg-[#1a1c1e] rounded-t-2xl flex flex-col overflow-hidden"
-      style={{ top: 60 }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex justify-end px-5 pt-5">
-        <button
-          onClick={onClose}
-          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white"
-          data-testid="button-close-success"
-        >
-          <X size={15} />
-        </button>
-      </div>
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
-        <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center">
-          <CircleCheck size={32} className="text-white" />
+  mobile?: boolean;
+}) => {
+  if (mobile) {
+    return (
+      <div className="flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end px-5 pt-5">
+          <button
+            onClick={onClose}
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white"
+            data-testid="button-close-success"
+          >
+            <X size={15} />
+          </button>
         </div>
-        <h2 className="text-2xl font-bold text-white">Password reset successful</h2>
-        <p className="text-sm text-white/60">You have successfully reset your password. Proceed to log in.</p>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
+          <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center">
+            <CircleCheck size={32} className="text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-white">Password reset successful</h2>
+          <p className="text-sm text-white/60">You have successfully reset your password. Proceed to log in.</p>
+        </div>
+        <div className="px-5 pb-10 pt-3">
+          <button
+            type="button"
+            onClick={() => onViewChange("login")}
+            className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+            data-testid="button-continue-success"
+          >
+            Continue
+          </button>
+        </div>
       </div>
-      <div className="px-5 pb-10 pt-3">
-        <button
-          type="button"
-          onClick={() => onViewChange("login")}
-          className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
-          data-testid="button-continue-success"
-        >
-          Continue
-        </button>
-      </div>
-    </div>
+    );
+  }
 
-    {/* Desktop: centered card */}
+  return (
     <div
-      className="hidden md:block w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 py-8 border border-white/10 shadow-2xl"
+      className="w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 py-8 border border-white/10 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex justify-end mb-2">
@@ -572,5 +637,5 @@ const SuccessDialog = ({
         </button>
       </div>
     </div>
-  </>
-);
+  );
+};
