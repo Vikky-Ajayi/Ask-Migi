@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ExpertLayout } from "@/components/ExpertLayout";
 import { PromoteModal } from "@/components/PromoteModal";
 import { ArrowLeft, Check, ChevronDown, X } from "lucide-react";
+import ukFlagImg from "@assets/emojione_flag-for-united-kingdom_1781943901686.png";
 
 const SERVICE_TYPES = [
   "Visa and Passport Services",
@@ -61,8 +62,8 @@ const ALL_COUNTRIES = [
   "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe",
 ];
 
-const CURRENCIES: { code: string; flag: string }[] = [
-  { code: "GBP", flag: "🇬🇧" },
+const CURRENCIES: { code: string; flag?: string; flagImg?: string }[] = [
+  { code: "GBP", flagImg: "uk" },
   { code: "USD", flag: "🇺🇸" },
   { code: "EUR", flag: "🇪🇺" },
   { code: "CAD", flag: "🇨🇦" },
@@ -354,7 +355,9 @@ export const ExpertCreateServicePage = () => {
                         onClick={() => setShowCurrencyMenu((o) => !o)}
                         className="h-full flex items-center gap-1.5 px-3 border-r border-[#2e3032] text-sm text-white hover:bg-white/5 transition-colors whitespace-nowrap"
                       >
-                        <span className="text-base leading-none">{selectedCurrency.flag}</span>
+                        {selectedCurrency.flagImg === "uk"
+                          ? <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
+                          : <span className="text-base leading-none">{selectedCurrency.flag}</span>}
                         <span>{selectedCurrency.code}</span>
                         <ChevronDown size={13} className="text-white/40" />
                       </button>
@@ -366,7 +369,9 @@ export const ExpertCreateServicePage = () => {
                               onClick={() => { setCurrency(c.code); setShowCurrencyMenu(false); }}
                               className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
                             >
-                              <span>{c.flag}</span>
+                              {c.flagImg === "uk"
+                                ? <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
+                                : <span>{c.flag}</span>}
                               <span>{c.code}</span>
                               {c.code === currency && <Check size={12} className="ml-auto text-white/60" />}
                             </button>
