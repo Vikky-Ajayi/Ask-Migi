@@ -158,6 +158,7 @@ class DatabaseStorage implements IStorage {
       question: data.question,
       country: data.country ?? "United Kingdom",
       coinsUsed: data.coinsUsed ?? 3,
+      analysis: data.analysis ?? null,
     }).returning();
     return enquiry;
   }

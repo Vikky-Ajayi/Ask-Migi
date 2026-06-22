@@ -78,10 +78,13 @@ export async function sendNewQuestionEmail(
   expertEmail: string,
   userName: string,
   question: string,
-  enquiryId: string
+  enquiryId: string,
+  magicToken?: string
 ): Promise<void> {
   const client = getResend();
-  const dashboardUrl = `${SITE_URL}/expert-dashboard`;
+  const dashboardUrl = magicToken
+    ? `${SITE_URL}/expert-dashboard?key=${magicToken}`
+    : `${SITE_URL}/expert-dashboard`;
 
   const html = emailWrapper(`
     ${emailHeader()}

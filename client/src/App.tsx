@@ -13,6 +13,7 @@ import { LandingPage } from "@/pages/LandingPage";
 import { ChatPage } from "@/pages/ChatPage";
 import { BuyCoinsPage } from "@/pages/BuyCoinsPage";
 import { ExpertsPage } from "@/pages/ExpertsPage";
+import { AboutPage } from "@/pages/AboutPage";
 import { EnquiriesPage } from "@/pages/EnquiriesPage";
 import { FAQPage } from "@/pages/FAQPage";
 import { ContactPage } from "@/pages/ContactPage";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/enquiries" component={EnquiriesPage} />
       <Route path="/buy-coins" component={BuyCoinsPage} />
       <Route path="/experts" component={ExpertsPage} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/faq" component={FAQPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/settings" component={RedirectHome} />

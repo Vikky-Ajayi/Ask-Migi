@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { ChevronDown, CircleUser, User, Settings, LogOut } from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
 import coinImg from "@assets/coins_1781943901685.png";
 
@@ -13,16 +14,13 @@ interface DesktopNavProps {
 export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: DesktopNavProps) => {
   const { user, isLoggedIn, logout } = useAuth();
   const [, navigate] = useLocation();
-  const [expertOpen, setExpertOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const expertRef = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
-      if (expertRef.current && !expertRef.current.contains(e.target as Node)) setExpertOpen(false);
       if (helpRef.current && !helpRef.current.contains(e.target as Node)) setHelpOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
     };
@@ -45,38 +43,14 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
 
       {/* Right side — nav links + auth */}
       <div className="flex items-center gap-6">
-        {/* Become an Expert */}
-        <div className="relative" ref={expertRef}>
-          <button
-            onClick={() => setExpertOpen((v) => !v)}
-            className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
-            data-testid="nav-become-expert"
-          >
-            Become an Expert <ChevronDown size={14} className={`transition-transform ${expertOpen ? "rotate-180" : ""}`} />
-          </button>
-          {expertOpen && (
-            <div className="absolute top-full left-0 mt-2 w-52 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
-              <button
-                onClick={() => { navigate("/become-an-expert"); setExpertOpen(false); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
-              >
-                Immigration Experts
-              </button>
-              <button
-                onClick={() => { navigate("/travel-agents"); setExpertOpen(false); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
-              >
-                Travel Agents
-              </button>
-              <button
-                onClick={() => { navigate("/travel-agents?type=tour"); setExpertOpen(false); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
-              >
-                Tour Guides
-              </button>
-            </div>
-          )}
-        </div>
+        {/* About */}
+        <button
+          onClick={() => navigate("/about")}
+          className="text-sm text-white/80 hover:text-white transition-colors"
+          data-testid="nav-about"
+        >
+          About
+        </button>
 
         {/* Buy Coins */}
         <button

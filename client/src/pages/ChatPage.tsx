@@ -176,9 +176,14 @@ export const ChatPage = (): JSX.Element => {
                         </div>
                       </div>
                     ) : (
-                      <div className="ml-10 flex items-center gap-2">
+                      <div className="ml-10 flex flex-col gap-3">
+                        {activeEnquiry.analysis && (
+                          <p className="text-sm text-white/70 leading-6">
+                            {activeEnquiry.analysis}
+                          </p>
+                        )}
                         <p className="text-sm text-white/60 leading-6">
-                          Thank you for your question! Your query has been sent to an expert who will get back to you within 6 to 12 hours. You'll be notified by email when your response is ready.
+                          Your query has been sent to an expert who will get back to you within 6–12 hours. You'll be notified by email when your response is ready.
                         </p>
                       </div>
                     )}

@@ -31,6 +31,7 @@ export const enquiries = pgTable("enquiries", {
   question: text("question").notNull(),
   country: text("country").notNull().default("United Kingdom"),
   status: text("status").notNull().default("pending"), // pending | ai_answered | answered
+  analysis: text("analysis"), // short AI analysis shown to user immediately
   answer: text("answer"),
   answeredBy: text("answered_by"),
   coinsUsed: integer("coins_used").notNull().default(3),

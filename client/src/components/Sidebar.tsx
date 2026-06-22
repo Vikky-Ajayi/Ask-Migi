@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -11,7 +12,6 @@ interface SidebarProps {
 
 export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: SidebarProps) => {
   const [, navigate] = useLocation();
-  const [expertOpen, setExpertOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const go = (path: string) => {
@@ -62,24 +62,7 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
         <NavItem label="Home" onClick={() => go("/")} />
         <NavItem label="Previous Enquiries" onClick={() => go("/enquiries")} />
         <NavItem label="Buy Coins" onClick={() => go("/buy-coins")} />
-
-        <div>
-          <button
-            onClick={() => setExpertOpen((v) => !v)}
-            className="w-full flex items-center justify-between py-3 px-2 text-white/80 hover:text-white text-sm font-medium"
-            data-testid="sidebar-become-expert"
-          >
-            Become an Expert
-            <ChevronDown size={16} className={`transition-transform ${expertOpen ? "rotate-180" : ""}`} />
-          </button>
-          {expertOpen && (
-            <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-3">
-              <SubNavItem label="Immigration Experts" onClick={() => go("/experts?tab=immigration")} />
-              <SubNavItem label="Travel Agents" onClick={() => go("/experts?tab=travel")} />
-              <SubNavItem label="Tour Guides" onClick={() => go("/experts?tab=tour")} />
-            </div>
-          )}
-        </div>
+        <NavItem label="About" onClick={() => go("/about")} />
 
         <div>
           <button

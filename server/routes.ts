@@ -9,9 +9,15 @@ import {
   getUserIdFromToken,
   deleteAuthToken,
 } from "./storage";
-import { randomInt } from "crypto";
-import { generateAIResponse } from "./ai";
+import { randomInt, createHmac } from "crypto";
+import { generateAIResponse, generateQuestionAnalysis } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail } from "./email";
+
+function getExpertMagicToken(): string {
+  return createHmac("sha256", process.env.TOKEN_SECRET || "secret")
+    .update("expert_dashboard_access")
+    .digest("hex");
+}
 
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function getTokenFromRequest(req: Request): string | null {
@@ -213,21 +219,31 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return res.status(402).json({ message: "Insufficient coins. Please purchase more coins." });
     }
 
-    // Create enquiry first
+    // Generate short analysis for the user (synchronous — shown immediately)
+    let analysis = "";
+    try {
+      analysis = await generateQuestionAnalysis(result.data.question, result.data.expertType, result.data.country);
+    } catch (err: any) {
+      console.error("[AI] Failed to generate analysis:", err.message);
+    }
+
+    // Create enquiry with analysis
     const enquiry = await storage.createEnquiry({
       userId,
       expertType: result.data.expertType,
       question: result.data.question,
       country: result.data.country,
       coinsUsed: coinsNeeded,
+      analysis: analysis || null,
     });
 
     await storage.updateUserCoins(userId, -coinsNeeded);
 
-    // Notify expert of new question (non-blocking)
+    // Notify expert of new question (non-blocking, include magic link)
     const expertEmail = process.env.EXPERT_EMAIL;
     if (expertEmail) {
-      sendNewQuestionEmail(expertEmail, `${user.firstName} ${user.lastName}`, result.data.question, enquiry.id).catch(
+      const magicToken = getExpertMagicToken();
+      sendNewQuestionEmail(expertEmail, `${user.firstName} ${user.lastName}`, result.data.question, enquiry.id, magicToken).catch(
         (err) => console.error("[EMAIL] Failed to send expert notification:", err.message)
       );
     }
@@ -272,6 +288,33 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
 
     return res.json(updated);
+  });
+
+  // POST /api/expert/magic-login — permanent magic link token exchange
+  app.post("/api/expert/magic-login", async (req, res) => {
+    const schema = z.object({ token: z.string().min(1) });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: "Invalid request" });
+
+    const expected = getExpertMagicToken();
+    if (result.data.token !== expected) {
+      return res.status(401).json({ message: "Invalid access token" });
+    }
+
+    // Find any expert user — prefer the EXPERT_EMAIL user if configured
+    const expertEmail = process.env.EXPERT_EMAIL;
+    let expertUser = expertEmail ? await storage.getUserByEmail(expertEmail) : null;
+
+    if (!expertUser) {
+      return res.status(404).json({ message: "No expert account found. Please register an expert account first." });
+    }
+
+    if (expertUser.role !== "expert") {
+      return res.status(403).json({ message: "Account is not an expert account" });
+    }
+
+    const token = createAuthToken(expertUser.id);
+    return res.json({ user: safeUser(expertUser), token });
   });
 
   // ── Expert Questions Feed ──────────────────────────────────────────────────

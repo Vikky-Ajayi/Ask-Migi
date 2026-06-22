@@ -45,3 +45,40 @@ The user is asking about matters related to ${country}.`;
 
   return completion.choices[0]?.message?.content ?? "An expert will review your question and respond shortly.";
 }
+
+export async function generateQuestionAnalysis(
+  question: string,
+  expertType: string,
+  country: string
+): Promise<string> {
+  const client = getGroq();
+
+  const expertContext =
+    expertType === "immigration"
+      ? "immigration and visa matters"
+      : expertType === "travel"
+      ? "travel planning and logistics"
+      : "tours and local experiences";
+
+  const systemPrompt = `You are a helpful assistant that briefly acknowledges and analyses user questions about ${expertContext} related to ${country}.
+Write exactly 2–3 sentences. Do NOT answer the question — only:
+1. Acknowledge what the user is asking about
+2. Note the key factors or considerations involved
+Keep it concise, warm, and professional. Do not use bullet points or headers.`;
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analyse this question briefly: ${question}` },
+      ],
+      max_tokens: 120,
+      temperature: 0.5,
+    });
+
+    return completion.choices[0]?.message?.content ?? "";
+  } catch {
+    return "";
+  }
+}

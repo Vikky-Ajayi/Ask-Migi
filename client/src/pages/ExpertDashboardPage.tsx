@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearch, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { ExpertLayout } from "@/components/ExpertLayout";
 import { ChevronRight, Info, Eye, Send } from "lucide-react";
@@ -8,12 +9,50 @@ import { useToast } from "@/hooks/use-toast";
 type View = "dashboard" | "answer" | "preview";
 
 export const ExpertDashboardPage = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [view, setView] = useState<View>("dashboard");
   const [selectedEnquiry, setSelectedEnquiry] = useState<any>(null);
   const [answerText, setAnswerText] = useState("");
+  const [magicLoading, setMagicLoading] = useState(false);
+  const search = useSearch();
+  const [, navigate] = useLocation();
+
+  // Handle magic link token from email — auto-login if not already logged in
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const key = params.get("key");
+    if (!key || user) return;
+
+    setMagicLoading(true);
+    fetch("/api/expert/magic-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: key }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          toast({
+            title: "Access denied",
+            description: data.message || "This link is invalid.",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
+        const data = await res.json();
+        localStorage.setItem("askmigi_token", data.token);
+        await refreshUser();
+        navigate("/expert-dashboard", { replace: true });
+      })
+      .catch(() => {
+        toast({ title: "Error", description: "Failed to authenticate. Please try again.", variant: "destructive" });
+        navigate("/");
+      })
+      .finally(() => setMagicLoading(false));
+  }, [search]);
 
   const { data: questions = [], isLoading: qLoading } = useQuery<any[]>({
     queryKey: ["/api/expert/questions"],
@@ -25,7 +64,7 @@ export const ExpertDashboardPage = () => {
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: !!user,
+    enabled: !!user && !magicLoading,
     refetchInterval: 15000,
   });
 
@@ -67,6 +106,17 @@ export const ExpertDashboardPage = () => {
     if (!answerText.trim() || !selectedEnquiry) return;
     answerMutation.mutate({ id: selectedEnquiry.id, answer: answerText });
   };
+
+  if (magicLoading) {
+    return (
+      <main className="min-h-screen w-full bg-[#161618] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          <p className="text-sm text-white/50">Authenticating…</p>
+        </div>
+      </main>
+    );
+  }
 
   if (view === "preview" && selectedEnquiry) {
     return (
@@ -127,7 +177,6 @@ export const ExpertDashboardPage = () => {
             ← Back to Dashboard
           </button>
 
-          {/* Question card */}
           <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 mb-4">
             <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Question</p>
             <p className="text-base text-white leading-relaxed">{selectedEnquiry.question}</p>
@@ -136,7 +185,6 @@ export const ExpertDashboardPage = () => {
             )}
           </div>
 
-          {/* Guidelines */}
           <div className="bg-[#0d2a4d] border border-[#1a4a7a] rounded-2xl p-4 mb-5 flex items-start gap-3">
             <Info size={16} className="text-[#4da6ff] shrink-0 mt-0.5" />
             <div>
@@ -150,7 +198,6 @@ export const ExpertDashboardPage = () => {
             </div>
           </div>
 
-          {/* AI draft notice */}
           {selectedEnquiry.answer && (
             <div className="bg-[#1a2a1a] border border-[#2a4a2a] rounded-2xl p-4 mb-4 flex items-start gap-3">
               <Info size={16} className="text-emerald-400 shrink-0 mt-0.5" />
@@ -160,7 +207,6 @@ export const ExpertDashboardPage = () => {
             </div>
           )}
 
-          {/* Answer textarea */}
           <div className="flex flex-col gap-3">
             <label className="text-sm font-medium text-white">Your Response</label>
             <textarea
@@ -192,8 +238,6 @@ export const ExpertDashboardPage = () => {
   return (
     <ExpertLayout title="Career Expert Dashboard" pendingCount={pendingCount}>
       <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
-
-        {/* Live Questions Feed */}
         <div>
           <h2 className="text-base font-bold text-white mb-3">Live Questions Feed</h2>
 
@@ -216,7 +260,6 @@ export const ExpertDashboardPage = () => {
             </div>
           )}
         </div>
-
       </div>
     </ExpertLayout>
   );
