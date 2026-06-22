@@ -180,13 +180,11 @@ const CheckItem = ({
 const FileUploadZone = ({
   label, optional, fileName, onChange,
 }: { label: string; optional?: boolean; fileName: string; onChange: (name: string) => void }) => {
-  const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="flex flex-col gap-2">
       <FieldLabel>{label}{optional && " (Optional)"}</FieldLabel>
       <label
         className="border border-dashed border-[#3a3c3e] rounded-xl p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-white/30 transition-colors bg-[#252729]"
-        onClick={() => ref.current?.click()}
       >
         <Upload size={20} className="text-white/50" />
         <p className="text-sm font-semibold text-white text-center">
@@ -194,7 +192,6 @@ const FileUploadZone = ({
         </p>
         {!fileName && <p className="text-xs text-white/40">PDF, DOC, JPG, PNG (max 10MB)</p>}
         <input
-          ref={ref}
           type="file"
           className="hidden"
           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
