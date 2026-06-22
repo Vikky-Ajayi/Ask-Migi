@@ -3,9 +3,8 @@ import { useLocation, useSearch } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { ExpertLayout } from "@/components/ExpertLayout";
 import coinImg from "@assets/coins_1781943901685.png";
-import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiUrl } from "@/lib/queryClient";
 
 const COIN_PACKAGES = [
   {
@@ -79,7 +78,7 @@ export const ExpertBuyCoinsPage = () => {
     setVerifying(true);
 
     const token = localStorage.getItem("askmigi_token");
-    fetch(apiUrl("/api/coins/verify-payment"), {
+    fetch("/api/coins/verify-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ checkoutId, coinsAmount, reference: ref }),
@@ -107,7 +106,7 @@ export const ExpertBuyCoinsPage = () => {
     setLoading(idx);
     try {
       const token = localStorage.getItem("askmigi_token");
-      const res = await fetch(apiUrl("/api/coins/create-checkout"), {
+      const res = await fetch("/api/coins/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ coinsAmount: pkg.coins, price: pkg.priceRaw, currency: pkg.currency }),

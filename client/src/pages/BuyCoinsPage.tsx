@@ -4,7 +4,7 @@ import { NavBar } from "@/components/NavBar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, apiUrl } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -60,7 +60,7 @@ export const BuyCoinsPage = (): JSX.Element => {
     setVerifying(true);
 
     const token = localStorage.getItem("askmigi_token");
-    fetch(apiUrl("/api/coins/verify-payment"), {
+    fetch("/api/coins/verify-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ checkoutId, coinsAmount, reference: ref }),
