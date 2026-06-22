@@ -19,12 +19,6 @@ function getExpertMagicToken(): string {
     .digest("hex");
 }
 
-function registerHealthCheck(app: Express) {
-  app.get("/health", (_req, res) => {
-    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
-  });
-}
-
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function getTokenFromRequest(req: Request): string | null {
   const auth = req.headers.authorization;
