@@ -56,7 +56,7 @@ export const AboutPage = (): JSX.Element => {
           </p>
         </div>
 
-        <div className="w-full max-w-2xl flex flex-col gap-5 md:gap-6">
+        <div className="w-full max-w-2xl md:max-w-4xl flex flex-col gap-5 md:gap-6">
           {/* Step 01 — left */}
           <div className="self-start w-[85%] md:w-[75%]">
             <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl px-6 py-6 flex items-start gap-5">
