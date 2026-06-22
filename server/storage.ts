@@ -56,6 +56,7 @@ export interface IStorage {
   createUser(user: Omit<InsertUser, "password"> & { password: string; role?: string }): Promise<User>;
   updateUserCoins(userId: string, delta: number): Promise<User | undefined>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<boolean>;
+  updateUserRole(userId: string, role: string): Promise<void>;
 
   // Enquiries
   getEnquiries(userId: string): Promise<Enquiry[]>;
@@ -130,6 +131,10 @@ class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return result.length > 0;
+  }
+
+  async updateUserRole(userId: string, role: string): Promise<void> {
+    await db.update(users).set({ role }).where(eq(users.id, userId));
   }
 
   // ── Enquiries ──────────────────────────────────────────────────────────────

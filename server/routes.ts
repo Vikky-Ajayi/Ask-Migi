@@ -9,7 +9,7 @@ import {
   getUserIdFromToken,
   deleteAuthToken,
 } from "./storage";
-import { randomInt, createHmac } from "crypto";
+import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail } from "./email";
 
@@ -308,16 +308,28 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return res.status(401).json({ message: "Invalid access token" });
     }
 
-    // Find any expert user — prefer the EXPERT_EMAIL user if configured
+    // Find or auto-create the expert user via EXPERT_EMAIL
     const expertEmail = process.env.EXPERT_EMAIL;
-    let expertUser = expertEmail ? await storage.getUserByEmail(expertEmail) : null;
-
-    if (!expertUser) {
-      return res.status(404).json({ message: "No expert account found. Please register an expert account first." });
+    if (!expertEmail) {
+      return res.status(500).json({ message: "EXPERT_EMAIL is not configured on this server. Please contact the administrator." });
     }
 
-    if (expertUser.role !== "expert") {
-      return res.status(403).json({ message: "Account is not an expert account" });
+    let expertUser = await storage.getUserByEmail(expertEmail);
+
+    // Auto-create the expert account on first magic-link access — no manual registration needed
+    if (!expertUser) {
+      const randomPw = hashPassword(randomBytes(32).toString("hex"));
+      expertUser = await storage.createUser({
+        email: expertEmail,
+        firstName: "Expert",
+        lastName: "Advisor",
+        password: randomPw,
+        role: "expert",
+      });
+    } else if (expertUser.role !== "expert") {
+      // Upgrade the account to expert if it exists but isn't marked as expert
+      await storage.updateUserRole(expertUser.id, "expert");
+      expertUser = { ...expertUser, role: "expert" };
     }
 
     const token = createAuthToken(expertUser.id);
