@@ -47,8 +47,8 @@ export const AboutPage = (): JSX.Element => {
       </section>
 
       {/* ── How it works ──────────────────────────────────────────────────── */}
-      <section className="flex flex-col items-center px-5 pt-16 pb-12 md:pt-24 md:pb-16">
-        <div className="text-center mb-12 md:mb-16 max-w-lg">
+      <section className="flex flex-col items-center px-5 pt-16 pb-12 md:pt-24 md:pb-5">
+        <div className="text-center mb-12 md:mb-5 max-w-lg">
           <h2 className="text-3xl md:text-4xl font-black text-white">How it works</h2>
           <p className="mt-4 text-sm md:text-base text-white/55 leading-7">
             Getting started is easy — there are no hidden fees. Submit your question, and we'll connect
