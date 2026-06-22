@@ -72,6 +72,72 @@ function emailWrapper(rows: string): string {
 </html>`;
 }
 
+// ─── New Question Notification (to Expert) ────────────────────────────────────
+
+export async function sendNewQuestionEmail(
+  expertEmail: string,
+  userName: string,
+  question: string,
+  enquiryId: string
+): Promise<void> {
+  const client = getResend();
+  const dashboardUrl = `${SITE_URL}/expert-dashboard`;
+
+  const html = emailWrapper(`
+    ${emailHeader()}
+    <tr>
+      <td style="padding:28px 28px 0;">
+        <span style="display:inline-block;background:#3b82f6;color:#ffffff;font-size:12px;font-weight:700;padding:5px 13px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.2px;">&#128203; New Question</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px 0;">
+        <h1 style="margin:0;font-size:22px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.3;">A user has submitted a question for you</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 28px 0;">
+        <p style="margin:0;font-size:15px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;"><strong>${userName}</strong> has submitted a new question and is waiting for your expert response. An AI draft has been prepared to help you get started.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 28px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f5f5f5;border-radius:10px;border-left:4px solid #3b82f6;">
+          <tr>
+            <td style="padding:16px 20px;">
+              <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;font-family:Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:0.5px;">Their question</p>
+              <p style="margin:0;font-size:15px;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">&ldquo;${question}&rdquo;</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 28px 0;text-align:center;">
+        <a href="${dashboardUrl}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;">Review &amp; Send Response</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px 0;">
+        <p style="margin:0;font-size:13px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;line-height:1.6;text-align:center;">Please respond within 6&ndash;12 hours. The user has been informed of this timeframe.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 28px 28px;">
+        <p style="margin:0;font-size:14px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.7;">Thanks,<br/><strong>The Ask Migi Team</strong></p>
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  await client.emails.send({
+    from: FROM_EMAIL,
+    to: expertEmail,
+    subject: `New question from ${userName} – review needed`,
+    html,
+  });
+}
+
 // ─── Expert Reply Email ───────────────────────────────────────────────────────
 
 export async function sendExpertReplyEmail(

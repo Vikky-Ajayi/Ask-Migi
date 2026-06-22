@@ -11,7 +11,7 @@ import {
 } from "./storage";
 import { randomInt } from "crypto";
 import { generateAIResponse } from "./ai";
-import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail } from "./email";
+import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail } from "./email";
 
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function getTokenFromRequest(req: Request): string | null {
@@ -224,19 +224,21 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     await storage.updateUserCoins(userId, -coinsNeeded);
 
-    // Generate AI response asynchronously (don't block the HTTP response)
+    // Notify expert of new question (non-blocking)
+    const expertEmail = process.env.EXPERT_EMAIL;
+    if (expertEmail) {
+      sendNewQuestionEmail(expertEmail, `${user.firstName} ${user.lastName}`, result.data.question, enquiry.id).catch(
+        (err) => console.error("[EMAIL] Failed to send expert notification:", err.message)
+      );
+    }
+
+    // Generate AI draft response for expert to review (non-blocking, not shown to user)
     generateAIResponse(result.data.question, result.data.expertType, result.data.country)
       .then(async (aiAnswer) => {
-        const updated = await storage.updateEnquiryAnswer(enquiry.id, aiAnswer, "AI + Expert Review", "ai_answered");
-        // Send notification email to user
-        if (updated) {
-          sendExpertReplyEmail(user.email, user.firstName, result.data.question, enquiry.id).catch(
-            (err) => console.error("[EMAIL] Failed to send expert reply email:", err.message)
-          );
-        }
+        await storage.updateEnquiryAnswer(enquiry.id, aiAnswer, "AI Draft", "ai_draft");
       })
       .catch((err) => {
-        console.error("[AI] Failed to generate AI response:", err.message);
+        console.error("[AI] Failed to generate AI draft:", err.message);
       });
 
     return res.status(201).json(enquiry);

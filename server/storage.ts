@@ -142,7 +142,7 @@ class DatabaseStorage implements IStorage {
 
   async getAllPendingEnquiries(): Promise<Enquiry[]> {
     return db.select().from(enquiries)
-      .where(inArray(enquiries.status, ["pending", "ai_answered"]))
+      .where(inArray(enquiries.status, ["pending", "ai_draft"]))
       .orderBy(desc(enquiries.createdAt));
   }
 

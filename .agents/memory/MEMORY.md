@@ -1,2 +1,3 @@
 - [Auth architecture](auth-architecture.md) — token-based auth using in-memory map (no express-session), Bearer token in Authorization header, token stored in localStorage under `askmigi_token`.
 - [Backend data model](backend-data-model.md) — MemStorage with seeded demo user (demo@askmigi.com / demo123, 50 coins) and 6 experts across immigration/travel/tour types.
+- [Career platform restructuring](career-platform-restructuring.md) — Major restructuring: travel agent pages removed, platform renamed to career guidance, new ai_draft question flow, EXPERT_EMAIL env var needed.

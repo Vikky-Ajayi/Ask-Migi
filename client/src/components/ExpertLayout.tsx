@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
-import coinImg from "@assets/coins_1781943901685.png";
-import { LayoutDashboard, Clock, LogOut, Menu, X, User, ChevronDown, HelpCircle, CircleHelp } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X, User, ChevronDown, HelpCircle, CircleHelp } from "lucide-react";
 
 interface ExpertLayoutProps {
   children: React.ReactNode;
   title: string;
-  verified?: boolean;
   pendingCount?: number;
 }
 
-export const ExpertLayout = ({ children, title, verified = false, pendingCount = 0 }: ExpertLayoutProps) => {
+export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayoutProps) => {
   const { user, logout } = useAuth();
   const [, navigate] = useLocation();
   const [location] = useLocation();
@@ -21,7 +19,6 @@ export const ExpertLayout = ({ children, title, verified = false, pendingCount =
   const navItems = [
     { label: "Dashboard", path: "/expert-dashboard", icon: <LayoutDashboard size={15} />, badge: 0 },
     { label: "Questions", path: "/expert-questions", icon: <CircleHelp size={15} />, badge: pendingCount },
-    { label: "Earnings History", path: "/expert-earnings", icon: <Clock size={15} />, badge: 0 },
   ];
 
   const handleLogout = () => {
@@ -31,7 +28,6 @@ export const ExpertLayout = ({ children, title, verified = false, pendingCount =
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "?";
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Expert User";
-  const coins = user?.coins ?? 0;
 
   const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
     <>
@@ -70,7 +66,7 @@ export const ExpertLayout = ({ children, title, verified = false, pendingCount =
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-[13px] font-semibold text-white truncate leading-tight">{fullName}</span>
-            <span className="text-[11px] text-white/40 truncate leading-tight">Immigration Expert</span>
+            <span className="text-[11px] text-white/40 truncate leading-tight">Career Expert</span>
           </div>
         </div>
         <button
@@ -130,21 +126,6 @@ export const ExpertLayout = ({ children, title, verified = false, pendingCount =
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            <button
-              onClick={() => navigate("/expert/buy-coins")}
-              className="hidden md:block text-[13px] font-medium text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
-            >
-              Buy Coins
-            </button>
-
-            <div
-              onClick={() => navigate("/expert/buy-coins")}
-              className="flex items-center gap-1.5 bg-[#1e2022] hover:bg-[#252729] rounded-full px-3 py-1.5 cursor-pointer transition-colors"
-            >
-              <img src={coinImg} alt="coins" className="w-4 h-4 object-contain" />
-              <span className="text-[13px] font-semibold text-white">{coins}</span>
-            </div>
-
             <div className="relative hidden md:block">
               <button
                 onClick={() => setHelpOpen(!helpOpen)}

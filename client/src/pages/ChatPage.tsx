@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import coinImg from "@assets/coins_1781943901685.png";
 
 export const ChatPage = (): JSX.Element => {
   const [, navigate] = useLocation();
@@ -53,51 +54,40 @@ export const ChatPage = (): JSX.Element => {
   const activeEnquiry = enquiries.find((e: any) => e.id === activeId);
 
   const submitMutation = useMutation({
-    mutationFn: async ({ question, expertType, country }: { question: string; expertType: string; country: string }) => {
+    mutationFn: async ({ question, country }: { question: string; country: string }) => {
       const res = await apiRequest("POST", "/api/enquiries", {
         question,
-        expertType: expertType === "Immigration Experts" ? "immigration"
-          : expertType === "Travel agents" ? "travel" : "tour",
+        expertType: "immigration",
         country,
       });
       return res.json();
     },
-    onSuccess: async (data) => {
-      await qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
-      await refreshUser();
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
+      refreshUser();
       setActiveId(data.id);
-      toast({ title: "Question submitted!", description: "An AI + Expert response will be generated shortly." });
     },
     onError: (e: any) => {
       if (e.message?.includes("402")) {
-        toast({ title: "Not enough coins", description: "Please purchase more coins.", variant: "destructive" });
+        toast({ title: "Not enough coins", description: "Please purchase more coins to continue.", variant: "destructive" });
         navigate("/buy-coins");
+      } else if (e.message?.includes("401")) {
+        setAuthView("login");
       } else {
         toast({ title: "Error", description: e.message || "Failed to submit question.", variant: "destructive" });
       }
     },
   });
 
-  const handleSubmit = (q: string, expertType: string, country: string) => {
+  const handleSubmit = (question: string, _expertType: string, country: string) => {
     if (!isLoggedIn) { setAuthView("login"); return; }
-    submitMutation.mutate({ question: q, expertType, country });
+    submitMutation.mutate({ question, country });
   };
 
-  if (!authLoading && !isLoggedIn) {
+  if (authLoading) {
     return (
       <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
         <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
-        <div className="flex flex-1 items-center justify-center px-4">
-          <div className="text-center">
-            <p className="text-white/60 mb-4">Please log in to view your enquiries.</p>
-            <button
-              onClick={() => setAuthView("login")}
-              className="px-6 py-3 rounded-full bg-white text-black font-semibold"
-            >
-              Log In
-            </button>
-          </div>
-        </div>
         <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
       </main>
     );
@@ -108,6 +98,9 @@ export const ChatPage = (): JSX.Element => {
     question: e.question,
     status: e.status,
   }));
+
+  const isAnswered = activeEnquiry?.status === "answered";
+  const isPending = !activeEnquiry || activeEnquiry.status === "pending" || activeEnquiry.status === "ai_draft";
 
   return (
     <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
@@ -132,7 +125,7 @@ export const ChatPage = (): JSX.Element => {
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
           <div className="w-full bg-[#1e2022] border-b border-white/5 px-3 md:px-6 py-3 text-xs md:text-sm text-white/70 text-center shrink-0">
             <span className="font-semibold text-white">Please note:</span>{" "}
-            Expert responses are not instant. You'll receive a response in 3-5 Business days
+            Expert responses are not instant. You'll receive a response within 6 to 12 hours
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
@@ -158,11 +151,11 @@ export const ChatPage = (): JSX.Element => {
                       </div>
                       <span className="text-sm font-semibold text-yellow-400">Expert</span>
                       <span className="text-xs text-yellow-400/70">
-                        · {activeEnquiry.status === "answered" ? "Answered" : activeEnquiry.status === "ai_answered" ? "Initial response" : "Pending response"}
+                        · {isAnswered ? "Answered" : "Pending response"}
                       </span>
                     </div>
 
-                    {(activeEnquiry.status === "answered" || activeEnquiry.status === "ai_answered") && activeEnquiry.answer ? (
+                    {isAnswered && activeEnquiry.answer ? (
                       <div className="ml-10">
                         {activeEnquiry.answer.split("\n\n").map((para: string, i: number) => (
                           <p key={i} className="text-sm text-white/80 leading-6 mb-3 last:mb-0">
@@ -174,18 +167,18 @@ export const ChatPage = (): JSX.Element => {
                             — {activeEnquiry.answeredBy}
                           </p>
                         )}
-                        {activeEnquiry.status === "ai_answered" && (
-                          <div className="mt-4 px-4 py-3 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
-                            <p className="text-xs text-yellow-400/90 leading-5">
-                              <span className="font-semibold">Please note:</span> This is an initial AI-generated response to get you started. One of our immigration experts will review your question and provide a more in-depth, personalised response shortly.
-                            </p>
-                          </div>
-                        )}
+                        {/* Coin nudge */}
+                        <div className="mt-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+                          <img src={coinImg} alt="coins" className="w-5 h-5 object-contain shrink-0" />
+                          <p className="text-xs text-white/60 leading-5">
+                            Want more detail? Ask a follow-up question below using your coins.
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <div className="ml-10 flex items-center gap-2">
                         <p className="text-sm text-white/60 leading-6">
-                          Thank you for your question! An expert will review and respond as soon as possible. You'll be notified when your response is ready.
+                          Thank you for your question! Your query has been sent to an expert who will get back to you within 6 to 12 hours. You'll be notified by email when your response is ready.
                         </p>
                       </div>
                     )}

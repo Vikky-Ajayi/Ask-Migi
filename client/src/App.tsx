@@ -17,13 +17,7 @@ import { EnquiriesPage } from "@/pages/EnquiriesPage";
 import { FAQPage } from "@/pages/FAQPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { PolicyPage } from "@/pages/PolicyPage";
-import { ExpertWelcomePage } from "@/pages/ExpertWelcomePage";
-import { BecomeAnExpertPage } from "@/pages/BecomeAnExpertPage";
 import { ExpertDashboardPage } from "@/pages/ExpertDashboardPage";
-import { ExpertVerificationPage } from "@/pages/ExpertVerificationPage";
-import { ExpertCreateServicePage } from "@/pages/ExpertCreateServicePage";
-import { ExpertBuyCoinsPage } from "@/pages/ExpertBuyCoinsPage";
-import { TravelAgentsPage } from "@/pages/TravelAgentsPage";
 
 const RedirectHome = () => {
   const [, navigate] = useLocation();
@@ -42,16 +36,8 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/settings" component={RedirectHome} />
-      <Route path="/expert-welcome" component={ExpertWelcomePage} />
-      <Route path="/become-an-expert" component={BecomeAnExpertPage} />
       <Route path="/expert-dashboard" component={ExpertDashboardPage} />
-      <Route path="/expert-verify" component={ExpertVerificationPage} />
-      <Route path="/expert-services" component={ExpertDashboardPage} />
-      <Route path="/expert-services/create" component={ExpertCreateServicePage} />
-      <Route path="/expert/buy-coins" component={ExpertBuyCoinsPage} />
       <Route path="/expert-questions" component={ExpertDashboardPage} />
-      <Route path="/expert-earnings" component={ExpertDashboardPage} />
-      <Route path="/travel-agents" component={TravelAgentsPage} />
       <Route path="/disclaimer">
         {() => <PolicyPage type="disclaimer" />}
       </Route>

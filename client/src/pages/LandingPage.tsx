@@ -22,7 +22,7 @@ export const LandingPage = (): JSX.Element => {
     refetchInterval: 5000,
   });
 
-  const handleQuestionSubmit = async (q: string, expertType: string, country: string) => {
+  const handleQuestionSubmit = async (q: string, _expertType: string, country: string) => {
     if (!isLoggedIn) {
       setAuthView("login");
       return;
@@ -30,8 +30,7 @@ export const LandingPage = (): JSX.Element => {
     try {
       const res = await apiRequest("POST", "/api/enquiries", {
         question: q,
-        expertType: expertType === "Immigration Experts" ? "immigration"
-          : expertType === "Travel agents" ? "travel" : "tour",
+        expertType: "immigration",
         country,
       });
       const data = await res.json();
@@ -88,17 +87,13 @@ export const LandingPage = (): JSX.Element => {
             <div className="flex flex-col items-center gap-4 text-center">
               <img className="h-10 md:h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
               <p className="max-w-xl text-sm md:text-base text-white/70 leading-7">
-                Get expert immigration guidance every step of the way—whether visiting, relocating, or pursuing citizenship, our experts help you settle with confidence.
+                Get expert career guidance every step of the way—whether you're planning your next move, navigating a career change, or seeking professional advice, our experts help you succeed with confidence.
               </p>
             </div>
 
             <ChatInput
               onSubmit={handleQuestionSubmit}
               showAudienceTabs={true}
-              onTabClick={(tab) => {
-                if (tab === "Travel agents") navigate("/travel-agents");
-                else if (tab === "Tour Guides") navigate("/travel-agents?type=tour");
-              }}
             />
 
             <p className="text-center text-xs md:text-sm text-white/50 leading-6">

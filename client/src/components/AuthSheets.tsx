@@ -63,9 +63,7 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
         style={{ opacity: sheetVisible ? 1 : 0, transition: "opacity 0.25s" }}
       >
         {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} onSuccess={onSuccess} />}
-        {rendered === "register" && registerRole === "expert"
-          ? <ExpertRegisterDialog onViewChange={onViewChange} onClose={handleClose} onSuccess={onSuccess} />
-          : rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} registerRole={registerRole} onSuccess={onSuccess} />}
+        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} />}
         {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} />}
@@ -82,9 +80,7 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
         }}
       >
         {rendered === "login" && <LoginDialog onViewChange={onViewChange} onClose={handleClose} mobile onSuccess={onSuccess} />}
-        {rendered === "register" && registerRole === "expert"
-          ? <ExpertRegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile onSuccess={onSuccess} />
-          : rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile registerRole={registerRole} onSuccess={onSuccess} />}
+        {rendered === "register" && <RegisterDialog onViewChange={onViewChange} onClose={handleClose} mobile onSuccess={onSuccess} />}
         {rendered === "forgot" && <ForgotPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "otp" && <OTPDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
         {rendered === "new-password" && <NewPasswordDialog onViewChange={onViewChange} onClose={handleClose} mobile />}
