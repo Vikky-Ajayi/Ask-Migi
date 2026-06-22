@@ -62,7 +62,7 @@ export interface IStorage {
   getAllPendingEnquiries(): Promise<Enquiry[]>;
   getEnquiry(id: string): Promise<Enquiry | undefined>;
   createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry>;
-  updateEnquiryAnswer(id: string, answer: string, answeredBy: string): Promise<Enquiry | undefined>;
+  updateEnquiryAnswer(id: string, answer: string, answeredBy: string, status?: string): Promise<Enquiry | undefined>;
 
   // Experts (directory)
   getExperts(type?: string): Promise<Expert[]>;

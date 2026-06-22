@@ -368,7 +368,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const userId = (req as any).userId;
     const updated = await storage.updateExpertVerification(userId, {
       ...result.data,
-      status: "verified",
+      status: "pending",
       submittedAt: new Date(),
     });
     return res.json(updated);
