@@ -35,35 +35,13 @@ export const AboutPage = (): JSX.Element => {
           </button>
         </div>
 
-        {/* Two tilted photo cards */}
-        <div className="relative mt-12 mb-2" style={{ height: "320px", width: "320px" }}>
-          {/* Left photo — tilted left */}
+        {/* Group photo */}
+        <div className="mt-12 mb-2 w-full max-w-lg">
           <img
-            src="/expert1.png"
-            alt="Expert consultant"
-            style={{
-              position: "absolute",
-              width: "160px",
-              right: "calc(50% + 4px)",
-              bottom: 0,
-              transform: "rotate(-6deg)",
-              transformOrigin: "bottom right",
-              filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))",
-            }}
-          />
-          {/* Right photo — tilted right */}
-          <img
-            src="/expert2.png"
-            alt="Expert advisor"
-            style={{
-              position: "absolute",
-              width: "160px",
-              left: "calc(50% + 4px)",
-              bottom: 0,
-              transform: "rotate(6deg)",
-              transformOrigin: "bottom left",
-              filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))",
-            }}
+            src="/experts-group.png"
+            alt="Ask Migi experts"
+            className="w-full h-auto"
+            style={{ filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.7))" }}
           />
         </div>
       </section>
