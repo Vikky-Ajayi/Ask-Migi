@@ -93,44 +93,6 @@ export const AboutPage = (): JSX.Element => {
             ))}
           </div>
 
-          {/* Our experts */}
-          <div>
-            <h2 className="text-xl font-bold text-white mb-2">Our experts</h2>
-            <p className="text-sm text-white/55 leading-6 mb-6">
-              Every expert on Ask Migi is vetted for qualifications, experience, and communication quality. 
-              They specialise in areas where getting the wrong advice can have serious consequences — which is exactly 
-              why we don't leave it to chance.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  icon: "🌍",
-                  title: "Immigration Advisors",
-                  desc: "Visa applications, residency permits, citizenship pathways, work authorisation, and cross-border relocation.",
-                },
-                {
-                  icon: "💼",
-                  title: "Career Consultants",
-                  desc: "Job searches, CV review, interview coaching, career transitions, and industry guidance.",
-                },
-                {
-                  icon: "🗺️",
-                  title: "Travel Specialists",
-                  desc: "International travel planning, tourist visas, guided experiences, and destination advice.",
-                },
-              ].map((area) => (
-                <div
-                  key={area.title}
-                  className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-6 flex flex-col gap-3"
-                >
-                  <span className="text-3xl">{area.icon}</span>
-                  <h3 className="text-base font-bold text-white">{area.title}</h3>
-                  <p className="text-sm text-white/50 leading-6">{area.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* CTA */}
           <div className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-8 text-center">
             <h2 className="text-xl font-bold text-white mb-3">Ready to get real answers?</h2>
