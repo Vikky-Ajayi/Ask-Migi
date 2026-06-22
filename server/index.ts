@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
+import cors from "cors";
 import { rateLimit } from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -14,6 +15,24 @@ declare module "http" {
     rawBody: unknown;
   }
 }
+
+// ── CORS — allow Vercel frontend to reach Railway backend ────────────────────
+// SITE_URL should be set to the Vercel frontend origin in production.
+const allowedOrigins: (string | RegExp)[] = [
+  /^https:\/\/.*\.vercel\.app$/,          // any Vercel preview/prod domain
+  /^https:\/\/.*\.railway\.app$/,          // Railway itself (health checks, etc.)
+];
+if (process.env.SITE_URL) allowedOrigins.push(process.env.SITE_URL);
+if (!isProd) allowedOrigins.push(/^http:\/\/localhost(:\d+)?$/);
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  })
+);
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(

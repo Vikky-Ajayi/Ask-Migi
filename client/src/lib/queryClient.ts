@@ -2,6 +2,15 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 const TOKEN_KEY = "askmigi_token";
 
+// When VITE_API_URL is set (e.g. Railway backend on a separate domain), prefix all /api
+// calls with it. In local dev (Replit same-origin), leave it empty and use relative paths.
+const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
+export function apiUrl(path: string): string {
+  if (API_BASE && path.startsWith("/")) return `${API_BASE}${path}`;
+  return path;
+}
+
 function getAuthHeaders(extra?: Record<string, string>): Record<string, string> {
   const token = localStorage.getItem(TOKEN_KEY);
   const headers: Record<string, string> = { ...extra };
@@ -22,7 +31,7 @@ export async function apiRequest(
   data?: unknown,
 ): Promise<Response> {
   const headers = getAuthHeaders(data ? { "Content-Type": "application/json" } : {});
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(url), {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
@@ -38,9 +47,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const url = queryKey.join("/") as string;
+    const path = queryKey.join("/") as string;
     const headers = getAuthHeaders();
-    const res = await fetch(url, { headers, credentials: "include" });
+    const res = await fetch(apiUrl(path), { headers, credentials: "include" });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
