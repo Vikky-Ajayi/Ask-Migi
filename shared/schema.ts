@@ -81,6 +81,7 @@ export const coinPurchases = pgTable("coin_purchases", {
   coinsAmount: integer("coins_amount").notNull(),
   price: text("price").notNull(),
   status: text("status").notNull().default("completed"), // pending | completed
+  sumupRef: text("sumup_ref").unique(), // unique SumUp checkout reference — prevents double-grants
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [
   index("coin_purchases_user_id_idx").on(t.userId),

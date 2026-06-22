@@ -322,7 +322,84 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // ── Coins ──────────────────────────────────────────────────────────────────
 
-  // POST /api/coins/purchase
+  // POST /api/coins/create-checkout  — creates a SumUp hosted checkout
+  app.post("/api/coins/create-checkout", requireAuth, async (req, res) => {
+    const schema = z.object({
+      coinsAmount: z.number().int().positive(),
+      price: z.number().positive(),
+      currency: z.string().min(3).max(3).default("GBP"),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
+
+    const userId = (req as any).userId as string;
+    const { coinsAmount, price, currency } = parsed.data;
+    const reference = `askmigi-${userId.slice(0, 8)}-${coinsAmount}c-${Date.now()}`;
+
+    // Determine return URL — production domain or Replit dev domain
+    const host = process.env.REPLIT_DOMAINS
+      ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+      : (process.env.SITE_URL ?? `https://${req.hostname}`);
+
+    try {
+      const { createCheckout } = await import("./sumup.js");
+      const { checkoutId, payUrl } = await createCheckout({
+        reference,
+        amount: price,
+        currency,
+        description: `${coinsAmount} Coins – Ask Migi`,
+        returnUrl: `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}&checkoutId=${checkoutId}`,
+      });
+      return res.json({ checkoutId, payUrl, reference });
+    } catch (err: any) {
+      console.error("[SUMUP] create-checkout error:", err.message);
+      return res.status(502).json({ message: "Payment provider unavailable. Please try again later." });
+    }
+  });
+
+  // POST /api/coins/verify-payment  — verifies SumUp checkout and credits coins (idempotent)
+  app.post("/api/coins/verify-payment", requireAuth, async (req, res) => {
+    const schema = z.object({
+      checkoutId: z.string().min(1),
+      coinsAmount: z.number().int().positive(),
+      reference: z.string().min(1),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
+
+    const userId = (req as any).userId as string;
+    const { checkoutId, coinsAmount, reference } = parsed.data;
+
+    // Idempotency: if already processed, return success without double-crediting
+    const existing = await storage.getPurchaseBySumupRef(reference);
+    if (existing) {
+      const user = await storage.getUser(userId);
+      return res.json({ success: true, coins: user?.coins, alreadyProcessed: true });
+    }
+
+    try {
+      const { getCheckoutStatus } = await import("./sumup.js");
+      const checkout = await getCheckoutStatus(checkoutId);
+
+      if (checkout.status !== "PAID") {
+        return res.status(402).json({ message: `Payment not completed (status: ${checkout.status}).` });
+      }
+
+      const purchase = await storage.createCoinPurchase({
+        userId,
+        coinsAmount,
+        price: String(checkout.amount),
+        sumupRef: reference,
+      });
+      const updatedUser = await storage.updateUserCoins(userId, coinsAmount);
+      return res.json({ success: true, coins: updatedUser?.coins, purchase });
+    } catch (err: any) {
+      console.error("[SUMUP] verify-payment error:", err.message);
+      return res.status(502).json({ message: "Could not verify payment. Please contact support." });
+    }
+  });
+
+  // POST /api/coins/purchase  — legacy direct-grant (kept for admin/dev use)
   app.post("/api/coins/purchase", requireAuth, async (req, res) => {
     const schema = z.object({
       coinsAmount: z.number().int().positive(),

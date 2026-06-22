@@ -71,6 +71,7 @@ export interface IStorage {
   // Coin Purchases
   createCoinPurchase(purchase: InsertCoinPurchase): Promise<CoinPurchase>;
   getCoinPurchases(userId: string): Promise<CoinPurchase[]>;
+  getPurchaseBySumupRef(sumupRef: string): Promise<CoinPurchase | undefined>;
 
   // Password Resets
   createPasswordReset(email: string, otp: string): Promise<PasswordReset>;
@@ -190,6 +191,7 @@ class DatabaseStorage implements IStorage {
       userId: data.userId,
       coinsAmount: data.coinsAmount,
       price: data.price,
+      sumupRef: data.sumupRef ?? null,
     }).returning();
     return purchase;
   }
@@ -198,6 +200,12 @@ class DatabaseStorage implements IStorage {
     return db.select().from(coinPurchases)
       .where(eq(coinPurchases.userId, userId))
       .orderBy(desc(coinPurchases.createdAt));
+  }
+
+  async getPurchaseBySumupRef(sumupRef: string): Promise<CoinPurchase | undefined> {
+    const [row] = await db.select().from(coinPurchases)
+      .where(eq(coinPurchases.sumupRef, sumupRef));
+    return row;
   }
 
   // ── Password Resets ────────────────────────────────────────────────────────
