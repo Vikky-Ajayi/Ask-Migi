@@ -11,7 +11,7 @@ import {
 } from "./storage";
 import { randomInt } from "crypto";
 import { generateAIResponse } from "./ai";
-import { sendOTPEmail, sendWelcomeEmail, sendExpertReplyEmail } from "./email";
+import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail } from "./email";
 
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function getTokenFromRequest(req: Request): string | null {
@@ -62,8 +62,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const user = await storage.createUser({ email, firstName, lastName, password: hashedPw, role });
     const token = createAuthToken(user.id);
 
-    // Send welcome email (non-blocking)
-    sendWelcomeEmail(email, firstName).catch((err) =>
+    // Send role-appropriate welcome email (non-blocking)
+    const welcomeFn = role === "expert" ? sendExpertWelcomeEmail : sendWelcomeEmail;
+    welcomeFn(email, firstName).catch((err) =>
       console.error("[EMAIL] Failed to send welcome email:", err.message)
     );
 
