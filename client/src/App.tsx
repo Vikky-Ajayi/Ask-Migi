@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/context/AuthContext";
 import { Preloader } from "@/components/Preloader";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { LandingPage } from "@/pages/LandingPage";
 import { ChatPage } from "@/pages/ChatPage";
@@ -85,15 +86,17 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          {showPreloader && <Preloader onComplete={handlePreloaderComplete} />}
-          <Router />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            {showPreloader && <Preloader onComplete={handlePreloaderComplete} />}
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

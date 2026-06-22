@@ -119,10 +119,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         console.error("[EMAIL] Failed to send OTP email:", err.message);
       });
 
-      console.log(`[AUTH] OTP for ${email}: ${otp}`);
-
-      // In dev mode only, return OTP hint
+      // In dev mode only, log OTP to console and return in response
       const isDev = process.env.NODE_ENV === "development";
+      if (isDev) console.log(`[AUTH] OTP for ${email}: ${otp}`);
       return res.json({ message: "OTP sent", ...(isDev ? { otp } : {}) });
     }
     return res.json({ message: "If that email exists, an OTP has been sent." });

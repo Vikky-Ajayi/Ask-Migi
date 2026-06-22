@@ -304,6 +304,10 @@ class DatabaseStorage implements IStorage {
 export const storage = new DatabaseStorage();
 
 // ── Auth token store (HMAC-signed, survives restarts) ─────────────────────────
+const isProd = process.env.NODE_ENV === "production";
+if (isProd && !process.env.TOKEN_SECRET) {
+  throw new Error("TOKEN_SECRET environment variable must be set in production.");
+}
 const TOKEN_SECRET = process.env.TOKEN_SECRET || "askmigi-dev-secret-changeme";
 const invalidatedTokens = new Set<string>();
 
