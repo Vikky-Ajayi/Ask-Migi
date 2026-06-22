@@ -9,108 +9,160 @@ export const AboutPage = (): JSX.Element => {
     <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
-      <div className="flex flex-col items-center px-4 md:px-6 py-12 md:py-16">
-        <div className="w-full max-w-3xl flex flex-col gap-14">
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <section className="flex flex-col items-center text-center px-5 pt-14 pb-4 md:pt-20 md:pb-6">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight max-w-2xl">
+          Clear answers from people<br className="hidden md:block" /> who actually know.
+        </h1>
+        <p className="mt-5 text-sm md:text-base text-white/55 leading-7 max-w-lg">
+          Are you looking for real guidance on immigration, careers, or life abroad? Ask Migi connects you
+          with verified experts and gives you honest answers — fast.
+        </p>
+        <div className="mt-8 flex items-center gap-3 flex-wrap justify-center">
+          <button
+            onClick={() => setAuthView("register")}
+            className="h-11 px-7 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+            data-testid="button-hero-signup"
+          >
+            Create Account
+          </button>
+          <button
+            onClick={() => setAuthView("login")}
+            className="h-11 px-7 rounded-full border border-white/20 text-white font-semibold text-sm hover:bg-white/5 transition-colors"
+            data-testid="button-hero-login"
+          >
+            Log in
+          </button>
+        </div>
 
-          {/* Hero */}
-          <div className="text-center">
-            <span className="inline-block bg-white/10 border border-white/10 text-white/70 text-xs font-semibold px-4 py-1.5 rounded-full mb-5 tracking-wide uppercase">
-              About Ask Migi
-            </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-5">
-              Clear answers from people<br className="hidden md:block" /> who actually know.
-            </h1>
-            <p className="text-base text-white/55 leading-7 max-w-2xl mx-auto">
-              Ask Migi was built for one purpose — to connect people who have important, life-changing questions 
-              with verified career and immigration experts who can give real, practical answers. No generic advice. 
-              No search engine rabbit holes. Just clear guidance from professionals who've seen it all.
-            </p>
-          </div>
+        {/* Two tilted photo cards */}
+        <div className="relative mt-12 mb-2" style={{ height: "320px", width: "320px" }}>
+          {/* Left photo — tilted left */}
+          <img
+            src="/expert1.png"
+            alt="Expert consultant"
+            style={{
+              position: "absolute",
+              width: "160px",
+              right: "calc(50% + 4px)",
+              bottom: 0,
+              transform: "rotate(-6deg)",
+              transformOrigin: "bottom right",
+              filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))",
+            }}
+          />
+          {/* Right photo — tilted right */}
+          <img
+            src="/expert2.png"
+            alt="Expert advisor"
+            style={{
+              position: "absolute",
+              width: "160px",
+              left: "calc(50% + 4px)",
+              bottom: 0,
+              transform: "rotate(6deg)",
+              transformOrigin: "bottom left",
+              filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))",
+            }}
+          />
+        </div>
+      </section>
 
-          {/* How it works */}
-          <div>
-            <h2 className="text-xl font-bold text-white mb-6">How it works</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  step: "01",
-                  title: "Ask your question",
-                  desc: "Type your question — about visas, career moves, relocation, or anything in between. Use your coins to submit.",
-                },
-                {
-                  step: "02",
-                  title: "Expert reviews it",
-                  desc: "A verified expert is notified immediately. They review an AI-prepared draft, personalise it, and send their response.",
-                },
-                {
-                  step: "03",
-                  title: "You get a real answer",
-                  desc: "Within 6–12 hours you receive a detailed, expert-verified response by email — and it's saved in your chat history.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.step}
-                  className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-6 flex flex-col gap-3"
-                >
-                  <span className="text-3xl font-black text-white/10">{item.step}</span>
-                  <h3 className="text-base font-bold text-white">{item.title}</h3>
-                  <p className="text-sm text-white/50 leading-6">{item.desc}</p>
-                </div>
-              ))}
+      {/* ── How it works ──────────────────────────────────────────────────── */}
+      <section className="flex flex-col items-center px-5 pt-16 pb-12 md:pt-24 md:pb-16">
+        <div className="text-center mb-12 md:mb-16 max-w-lg">
+          <h2 className="text-3xl md:text-4xl font-black text-white">How it works</h2>
+          <p className="mt-4 text-sm md:text-base text-white/55 leading-7">
+            Getting started is easy — there are no hidden fees. Submit your question, and we'll connect
+            you with the right expert so you can get real answers fast.
+          </p>
+        </div>
+
+        <div className="w-full max-w-2xl flex flex-col gap-5 md:gap-6">
+          {/* Step 01 — left */}
+          <div className="self-start w-[85%] md:w-[75%]">
+            <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl px-6 py-6 flex items-start gap-5">
+              <div className="shrink-0 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
+                <span className="text-xs font-bold text-white/70">01</span>
+              </div>
+              <div>
+                <h3 className="text-lg md:text-xl font-black text-white leading-tight">Ask your question</h3>
+                <p className="mt-2 text-sm text-white/55 leading-6">
+                  Type your question — about visas, career moves, relocation, or anything in between.
+                  Use your coins to submit.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Why Ask Migi */}
-          <div className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-7 md:p-10">
-            <h2 className="text-xl font-bold text-white mb-4">Why Ask Migi exists</h2>
-            <p className="text-sm text-white/60 leading-7 mb-4">
-              Immigration and career decisions are some of the most consequential choices a person can make — yet 
-              getting trustworthy advice has historically meant expensive consultations, long waiting lists, or 
-              wading through unreliable information online.
-            </p>
-            <p className="text-sm text-white/60 leading-7 mb-4">
-              We built Ask Migi to change that. By combining the speed of AI with the judgment of real professionals, 
-              we give anyone access to high-quality, personalised guidance — at a fraction of the cost and none of the wait.
-            </p>
-            <p className="text-sm text-white/60 leading-7">
-              Every answer on our platform is reviewed and approved by a human expert before it reaches you. 
-              We believe you deserve more than an algorithm. You deserve someone who actually cares about getting it right.
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { value: "6–12h", label: "Response time" },
-              { value: "100%", label: "Expert reviewed" },
-              { value: "50+", label: "Countries covered" },
-              { value: "24/7", label: "Question submission" },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-5 text-center">
-                <p className="text-2xl font-black text-white mb-1">{stat.value}</p>
-                <p className="text-xs text-white/40">{stat.label}</p>
+          {/* Step 02 — right */}
+          <div className="self-end w-[85%] md:w-[75%]">
+            <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl px-6 py-6 flex items-start gap-5">
+              <div className="shrink-0 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
+                <span className="text-xs font-bold text-white/70">02</span>
               </div>
-            ))}
+              <div>
+                <h3 className="text-lg md:text-xl font-black text-white leading-tight">Expert reviews it</h3>
+                <p className="mt-2 text-sm text-white/55 leading-6">
+                  A verified expert is notified immediately. They review an AI-prepared draft,
+                  personalise it, and send their response.
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* CTA */}
-          <div className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-8 text-center">
-            <h2 className="text-xl font-bold text-white mb-3">Ready to get real answers?</h2>
-            <p className="text-sm text-white/55 leading-6 mb-6 max-w-lg mx-auto">
-              Create a free account and get 5 coins to ask your first questions. 
-              No commitment, no subscription — just expert answers when you need them.
-            </p>
-            <button
-              onClick={() => setAuthView("register")}
-              className="h-11 px-8 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
-              data-testid="button-about-signup"
-            >
-              Get started free
-            </button>
+          {/* Step 03 — left */}
+          <div className="self-start w-[85%] md:w-[75%]">
+            <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl px-6 py-6 flex items-start gap-5">
+              <div className="shrink-0 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center">
+                <span className="text-xs font-bold text-white/70">03</span>
+              </div>
+              <div>
+                <h3 className="text-lg md:text-xl font-black text-white leading-tight">You get a real answer</h3>
+                <p className="mt-2 text-sm text-white/55 leading-6">
+                  Within 6–12 hours you receive a detailed, expert-verified response — saved in
+                  your chat history and sent to your email.
+                </p>
+              </div>
+            </div>
           </div>
-
         </div>
-      </div>
+      </section>
+
+      {/* ── Stats ─────────────────────────────────────────────────────────── */}
+      <section className="px-5 pb-12 md:pb-16">
+        <div className="max-w-2xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { value: "6–12h", label: "Response time" },
+            { value: "100%", label: "Expert reviewed" },
+            { value: "50+", label: "Countries covered" },
+            { value: "24/7", label: "Question submission" },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-5 text-center">
+              <p className="text-2xl font-black text-white mb-1">{stat.value}</p>
+              <p className="text-xs text-white/40">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA ───────────────────────────────────────────────────────────── */}
+      <section className="px-5 pb-16 md:pb-20">
+        <div className="max-w-2xl mx-auto rounded-2xl border border-[#2e3032] bg-[#1a1c1e] p-8 text-center">
+          <h2 className="text-xl font-bold text-white mb-3">Ready to get real answers?</h2>
+          <p className="text-sm text-white/55 leading-6 mb-6 max-w-lg mx-auto">
+            Create a free account and ask your first questions.
+            No commitment, no subscription — just expert answers when you need them.
+          </p>
+          <button
+            onClick={() => setAuthView("register")}
+            className="h-11 px-8 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+            data-testid="button-about-signup"
+          >
+            Get started free
+          </button>
+        </div>
+      </section>
 
       <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
     </main>
