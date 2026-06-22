@@ -1,11 +1,12 @@
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/context/AuthContext";
+import { Preloader } from "@/components/Preloader";
 
 import { LandingPage } from "@/pages/LandingPage";
 import { ChatPage } from "@/pages/ChatPage";
@@ -68,11 +69,27 @@ function Router() {
 }
 
 function App() {
+  const [showPreloader, setShowPreloader] = useState<boolean>(() => {
+    try {
+      return !sessionStorage.getItem("askmigi_preloader_shown");
+    } catch {
+      return true;
+    }
+  });
+
+  const handlePreloaderComplete = useCallback(() => {
+    try {
+      sessionStorage.setItem("askmigi_preloader_shown", "1");
+    } catch { /* ignore */ }
+    setShowPreloader(false);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
+          {showPreloader && <Preloader onComplete={handlePreloaderComplete} />}
           <Router />
         </TooltipProvider>
       </AuthProvider>
