@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { NavBar } from "@/components/NavBar";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
+import { MobileEnquirySidebar } from "@/components/MobileEnquirySidebar";
 import { ChatInput } from "@/components/ChatInput";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
@@ -13,6 +14,7 @@ export const EnquiriesPage = (): JSX.Element => {
   const [, navigate] = useLocation();
   const [authView, setAuthView] = useState<AuthView>(null);
   const [activeId, setActiveId] = useState<string>("");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { isLoggedIn, isLoading: authLoading, refreshUser } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -88,7 +90,11 @@ export const EnquiriesPage = (): JSX.Element => {
 
   return (
     <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
-      <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
+      <NavBar
+        onLoginClick={() => setAuthView("login")}
+        onSignUpClick={() => setAuthView("register")}
+        onMenuClick={() => setMobileSidebarOpen(true)}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
@@ -165,6 +171,15 @@ export const EnquiriesPage = (): JSX.Element => {
           </div>
         </div>
       </div>
+
+      <MobileEnquirySidebar
+        open={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+        enquiries={sidebarItems}
+        activeId={activeId}
+        onSelect={setActiveId}
+        onNewQuestion={() => navigate("/")}
+      />
 
       <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
     </main>

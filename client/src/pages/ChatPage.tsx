@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
 import { NavBar } from "@/components/NavBar";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
@@ -10,6 +10,31 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
+
+function TypingText({ text, speed = 18 }: { text: string; speed?: number }) {
+  const [displayed, setDisplayed] = useState("");
+  const indexRef = useRef(0);
+
+  useEffect(() => {
+    setDisplayed("");
+    indexRef.current = 0;
+    const interval = setInterval(() => {
+      indexRef.current += 1;
+      setDisplayed(text.slice(0, indexRef.current));
+      if (indexRef.current >= text.length) clearInterval(interval);
+    }, speed);
+    return () => clearInterval(interval);
+  }, [text, speed]);
+
+  return (
+    <span>
+      {displayed}
+      {displayed.length < text.length && (
+        <span className="inline-block w-[2px] h-[1em] bg-white/50 align-middle ml-0.5 animate-pulse" />
+      )}
+    </span>
+  );
+}
 
 export const ChatPage = (): JSX.Element => {
   const [, navigate] = useLocation();
@@ -179,11 +204,14 @@ export const ChatPage = (): JSX.Element => {
                       <div className="ml-10 flex flex-col gap-3">
                         {activeEnquiry.analysis && (
                           <p className="text-sm text-white/70 leading-6">
-                            {activeEnquiry.analysis}
+                            <TypingText text={activeEnquiry.analysis} />
                           </p>
                         )}
                         <p className="text-sm text-white/60 leading-6">
-                          Your query has been sent to an expert who will get back to you within 6–12 hours. You'll be notified by email when your response is ready.
+                          <TypingText
+                            text="Your query has been sent to an expert who will get back to you within 6–12 hours. You'll be notified by email when your response is ready."
+                            speed={12}
+                          />
                         </p>
                       </div>
                     )}

@@ -31,7 +31,8 @@ You provide clear, accurate, and helpful advice to people asking questions about
 Keep responses concise but comprehensive — 2-4 paragraphs. 
 Focus on practical, actionable advice. 
 Always recommend consulting a licensed professional for specific legal advice.
-The user is asking about matters related to ${country}.`;
+The user is asking about matters related to ${country}.
+At the very end of your response, add one final sentence spoken in first person as the expert that creates urgency and personal value — something like "I can tell you exactly which [specific option/route/path] fits your situation and what your [chances/next steps/timeline] look like." Make it specific to what the user asked about.`;
 
   const completion = await client.chat.completions.create({
     model: "llama-3.3-70b-versatile",

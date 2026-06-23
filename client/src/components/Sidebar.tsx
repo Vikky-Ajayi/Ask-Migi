@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 
 interface SidebarProps {
@@ -13,10 +14,17 @@ interface SidebarProps {
 export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: SidebarProps) => {
   const [, navigate] = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
+  const { logout } = useAuth();
 
   const go = (path: string) => {
     navigate(path);
     onClose();
+  };
+
+  const handleLogout = () => {
+    logout();
+    onClose();
+    navigate("/");
   };
 
   if (!open) return null;
@@ -85,6 +93,16 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
           <NavItem label="Disclaimer" onClick={() => go("/disclaimer")} small />
           <NavItem label="Privacy Policy" onClick={() => go("/privacy-policy")} small />
           <NavItem label="Refund Policy" onClick={() => go("/refund-policy")} small />
+          {isLoggedIn && (
+            <button
+              onClick={handleLogout}
+              className="w-full text-left py-3 px-2 text-red-400/80 hover:text-red-400 text-xs font-medium rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
+              data-testid="sidebar-button-logout"
+            >
+              <LogOut size={13} />
+              Log out
+            </button>
+          )}
         </div>
       </aside>
     </>

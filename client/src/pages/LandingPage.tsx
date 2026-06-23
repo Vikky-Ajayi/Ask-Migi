@@ -91,6 +91,34 @@ export const LandingPage = (): JSX.Element => {
               </p>
             </div>
 
+            {isLoggedIn && sidebarItems.length > 0 && (
+              <div className="md:hidden flex flex-col gap-2">
+                <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-1">Recent Conversations</p>
+                <div className="flex flex-col gap-1">
+                  {sidebarItems.slice(0, 3).map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => navigate(`/chat?id=${item.id}`)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl bg-white/5 border border-white/8 hover:bg-white/10 transition-colors flex items-center justify-between gap-3"
+                    >
+                      <span className="text-sm text-white/70 truncate leading-5">{item.question}</span>
+                      <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${item.status === "answered" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                        {item.status === "answered" ? "Answered" : "Pending"}
+                      </span>
+                    </button>
+                  ))}
+                  {sidebarItems.length > 3 && (
+                    <button
+                      onClick={() => navigate("/enquiries")}
+                      className="text-xs text-white/40 hover:text-white/60 text-center py-1 transition-colors"
+                    >
+                      View all {sidebarItems.length} conversations →
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <ChatInput
               onSubmit={handleQuestionSubmit}
               showAudienceTabs={true}
