@@ -12,7 +12,8 @@ function getResend(): Resend {
   return resend;
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Ask MiGi <onboarding@resend.dev>";
+const _rawFrom = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+const FROM_EMAIL = _rawFrom.includes("<") ? _rawFrom : `Ask MiGi <${_rawFrom}>`;
 const SITE_URL = process.env.SITE_URL || "https://askmigi.com";
 
 // ─── Shared building blocks ───────────────────────────────────────────────────
