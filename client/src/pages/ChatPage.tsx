@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { NavBar } from "@/components/NavBar";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
 
+// ── Typing animation ──────────────────────────────────────────────────────────
 function TypingText({ text, speed = 18 }: { text: string; speed?: number }) {
   const [displayed, setDisplayed] = useState("");
   const indexRef = useRef(0);
@@ -36,6 +37,25 @@ function TypingText({ text, speed = 18 }: { text: string; speed?: number }) {
   );
 }
 
+// ── Casual message classifier (client-side, no network) ───────────────────────
+function isCasualMessage(msg: string): boolean {
+  const t = msg.toLowerCase().trim();
+  const patterns = [
+    /^(hi+|hello+|hey+|howdy|hiya|yo+|sup|greetings|salut|hola|bonjour|ciao)[\s!?.]*$/,
+    /^good\s*(morning|afternoon|evening|night|day)[\s!?.]*$/,
+    /^what'?s\s*up[\s!?.]*$/,
+    /^(thanks?|thank\s*you|cheers|appreciate\s*(it|that)?|ty|thx|ta|many\s*thanks)[\s!?.]*$/,
+    /^(great|amazing|wonderful|awesome|excellent|fantastic|brilliant|superb|outstanding|love\s*it|good\s*job|well\s*done|nice|cool|perfect|brilliant)[\s!?.]*$/,
+    /^(bye+|goodbye|see\s*you|take\s*care|later|cya|farewell|ttyl|gotta\s*go|good\s*bye)[\s!?.]*$/,
+    /^(ok+|okay|sure|yep|yeah|yup|nope|alright|fine|got\s*it|sounds?\s*good|understood|noted)[\s!?.]*$/,
+    /^(wow|lol|haha|ha|😊|👍|🙏|❤️|nice one|good one)[\s!?.]*$/,
+  ];
+  return patterns.some((re) => re.test(t));
+}
+
+type CasualMsg = { userMsg: string; aiReply: string };
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export const ChatPage = (): JSX.Element => {
   const [, navigate] = useLocation();
   const search = useSearch();
@@ -45,6 +65,7 @@ export const ChatPage = (): JSX.Element => {
   const [authView, setAuthView] = useState<AuthView>(null);
   const [activeId, setActiveId] = useState<string>(initialId);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [casualMsgs, setCasualMsgs] = useState<CasualMsg[]>([]);
   const hasAutoOpened = useRef(false);
 
   const { isLoggedIn, isLoading: authLoading, refreshUser } = useAuth();
@@ -58,7 +79,6 @@ export const ChatPage = (): JSX.Element => {
     refetchInterval: 5000,
   });
 
-  /* Auto-open the mobile sidebar the first time enquiries appear */
   useEffect(() => {
     if (!hasAutoOpened.current && enquiries.length > 0 && window.innerWidth < 768) {
       hasAutoOpened.current = true;
@@ -67,17 +87,30 @@ export const ChatPage = (): JSX.Element => {
   }, [enquiries]);
 
   useEffect(() => {
-    if (!activeId && enquiries.length > 0) {
-      setActiveId(enquiries[0].id);
-    }
+    if (!activeId && enquiries.length > 0) setActiveId(enquiries[0].id);
   }, [enquiries, activeId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeId]);
+  }, [activeId, casualMsgs]);
 
   const activeEnquiry = enquiries.find((e: any) => e.id === activeId);
 
+  // ── Casual chat mutation (free, no coins) ────────────────────────────────
+  const casualMutation = useMutation({
+    mutationFn: async (message: string) => {
+      const res = await apiRequest("POST", "/api/casual-chat", { message });
+      return res.json() as Promise<{ reply: string }>;
+    },
+    onSuccess: (data, variables) => {
+      setCasualMsgs((prev) => [...prev, { userMsg: variables, aiReply: data.reply }]);
+    },
+    onError: () => {
+      toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
+    },
+  });
+
+  // ── Enquiry mutation (costs coins) ───────────────────────────────────────
   const submitMutation = useMutation({
     mutationFn: async ({ question, country }: { question: string; country: string }) => {
       const res = await apiRequest("POST", "/api/enquiries", {
@@ -91,6 +124,7 @@ export const ChatPage = (): JSX.Element => {
       qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
       refreshUser();
       setActiveId(data.id);
+      setCasualMsgs([]);
     },
     onError: (e: any) => {
       if (e.message?.includes("402")) {
@@ -106,8 +140,16 @@ export const ChatPage = (): JSX.Element => {
 
   const handleSubmit = (question: string, _expertType: string, country: string) => {
     if (!isLoggedIn) { setAuthView("login"); return; }
-    submitMutation.mutate({ question, country });
+    const trimmed = question.trim();
+    if (!trimmed) return;
+    if (isCasualMessage(trimmed)) {
+      casualMutation.mutate(trimmed);
+    } else {
+      submitMutation.mutate({ question: trimmed, country });
+    }
   };
+
+  const isSubmitting = casualMutation.isPending || submitMutation.isPending;
 
   if (authLoading) {
     return (
@@ -125,7 +167,6 @@ export const ChatPage = (): JSX.Element => {
   }));
 
   const isAnswered = activeEnquiry?.status === "answered";
-  const isPending = !activeEnquiry || activeEnquiry.status === "pending" || activeEnquiry.status === "ai_draft";
 
   return (
     <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
@@ -141,7 +182,7 @@ export const ChatPage = (): JSX.Element => {
           <ChatSidebar
             enquiries={sidebarItems}
             activeId={activeId}
-            onSelect={setActiveId}
+            onSelect={(id) => { setActiveId(id); setCasualMsgs([]); }}
             onNewQuestion={() => navigate("/")}
             isLoading={enqLoading}
           />
@@ -155,12 +196,55 @@ export const ChatPage = (): JSX.Element => {
 
           <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
-              {!activeEnquiry && !enqLoading && (
+
+              {/* Casual exchange messages */}
+              {casualMsgs.map((cm, i) => (
+                <div key={i} className="flex flex-col gap-4">
+                  {/* User bubble */}
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                      <p className="text-sm text-white/90 leading-6">{cm.userMsg}</p>
+                    </div>
+                  </div>
+                  {/* AI reply bubble */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">
+                        M
+                      </div>
+                      <span className="text-sm font-semibold text-white/70">Ask MiGi</span>
+                    </div>
+                    <div className="ml-10">
+                      <p className="text-sm text-white/80 leading-6">
+                        <TypingText text={cm.aiReply} speed={16} />
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Pending casual reply indicator */}
+              {casualMutation.isPending && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                      <p className="text-sm text-white/90 leading-6">{casualMutation.variables}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-10">
+                    <span className="text-sm text-white/40 animate-pulse">Ask MiGi is typing…</span>
+                  </div>
+                </div>
+              )}
+
+              {/* No enquiry selected */}
+              {!activeEnquiry && !enqLoading && casualMsgs.length === 0 && !casualMutation.isPending && (
                 <div className="text-center text-white/40 py-16">
                   <p>No question selected. Use the input below to ask a question.</p>
                 </div>
               )}
 
+              {/* Active enquiry thread */}
               {activeEnquiry && (
                 <>
                   <div className="flex justify-end">
@@ -192,7 +276,6 @@ export const ChatPage = (): JSX.Element => {
                             — {activeEnquiry.answeredBy}
                           </p>
                         )}
-                        {/* Coin nudge */}
                         <div className="mt-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
                           <img src={coinImg} alt="coins" className="w-5 h-5 object-contain shrink-0" />
                           <p className="text-xs text-white/60 leading-5">
@@ -228,7 +311,7 @@ export const ChatPage = (): JSX.Element => {
               <ChatInput
                 onSubmit={handleSubmit}
                 showAudienceTabs={false}
-                isSubmitting={submitMutation.isPending}
+                isSubmitting={isSubmitting}
               />
               <p className="text-center text-xs text-white/40 leading-5">
                 By messaging Ask MiGi, you agree to our{" "}
@@ -243,7 +326,6 @@ export const ChatPage = (): JSX.Element => {
         </div>
       </div>
 
-      {/* Mobile: enquiry sidebar */}
       <MobileEnquirySidebar
         open={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}

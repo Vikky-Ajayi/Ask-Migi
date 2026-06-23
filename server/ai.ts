@@ -47,6 +47,29 @@ At the very end of your response, add one final sentence spoken in first person 
   return completion.choices[0]?.message?.content ?? "An expert will review your question and respond shortly.";
 }
 
+export async function generateCasualReply(message: string): Promise<string> {
+  const client = getGroq();
+
+  const systemPrompt = `You are Ask MiGi's friendly assistant. Users sometimes send greetings, thanks, compliments, or short casual messages instead of career/immigration questions.
+Respond warmly and briefly (1–2 sentences max). Acknowledge the message, then gently invite them to ask their career, immigration, or visa-related question.
+Be conversational and encouraging. Do not start with "I" and do not use emojis.`;
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message },
+      ],
+      max_tokens: 80,
+      temperature: 0.8,
+    });
+    return completion.choices[0]?.message?.content ?? "Great to hear from you! Feel free to ask any career or immigration question — I'm here to help.";
+  } catch {
+    return "Great to hear from you! Feel free to ask any career or immigration question — I'm here to help.";
+  }
+}
+
 export async function generateQuestionAnalysis(
   question: string,
   expertType: string,

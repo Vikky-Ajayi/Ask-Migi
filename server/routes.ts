@@ -10,7 +10,7 @@ import {
   deleteAuthToken,
 } from "./storage";
 import { randomInt, randomBytes, createHmac } from "crypto";
-import { generateAIResponse, generateQuestionAnalysis } from "./ai";
+import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail } from "./email";
 
 function getExpertMagicToken(): string {
@@ -208,10 +208,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json(enquiry);
   });
 
+  // POST /api/casual-chat — free, no coins, no enquiry created
+  app.post("/api/casual-chat", requireAuth, async (req, res) => {
+    const schema = z.object({ message: z.string().min(1) });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: "Message is required" });
+    const reply = await generateCasualReply(result.data.message);
+    return res.json({ reply });
+  });
+
   // POST /api/enquiries
   app.post("/api/enquiries", requireAuth, async (req, res) => {
     const schema = z.object({
-      question: z.string().min(10, "Question must be at least 10 characters"),
+      question: z.string().min(1, "Please enter a question"),
       expertType: z.enum(["immigration", "travel", "tour"]).default("immigration"),
       country: z.string().default("United Kingdom"),
     });
