@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, CircleUser, User, Settings, LogOut } from "lucide-react";
+import { ChevronDown, CircleUser, User, Settings, LogOut, Phone } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import coinImg from "@assets/coins_1781943901685.png";
+import { CallExpertModal } from "./CallExpertModal";
 
 interface DesktopNavProps {
   onLoginClick?: () => void;
@@ -16,6 +17,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
   const [, navigate] = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [callModalOpen, setCallModalOpen] = useState(false);
   const helpRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +37,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
   };
 
   return (
+    <>
     <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#161618] border-b border-white/5">
       {/* Logo */}
       <button onClick={() => navigate("/")} className="focus:outline-none" data-testid="nav-logo">
@@ -59,6 +62,16 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
           data-testid="nav-buy-coins"
         >
           Buy Coins
+        </button>
+
+        {/* Call an Expert */}
+        <button
+          onClick={() => setCallModalOpen(true)}
+          className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors"
+          data-testid="nav-call-expert"
+        >
+          <Phone size={14} />
+          Call an Expert
         </button>
 
         {/* Help */}
@@ -152,5 +165,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
         )}
       </div>
     </nav>
+    {callModalOpen && <CallExpertModal onClose={() => setCallModalOpen(false)} />}
+    </>
   );
 };

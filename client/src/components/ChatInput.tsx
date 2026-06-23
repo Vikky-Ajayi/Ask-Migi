@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { Paperclip, ArrowUp, ChevronDown, MessageCircle, Phone, X } from "lucide-react";
+import { Paperclip, ArrowUp, ChevronDown, MessageCircle, Phone } from "lucide-react";
 import coinImg from "@assets/coins_1781943901685.png";
 import ukFlagImg from "@assets/emojione_flag-for-united-kingdom_1781943901686.png";
+import { CallExpertModal, EXPERT_PHONE } from "./CallExpertModal";
 
 interface ChatInputProps {
   onSubmit?: (question: string, expertType: string, country: string) => void;
   showAudienceTabs?: boolean;
   isSubmitting?: boolean;
 }
-
-const EXPERT_PHONE = "+44 7700 900000";
 
 const countries = [
   { flag: null, flagImg: ukFlagImg, name: "United Kingdom" },
@@ -37,53 +36,6 @@ const CountryFlag = ({ country, size = 20 }: { country: typeof countries[0]; siz
   }
   return <span style={{ fontSize: size * 0.85 }}>{country.flag}</span>;
 };
-
-function CallExpertModal({ onClose }: { onClose: () => void }) {
-  return (
-    <>
-      <div
-        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className="w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 pt-6 pb-8 border border-white/10 shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold text-white">Call an Expert</h2>
-            <button
-              onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
-              data-testid="button-close-call-modal"
-            >
-              <X size={15} />
-            </button>
-          </div>
-
-          <div className="flex flex-col items-center gap-5 py-4">
-            <div className="h-16 w-16 rounded-full bg-[#22c55e]/15 flex items-center justify-center">
-              <Phone size={28} className="text-[#22c55e]" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-white/60 mb-2">Speak directly with a career expert</p>
-              <p className="text-xs text-white/40 leading-5">Available Mon–Fri, 9am–6pm (UK time)</p>
-            </div>
-            <a
-              href={`tel:${EXPERT_PHONE.replace(/\s/g, "")}`}
-              className="flex items-center gap-3 w-full px-5 py-4 rounded-2xl bg-[#22c55e]/10 border border-[#22c55e]/30 hover:bg-[#22c55e]/20 transition-colors"
-              data-testid="link-call-expert"
-            >
-              <Phone size={18} className="text-[#22c55e] shrink-0" />
-              <span className="text-xl font-bold text-white tracking-wide">{EXPERT_PHONE}</span>
-            </a>
-            <p className="text-xs text-white/30 text-center">Tap the number above to dial automatically</p>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
 
 export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = false }: ChatInputProps) => {
   const [question, setQuestion] = useState("");

@@ -227,7 +227,7 @@ export const ChatPage = (): JSX.Element => {
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-3">
               <ChatInput
                 onSubmit={handleSubmit}
-                showAudienceTabs={true}
+                showAudienceTabs={false}
                 isSubmitting={submitMutation.isPending}
               />
               <p className="text-center text-xs text-white/40 leading-5">

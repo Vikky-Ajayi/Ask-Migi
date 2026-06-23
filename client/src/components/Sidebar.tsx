@@ -1,7 +1,8 @@
 import { useLocation } from "wouter";
-import { X, ChevronDown, LogOut } from "lucide-react";
+import { X, ChevronDown, LogOut, Phone } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { CallExpertModal } from "./CallExpertModal";
 
 
 interface SidebarProps {
@@ -14,6 +15,7 @@ interface SidebarProps {
 export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: SidebarProps) => {
   const [, navigate] = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
+  const [callModalOpen, setCallModalOpen] = useState(false);
   const { logout } = useAuth();
 
   const go = (path: string) => {
@@ -71,6 +73,14 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
         <NavItem label="Previous Enquiries" onClick={() => go("/enquiries")} />
         <NavItem label="Buy Coins" onClick={() => go("/buy-coins")} />
         <NavItem label="About" onClick={() => go("/about")} />
+        <button
+          onClick={() => setCallModalOpen(true)}
+          className="w-full text-left py-3 px-2 text-white/80 hover:text-white font-medium rounded-lg hover:bg-white/5 transition-colors text-sm flex items-center gap-2"
+          data-testid="sidebar-call-expert"
+        >
+          <Phone size={15} className="text-white/50" />
+          Call an Expert
+        </button>
 
         <div>
           <button
@@ -105,6 +115,7 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
           )}
         </div>
       </aside>
+      {callModalOpen && <CallExpertModal onClose={() => setCallModalOpen(false)} />}
     </>
   );
 };

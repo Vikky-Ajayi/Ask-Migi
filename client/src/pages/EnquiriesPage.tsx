@@ -158,7 +158,7 @@ export const EnquiriesPage = (): JSX.Element => {
 
           <div className="border-t border-white/5 px-3 md:px-6 py-3 md:py-4 shrink-0">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-3">
-              <ChatInput onSubmit={handleSubmit} showAudienceTabs={true} isSubmitting={submitMutation.isPending} />
+              <ChatInput onSubmit={handleSubmit} showAudienceTabs={false} isSubmitting={submitMutation.isPending} />
               <p className="text-center text-xs text-white/40 leading-5">
                 By messaging Ask MiGi, you agree to our{" "}
                 <button onClick={() => navigate("/terms")} className="text-white/60 underline underline-offset-2">Terms of Use,</button>{" "}
