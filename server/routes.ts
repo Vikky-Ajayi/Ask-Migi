@@ -412,32 +412,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json({ profilePic: updated?.profilePic });
   });
 
-  // POST /api/admin/set-coins — admin endpoint to grant coins or unlimited access
-  app.post("/api/admin/set-coins", async (req, res) => {
-    const adminSecret = process.env.ADMIN_SECRET;
-    if (!adminSecret) return res.status(503).json({ message: "Admin not configured" });
-    const schema = z.object({
-      secret: z.string(),
-      email: z.string().email(),
-      coins: z.number().int().min(0).optional(),
-      unlimited: z.boolean().optional(),
-    });
-    const result = schema.safeParse(req.body);
-    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
-    if (result.data.secret !== adminSecret) return res.status(401).json({ message: "Invalid admin secret" });
-
-    const targetUser = await storage.getUserByEmail(result.data.email);
-    if (!targetUser) return res.status(404).json({ message: "User not found" });
-
-    if (result.data.unlimited !== undefined) {
-      await storage.setUserUnlimitedCoins(targetUser.id, result.data.unlimited);
-    }
-    if (result.data.coins !== undefined) {
-      await storage.setUserCoinsByEmail(result.data.email, result.data.coins);
-    }
-    const updated = await storage.getUser(targetUser.id);
-    return res.json({ success: true, user: { email: updated?.email, coins: updated?.coins, unlimitedCoins: updated?.unlimitedCoins } });
-  });
 
   // ── Experts ────────────────────────────────────────────────────────────────
 
