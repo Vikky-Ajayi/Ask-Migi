@@ -15,8 +15,9 @@ export const AboutPage = (): JSX.Element => {
           Clear answers from people<br className="hidden md:block" /> who actually know.
         </h1>
         <p className="mt-5 text-sm md:text-base text-white/55 leading-7 max-w-lg">
-          Are you looking for real guidance on immigration, careers, or life abroad? Ask Migi connects you
-          with verified experts and gives you honest answers — fast.
+          Looking for honest guidance on careers, job hunting, or finding sponsored roles or working
+          abroad? Ask Migi connects you with verified experts who've been there — and gives you real
+          answers, fast.
         </p>
         <div className="mt-8 flex items-center gap-3 flex-wrap justify-center">
           <button
@@ -51,8 +52,9 @@ export const AboutPage = (): JSX.Element => {
         <div className="text-center mb-12 md:mb-5 max-w-lg">
           <h2 className="text-3xl md:text-4xl font-black text-white">How it works</h2>
           <p className="mt-4 text-sm md:text-base text-white/55 leading-7">
-            Getting started is easy — there are no hidden fees. Submit your question, and we'll connect
-            you with the right expert so you can get real answers fast.
+            Whether you're exploring new opportunities, navigating a career change, or looking for
+            professional guidance, we're here to help. Submit your question, and we'll connect you with
+            the right expert to support your career journey.
           </p>
         </div>
 
@@ -66,8 +68,9 @@ export const AboutPage = (): JSX.Element => {
               <div>
                 <h3 className="text-lg md:text-xl font-black text-white leading-tight">Ask your question</h3>
                 <p className="mt-2 text-sm text-white/55 leading-6">
-                  Type your question — about visas, career moves, relocation, or anything in between.
-                  Use your coins to submit.
+                  Type your question — about career moves, finding jobs locally and internationally,
+                  sponsored roles abroad, levelling up your career, getting a promotion, or being the best at
+                  what you do. Message or call an expert — whichever works for you.
                 </p>
               </div>
             </div>
@@ -82,8 +85,8 @@ export const AboutPage = (): JSX.Element => {
               <div>
                 <h3 className="text-lg md:text-xl font-black text-white leading-tight">Expert reviews it</h3>
                 <p className="mt-2 text-sm text-white/55 leading-6">
-                  A verified expert is notified immediately. They review an AI-prepared draft,
-                  personalise it, and send their response.
+                  A career expert reviews your question and offers tailored guidance to help you
+                  kick-start your career or goals.
                 </p>
               </div>
             </div>

@@ -231,7 +231,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const user = (req as any).user;
     const coinsNeeded = 3;
 
-    if (user.coins < coinsNeeded) {
+    if (!user.unlimitedCoins && user.coins < coinsNeeded) {
       return res.status(402).json({ message: "Insufficient coins. Please purchase more coins." });
     }
 
@@ -253,7 +253,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       analysis: analysis || null,
     });
 
-    await storage.updateUserCoins(userId, -coinsNeeded);
+    if (!user.unlimitedCoins) {
+      await storage.updateUserCoins(userId, -coinsNeeded);
+    }
 
     // Notify expert of new question (non-blocking, include magic link)
     const expertEmail = process.env.EXPERT_EMAIL;
@@ -355,26 +357,86 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json(all);
   });
 
-  // PATCH /api/expert/questions/:id/answer — expert submits an answer
+  // GET /api/expert/answered — all answered enquiries (for edit history)
+  app.get("/api/expert/answered", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (user.role !== "expert") return res.status(403).json({ message: "Experts only" });
+    const all = await storage.getAllAnsweredEnquiries();
+    return res.json(all);
+  });
+
+  // PATCH /api/expert/questions/:id/answer — expert submits or edits an answer
   app.patch("/api/expert/questions/:id/answer", requireAuth, async (req, res) => {
     const user = (req as any).user;
     if (user.role !== "expert") return res.status(403).json({ message: "Experts only" });
-    const schema = z.object({ answer: z.string().min(10, "Answer too short") });
+    const schema = z.object({ answer: z.string().min(10, "Answer too short"), isEdit: z.boolean().optional() });
     const result = schema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
 
     const enquiry = await storage.getEnquiry(req.params.id);
     if (!enquiry) return res.status(404).json({ message: "Not found" });
-    if (enquiry.status === "answered") return res.status(400).json({ message: "Already answered" });
 
+    const isEdit = result.data.isEdit === true || enquiry.status === "answered";
     const answeredBy = `${user.firstName} ${user.lastName}`;
-    const updated = await storage.updateEnquiryAnswer(req.params.id, result.data.answer, answeredBy);
+    const updated = await storage.updateEnquiryAnswer(req.params.id, result.data.answer, answeredBy, "answered", user.profilePic ?? null);
 
-    const enquiryUser = await storage.getUser(enquiry.userId);
-    if (enquiryUser) {
-      sendExpertReplyEmail(enquiryUser.email, enquiryUser.firstName, enquiry.question, enquiry.id).catch(() => {});
+    if (!isEdit) {
+      const enquiryUser = await storage.getUser(enquiry.userId);
+      if (enquiryUser) {
+        sendExpertReplyEmail(enquiryUser.email, enquiryUser.firstName, enquiry.question, enquiry.id).catch(() => {});
+      }
     }
     return res.json(updated);
+  });
+
+  // GET /api/expert/profile-pic — public endpoint to get current expert's pic
+  app.get("/api/expert/profile-pic", async (_req, res) => {
+    try {
+      const expertEmail = process.env.EXPERT_EMAIL;
+      if (!expertEmail) return res.json({ profilePic: null });
+      const expertUser = await storage.getUserByEmail(expertEmail);
+      return res.json({ profilePic: expertUser?.profilePic ?? null });
+    } catch {
+      return res.json({ profilePic: null });
+    }
+  });
+
+  // POST /api/expert/profile-pic — upload expert's profile picture
+  app.post("/api/expert/profile-pic", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (user.role !== "expert") return res.status(403).json({ message: "Experts only" });
+    const schema = z.object({ imageData: z.string().min(1) });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: "imageData is required" });
+    const updated = await storage.updateUserProfilePic(user.id, result.data.imageData);
+    return res.json({ profilePic: updated?.profilePic });
+  });
+
+  // POST /api/admin/set-coins — admin endpoint to grant coins or unlimited access
+  app.post("/api/admin/set-coins", async (req, res) => {
+    const adminSecret = process.env.ADMIN_SECRET;
+    if (!adminSecret) return res.status(503).json({ message: "Admin not configured" });
+    const schema = z.object({
+      secret: z.string(),
+      email: z.string().email(),
+      coins: z.number().int().min(0).optional(),
+      unlimited: z.boolean().optional(),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+    if (result.data.secret !== adminSecret) return res.status(401).json({ message: "Invalid admin secret" });
+
+    const targetUser = await storage.getUserByEmail(result.data.email);
+    if (!targetUser) return res.status(404).json({ message: "User not found" });
+
+    if (result.data.unlimited !== undefined) {
+      await storage.setUserUnlimitedCoins(targetUser.id, result.data.unlimited);
+    }
+    if (result.data.coins !== undefined) {
+      await storage.setUserCoinsByEmail(result.data.email, result.data.coins);
+    }
+    const updated = await storage.getUser(targetUser.id);
+    return res.json({ success: true, user: { email: updated?.email, coins: updated?.coins, unlimitedCoins: updated?.unlimitedCoins } });
   });
 
   // ── Experts ────────────────────────────────────────────────────────────────
@@ -416,17 +478,107 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     try {
       const { createCheckout } = await import("./sumup.js");
-      const { checkoutId, payUrl } = await createCheckout({
+      const placeholderReturn = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}&checkoutId=PLACEHOLDER`;
+      const checkout = await createCheckout({
         reference,
         amount: price,
         currency,
         description: `${coinsAmount} Coins – Ask Migi`,
-        returnUrl: `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}&checkoutId=${checkoutId}`,
+        returnUrl: placeholderReturn.replace("PLACEHOLDER", ""),
       });
-      return res.json({ checkoutId, payUrl, reference });
+      const finalReturnUrl = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}&checkoutId=${checkout.checkoutId}`;
+      return res.json({ checkoutId: checkout.checkoutId, payUrl: checkout.payUrl, reference, returnUrl: finalReturnUrl });
     } catch (err: any) {
       console.error("[SUMUP] create-checkout error:", err.message);
       return res.status(502).json({ message: "Payment provider unavailable. Please try again later." });
+    }
+  });
+
+  // POST /api/coins/create-crypto-checkout — creates a NOWPayments invoice for crypto payment
+  app.post("/api/coins/create-crypto-checkout", requireAuth, async (req, res) => {
+    const schema = z.object({
+      coinsAmount: z.number().int().positive(),
+      price: z.number().positive(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
+
+    const nowpaymentsKey = process.env.NOWPAYMENTS_API_KEY;
+    if (!nowpaymentsKey) return res.status(503).json({ message: "Crypto payments are not yet configured. Please use card payment." });
+
+    const userId = (req as any).userId as string;
+    const { coinsAmount, price } = parsed.data;
+    const orderId = `migi-${userId.slice(0, 8)}-${coinsAmount}c-${Date.now()}`;
+
+    const host = process.env.REPLIT_DOMAINS
+      ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+      : (process.env.SITE_URL ?? `https://${req.hostname}`);
+
+    try {
+      const response = await fetch("https://api.nowpayments.io/v1/invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": nowpaymentsKey },
+        body: JSON.stringify({
+          price_amount: price,
+          price_currency: "gbp",
+          order_id: orderId,
+          order_description: `${coinsAmount} Coins – Ask Migi`,
+          success_url: `${host}/buy-coins?crypto_success=1&coins=${coinsAmount}`,
+          cancel_url: `${host}/buy-coins`,
+          ipn_callback_url: `${host}/api/coins/crypto-webhook`,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        console.error("[NOWPAYMENTS] invoice error:", err);
+        return res.status(502).json({ message: "Could not create crypto invoice. Please try card payment." });
+      }
+      const data = await response.json() as { invoice_url: string; id: string };
+      return res.json({ invoiceUrl: data.invoice_url, orderId });
+    } catch (err: any) {
+      console.error("[NOWPAYMENTS] error:", err.message);
+      return res.status(502).json({ message: "Crypto payment provider unavailable. Please try card payment." });
+    }
+  });
+
+  // POST /api/coins/crypto-webhook — NOWPayments IPN callback
+  app.post("/api/coins/crypto-webhook", async (req, res) => {
+    try {
+      const { payment_status, order_id } = req.body ?? {};
+      if (payment_status !== "finished" && payment_status !== "confirmed") {
+        return res.status(200).json({ received: true });
+      }
+      if (!order_id || typeof order_id !== "string") return res.status(400).json({ message: "Invalid order_id" });
+
+      // Parse order_id: format "migi-USERID8-Nc-TIMESTAMP"
+      const match = order_id.match(/^migi-([a-zA-Z0-9]{8})-(\d+)c-/);
+      if (!match) return res.status(400).json({ message: "Invalid order_id format" });
+
+      const partialUserId = match[1];
+      const coinsAmount = parseInt(match[2], 10);
+
+      // Find user by partial ID prefix
+      const { db } = await import("./db.js");
+      const { users: usersTable } = await import("../shared/schema.js");
+      const { sql: sqlFn } = await import("drizzle-orm");
+      const [targetUser] = await db.select().from(usersTable).where(sqlFn`${usersTable.id} LIKE ${partialUserId + "%"}`).limit(1);
+
+      if (!targetUser) {
+        console.error("[NOWPAYMENTS] user not found for order:", order_id);
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Idempotency: use orderId as sumupRef
+      const existing = await storage.getPurchaseBySumupRef(order_id);
+      if (!existing) {
+        await storage.createCoinPurchase({ userId: targetUser.id, coinsAmount, price: String(req.body.price_amount ?? 0), sumupRef: order_id });
+        await storage.updateUserCoins(targetUser.id, coinsAmount);
+      }
+
+      return res.status(200).json({ received: true });
+    } catch (err: any) {
+      console.error("[NOWPAYMENTS] webhook error:", err.message);
+      return res.status(500).json({ message: "Webhook processing error" });
     }
   });
 

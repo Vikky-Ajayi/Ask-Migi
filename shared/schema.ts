@@ -11,7 +11,9 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   password: text("password").notNull(),
   coins: integer("coins").notNull().default(0),
+  unlimitedCoins: boolean("unlimited_coins").notNull().default(false),
   role: text("role").notNull().default("user"), // "user" | "expert"
+  profilePic: text("profile_pic"), // base64 data URL or external URL
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -34,6 +36,8 @@ export const enquiries = pgTable("enquiries", {
   analysis: text("analysis"), // short AI analysis shown to user immediately
   answer: text("answer"),
   answeredBy: text("answered_by"),
+  answeredByPic: text("answered_by_pic"), // expert profile pic at time of answer
+  answerEditedAt: timestamp("answer_edited_at"), // last edit timestamp
   coinsUsed: integer("coins_used").notNull().default(3),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [

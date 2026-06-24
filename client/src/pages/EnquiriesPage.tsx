@@ -131,7 +131,11 @@ export const EnquiriesPage = (): JSX.Element => {
 
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">E</div>
+                      {activeEnquiry.answeredByPic ? (
+                        <img src={activeEnquiry.answeredByPic} alt="Expert" className="h-8 w-8 rounded-full object-cover border border-[#3a3c3e] shrink-0" />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">E</div>
+                      )}
                       <span className="text-sm font-semibold text-yellow-400">Expert</span>
                       <span className="text-xs text-yellow-400/70">· {activeEnquiry.status === "answered" ? "Answered" : "Pending response"}</span>
                     </div>

@@ -156,71 +156,81 @@ export async function sendExpertReplyEmail(
   const html = emailWrapper(`
     ${emailHeader()}
     <tr>
-      <td style="padding:28px 28px 0;">
-        <span style="display:inline-block;background:#22c55e;color:#ffffff;font-size:12px;font-weight:700;padding:5px 13px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.2px;">&#128139; New Response</span>
+      <td style="padding:36px 36px 0;">
+        <p style="margin:0 0 6px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">Expert Response</p>
+        <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.25;">Your answer is ready, ${firstName}.</h1>
+        <p style="margin:0;font-size:15px;color:#4b5563;font-family:Arial,Helvetica,sans-serif;line-height:1.65;">A verified career expert has reviewed your question and provided a personalised response to help you move forward.</p>
       </td>
     </tr>
     <tr>
-      <td style="padding:16px 28px 0;">
-        <h1 style="margin:0;font-size:22px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.3;">You've Got Feedback from an Expert! &#9997;&#65039;</h1>
+      <td style="padding:28px 36px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;">
+          <tr>
+            <td style="padding:20px 24px 16px;">
+              <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;">Your Question</p>
+              <p style="margin:0;font-size:14px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;font-style:italic;">&ldquo;${question.length > 120 ? question.slice(0, 120) + "…" : question}&rdquo;</p>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
     <tr>
-      <td style="padding:14px 28px 0;">
-        <p style="margin:0;font-size:15px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;"><strong>Hi ${firstName},</strong><br/>Great news! An expert has replied to your question and provided detailed guidance to help you move forward with confidence.</p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:24px 28px 0;">
+      <td style="padding:24px 36px 0;">
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
           <tr>
-            <td width="33%" style="text-align:center;padding:0 8px;">
-              <div style="font-size:36px;line-height:1;margin:0 0 8px;">&#9989;</div>
-              <p style="margin:0;font-size:12px;color:#374151;font-family:Arial,Helvetica,sans-serif;font-weight:600;">Verified Expert</p>
+            <td width="33%" style="padding:0 6px 0 0;vertical-align:top;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;">
+                <tr><td style="padding:16px 14px;">
+                  <p style="margin:0 0 5px;font-size:18px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;">01</p>
+                  <p style="margin:0;font-size:12px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;line-height:1.4;">Reviewed by a verified career expert</p>
+                </td></tr>
+              </table>
             </td>
-            <td width="33%" style="text-align:center;padding:0 8px;">
-              <div style="font-size:36px;line-height:1;margin:0 0 8px;">&#128203;</div>
-              <p style="margin:0;font-size:12px;color:#374151;font-family:Arial,Helvetica,sans-serif;font-weight:600;">Detailed Response</p>
+            <td width="33%" style="padding:0 3px;vertical-align:top;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;">
+                <tr><td style="padding:16px 14px;">
+                  <p style="margin:0 0 5px;font-size:18px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;">02</p>
+                  <p style="margin:0;font-size:12px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;line-height:1.4;">Tailored to your specific situation</p>
+                </td></tr>
+              </table>
             </td>
-            <td width="33%" style="text-align:center;padding:0 8px;">
-              <div style="font-size:36px;line-height:1;margin:0 0 8px;">&#128640;</div>
-              <p style="margin:0;font-size:12px;color:#374151;font-family:Arial,Helvetica,sans-serif;font-weight:600;">Next Steps</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:20px 28px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f5f5f5;border-radius:10px;border-left:4px solid #374151;">
-          <tr>
-            <td style="padding:18px 20px;">
-              <p style="margin:0 0 18px;font-size:14px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">Your immigration question has been answered by a verified professional. Log in now to read their comprehensive response.</p>
-              <div style="text-align:center;">
-                <a href="${chatUrl}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 28px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;">Read Expert Response</a>
-              </div>
+            <td width="33%" style="padding:0 0 0 6px;vertical-align:top;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;">
+                <tr><td style="padding:16px 14px;">
+                  <p style="margin:0 0 5px;font-size:18px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;">03</p>
+                  <p style="margin:0;font-size:12px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;line-height:1.4;">Actionable next steps included</p>
+                </td></tr>
+              </table>
             </td>
           </tr>
         </table>
       </td>
     </tr>
     <tr>
-      <td style="padding:20px 28px 0;">
-        <p style="margin:0;font-size:14px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">This is exactly why Ask Migi exists &ndash; to connect you with trusted experts who provide clear, actionable answers when you need them most.</p>
+      <td style="padding:28px 36px 0;text-align:center;">
+        <a href="${chatUrl}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:15px 36px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.01em;">Read Your Expert Response</a>
       </td>
     </tr>
     <tr>
-      <td style="padding:20px 28px 28px;">
-        <p style="margin:0;font-size:14px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.7;">Warm regards,<br/><strong>The Ask Migi Team</strong></p>
+      <td style="padding:28px 36px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e5e7eb;">
+          <tr><td style="padding-top:24px;">
+            <p style="margin:0 0 4px;font-size:14px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">Best regards,</p>
+            <p style="margin:0;font-size:14px;font-weight:700;color:#111827;font-family:Arial,Helvetica,sans-serif;">The Ask Migi Team</p>
+          </td></tr>
+        </table>
       </td>
     </tr>
+    <tr><td style="padding:20px 36px 32px;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">You're receiving this because you submitted a question on Ask Migi. If you have any issues accessing your response, contact us at <a href="mailto:support@askmigi.com" style="color:#6b7280;">support@askmigi.com</a></p>
+    </td></tr>
     ${emailFooter()}
   `);
 
   await client.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: "You've Got Feedback from an Expert! ✍️",
+    subject: `Your expert response is ready — Ask Migi`,
     html,
   });
 }

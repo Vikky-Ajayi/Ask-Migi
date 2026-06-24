@@ -8,7 +8,9 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   coins: number;
+  unlimitedCoins: boolean;
   role: string;
+  profilePic?: string | null;
 }
 
 interface AuthContextType {

@@ -57,13 +57,17 @@ export interface IStorage {
   updateUserCoins(userId: string, delta: number): Promise<User | undefined>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<boolean>;
   updateUserRole(userId: string, role: string): Promise<void>;
+  updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined>;
+  setUserUnlimitedCoins(userId: string, unlimited: boolean): Promise<User | undefined>;
+  setUserCoinsByEmail(email: string, coins: number): Promise<User | undefined>;
 
   // Enquiries
   getEnquiries(userId: string): Promise<Enquiry[]>;
   getAllPendingEnquiries(): Promise<Enquiry[]>;
+  getAllAnsweredEnquiries(): Promise<Enquiry[]>;
   getEnquiry(id: string): Promise<Enquiry | undefined>;
   createEnquiry(enquiry: InsertEnquiry): Promise<Enquiry>;
-  updateEnquiryAnswer(id: string, answer: string, answeredBy: string, status?: string): Promise<Enquiry | undefined>;
+  updateEnquiryAnswer(id: string, answer: string, answeredBy: string, status?: string, answeredByPic?: string | null): Promise<Enquiry | undefined>;
 
   // Experts (directory)
   getExperts(type?: string): Promise<Expert[]>;
@@ -137,6 +141,21 @@ class DatabaseStorage implements IStorage {
     await db.update(users).set({ role }).where(eq(users.id, userId));
   }
 
+  async updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ profilePic }).where(eq(users.id, userId)).returning();
+    return user;
+  }
+
+  async setUserUnlimitedCoins(userId: string, unlimited: boolean): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ unlimitedCoins: unlimited }).where(eq(users.id, userId)).returning();
+    return user;
+  }
+
+  async setUserCoinsByEmail(email: string, coins: number): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ coins }).where(eq(users.email, email.toLowerCase())).returning();
+    return user;
+  }
+
   // ── Enquiries ──────────────────────────────────────────────────────────────
 
   async getEnquiries(userId: string): Promise<Enquiry[]> {
@@ -168,12 +187,18 @@ class DatabaseStorage implements IStorage {
     return enquiry;
   }
 
-  async updateEnquiryAnswer(id: string, answer: string, answeredBy: string, status: string = "answered"): Promise<Enquiry | undefined> {
+  async updateEnquiryAnswer(id: string, answer: string, answeredBy: string, status: string = "answered", answeredByPic?: string | null): Promise<Enquiry | undefined> {
     const [enquiry] = await db.update(enquiries)
-      .set({ answer, answeredBy, status })
+      .set({ answer, answeredBy, status, ...(answeredByPic !== undefined ? { answeredByPic } : {}), answerEditedAt: new Date() })
       .where(eq(enquiries.id, id))
       .returning();
     return enquiry;
+  }
+
+  async getAllAnsweredEnquiries(): Promise<Enquiry[]> {
+    return db.select().from(enquiries)
+      .where(eq(enquiries.status, "answered"))
+      .orderBy(desc(enquiries.createdAt));
   }
 
   // ── Experts (directory) ────────────────────────────────────────────────────
