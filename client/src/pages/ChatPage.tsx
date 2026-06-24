@@ -12,20 +12,28 @@ import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
 
 // ── Typing animation ──────────────────────────────────────────────────────────
-function TypingText({ text, speed = 18 }: { text: string; speed?: number }) {
-  const [displayed, setDisplayed] = useState("");
-  const indexRef = useRef(0);
+// Tracks which animKeys have already completed so re-mounts show text instantly
+const _animatedKeys = new Set<string>();
+
+function TypingText({ text, speed = 18, animKey }: { text: string; speed?: number; animKey?: string }) {
+  const alreadyDone = animKey ? _animatedKeys.has(animKey) : false;
+  const [displayed, setDisplayed] = useState(alreadyDone ? text : "");
+  const indexRef = useRef(alreadyDone ? text.length : 0);
 
   useEffect(() => {
+    if (alreadyDone) return;
     setDisplayed("");
     indexRef.current = 0;
     const interval = setInterval(() => {
       indexRef.current += 1;
       setDisplayed(text.slice(0, indexRef.current));
-      if (indexRef.current >= text.length) clearInterval(interval);
+      if (indexRef.current >= text.length) {
+        clearInterval(interval);
+        if (animKey) _animatedKeys.add(animKey);
+      }
     }, speed);
     return () => clearInterval(interval);
-  }, [text, speed]);
+  }, [text, speed, alreadyDone]);
 
   return (
     <span>
@@ -252,13 +260,14 @@ export const ChatPage = (): JSX.Element => {
                       <div className="ml-10 flex flex-col gap-3">
                         {activeEnquiry.analysis && (
                           <p className="text-sm text-white/70 leading-6">
-                            <TypingText text={activeEnquiry.analysis} />
+                            <TypingText text={activeEnquiry.analysis} animKey={`analysis-${activeEnquiry.id}`} />
                           </p>
                         )}
                         <p className="text-sm text-white/60 leading-6">
                           <TypingText
                             text="Your query has been sent to an expert who will get back to you within 6–12 hours. You'll be notified by email when your response is ready."
                             speed={12}
+                            animKey={`pending-${activeEnquiry.id}`}
                           />
                         </p>
                       </div>
