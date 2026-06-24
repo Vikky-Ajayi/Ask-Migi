@@ -44,6 +44,9 @@ function isCasualMessage(msg: string): boolean {
     /^(hi+|hello+|hey+|howdy|hiya|yo+|sup|greetings|salut|hola|bonjour|ciao)[\s!?.]*$/,
     /^good\s*(morning|afternoon|evening|night|day)[\s!?.]*$/,
     /^what'?s\s*up[\s!?.]*$/,
+    /^how\s+are\s+(you|u|ya|yall|y'all)([\s?!.,]*(doing|going|feeling|been)?[\s?!.]*)?$/,
+    /^(how('?s| is)\s+(it\s+going|things?|life|everything)[\s?!.]*)$/,
+    /^(i('?m|\s+am)\s+)?(doing\s+)?(good|great|fine|okay|well|alright|not\s+bad|fantastic|wonderful|amazing)[\s!?.]*$/,
     /^(thanks?|thank\s*you|cheers|appreciate\s*(it|that)?|ty|thx|ta|many\s*thanks)[\s!?.]*$/,
     /^(great|amazing|wonderful|awesome|excellent|fantastic|brilliant|superb|outstanding|love\s*it|good\s*job|well\s*done|nice|cool|perfect|brilliant)[\s!?.]*$/,
     /^(bye+|goodbye|see\s*you|take\s*care|later|cya|farewell|ttyl|gotta\s*go|good\s*bye)[\s!?.]*$/,
@@ -197,46 +200,6 @@ export const ChatPage = (): JSX.Element => {
           <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
 
-              {/* Casual exchange messages */}
-              {casualMsgs.map((cm, i) => (
-                <div key={i} className="flex flex-col gap-4">
-                  {/* User bubble */}
-                  <div className="flex justify-end">
-                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
-                      <p className="text-sm text-white/90 leading-6">{cm.userMsg}</p>
-                    </div>
-                  </div>
-                  {/* AI reply bubble */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">
-                        M
-                      </div>
-                      <span className="text-sm font-semibold text-white/70">Ask MiGi</span>
-                    </div>
-                    <div className="ml-10">
-                      <p className="text-sm text-white/80 leading-6">
-                        <TypingText text={cm.aiReply} speed={16} />
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* Pending casual reply indicator */}
-              {casualMutation.isPending && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
-                      <p className="text-sm text-white/90 leading-6">{casualMutation.variables}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 ml-10">
-                    <span className="text-sm text-white/40 animate-pulse">Ask MiGi is typing…</span>
-                  </div>
-                </div>
-              )}
-
               {/* No enquiry selected */}
               {!activeEnquiry && !enqLoading && casualMsgs.length === 0 && !casualMutation.isPending && (
                 <div className="text-center text-white/40 py-16">
@@ -302,6 +265,46 @@ export const ChatPage = (): JSX.Element => {
                     )}
                   </div>
                 </>
+              )}
+
+              {/* Casual exchange messages — always rendered below the enquiry thread */}
+              {casualMsgs.map((cm, i) => (
+                <div key={i} className="flex flex-col gap-4">
+                  {/* User bubble */}
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                      <p className="text-sm text-white/90 leading-6">{cm.userMsg}</p>
+                    </div>
+                  </div>
+                  {/* AI reply bubble */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">
+                        M
+                      </div>
+                      <span className="text-sm font-semibold text-white/70">Ask MiGi</span>
+                    </div>
+                    <div className="ml-10">
+                      <p className="text-sm text-white/80 leading-6">
+                        <TypingText text={cm.aiReply} speed={16} />
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Pending casual reply indicator */}
+              {casualMutation.isPending && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
+                      <p className="text-sm text-white/90 leading-6">{casualMutation.variables}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-10">
+                    <span className="text-sm text-white/40 animate-pulse">Ask MiGi is typing…</span>
+                  </div>
+                </div>
               )}
 
               <div ref={messagesEndRef} />
