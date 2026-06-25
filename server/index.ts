@@ -21,14 +21,14 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://gateway.sumup.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://gateway.sumup.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://gateway.sumup.com", "https://js.sumup.com", "https://static.sumup.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://gateway.sumup.com", "https://static.sumup.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: ["'self'", "https:"],
-        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://gateway.sumup.com"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://gateway.sumup.com", "https://static.sumup.com"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
-        frameSrc: ["https://gateway.sumup.com"],
+        frameSrc: ["https://gateway.sumup.com", "https://checkout.sumup.com", "https://js.sumup.com", "https://static.sumup.com", "https://sumup.com", "https://pay.google.com"],
       },
     },
     crossOriginEmbedderPolicy: false,
