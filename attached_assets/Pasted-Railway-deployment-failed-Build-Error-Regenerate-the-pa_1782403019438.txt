@@ -1,0 +1,32 @@
+Railway deployment failed — Build Error
+
+Regenerate the package-lock.json file outside of Replit to fix this build failure. The lockfile contains Replit-internal package URLs (package-firewall.replit.local) that are unreachable from Railway's build environment. Previous builds succeeded because the npm install step was cached, but this build had a cache miss and tried to download packages from Replit's private registry proxy.
+
+Repository: https://github.com/Vikky-Ajayi/Ask-Migi
+Branch: main · Commit: e7bacab — Add pause on hover functionality to the scrolling ticker
+
+Introduce CSS class `.animate-marquee:hover` with `animation-play-state: paused;` in `client/src/index.css` to pause the marquee animation on hover.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: b3eb97d4-92ed-480e-9ef3-6d44ce74042d
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Event-Id: ad9d162a-4e0f-4c5d-90a0-d910298cdc78
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/c53cfc54-56f5-4573-af50-6efc19f348e5/b3eb97d4-92ed-480e-9ef3-6d44ce74042d/gbiv9AD
+Replit-Helium-Checkpoint-Created: true
+Deployment ID: fe3c7466-487f-4e2e-a57c-885d38a0338b
+Service ID: dea73645-d6c9-4721-83be-6890f0bd1c26
+Environment ID: 74538d85-756e-4068-a96c-407aa5452187
+
+---
+
+## Problem
+The build fails at the npm ci step with ENOTFOUND package-firewall.replit.local. Railway's Railpack builder (Node.js provider) runs npm ci, which strictly uses the resolved URLs from package-lock.json. The lockfile contains Replit-internal URLs like http://package-firewall.replit.local/npm/tsx/-/tsx-4.22.4.tgz that are unreachable outside Replit. The failure stage is BUILD_IMAGE and the error is confirmed in build logs: "npm error network request to http://package-firewall.replit.local/npm/tsx/-/tsx-4.22.4.tgz failed, reason: getaddrinfo ENOTFOUND package-firewall.replit.local".
+
+## Diagnosis
+The package-lock.json was generated inside Replit's environment, which routes npm through an internal proxy (package-firewall.replit.local). This proxy hostname is baked into the resolved fields throughout the lockfile for many packages (confirmed by reading package-lock.json which shows hundreds of "resolved": "http://package-firewall.replit.local/npm/..." entries). While .npmrc sets registry=https://registry.npmjs.org/, npm ci ignores the registry config and uses the exact resolved URLs from the lockfile. Previous builds succeeded due to build cache; this build had a cache miss, triggering actual downloads that failed.
+
+## Fix
+1. **File:** package-lock.json (repo root)
+2. **Current content:** Contains hundreds of "resolved": "http://package-firewall.replit.local/npm/..." entries throughout the file.
+3. **Required change:** Regenerate the entire package-lock.json by running `npm install` in an environment outside of Replit (locally, in CI, or in any standard environment with internet access to npmjs.org). This will produce a lockfile with standard https://registry.npmjs.org/ URLs. Commit and push the updated package-lock.json.
+4. **Why this fixes it:** With standard registry URLs, npm ci on Railway will be able to download all packages from the public npm registry without hitting Replit's internal proxy hostname.
