@@ -583,10 +583,20 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     try {
       const { getCheckoutStatus } = await import("./sumup.js");
-      const checkout = await getCheckoutStatus(checkoutId);
+
+      // Poll up to 8 times (×1.5 s apart = ~12 s total) — SumUp API lags behind the widget callback
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      let checkout = await getCheckoutStatus(checkoutId);
+      let attempts = 1;
+      while (checkout.status === "PENDING" && attempts < 8) {
+        await sleep(1500);
+        checkout = await getCheckoutStatus(checkoutId);
+        attempts++;
+        console.log(`[SUMUP] verify attempt ${attempts}: ${checkout.status}`);
+      }
 
       if (checkout.status !== "PAID") {
-        return res.status(402).json({ message: `Payment not completed (status: ${checkout.status}).` });
+        return res.status(402).json({ message: `Payment not completed (status: ${checkout.status}). If you were charged, please contact support.` });
       }
 
       const purchase = await storage.createCoinPurchase({
