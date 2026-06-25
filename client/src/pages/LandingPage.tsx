@@ -176,7 +176,7 @@ export const LandingPage = (): JSX.Element => {
           <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 md:py-12">
             <div className="w-full max-w-2xl flex flex-col gap-6 md:gap-8">
               <div className="flex flex-col items-center gap-4 text-center">
-                <img className="h-10 md:h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+                <img className="h-10 md:h-14 invert dark:invert-0" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
                 <p className="max-w-xl text-sm md:text-base text-th-text-70 leading-7">
                   Get expert career guidance every step of the way—whether you're planning your next move, navigating a career change, or seeking professional advice, our experts help you succeed with confidence.
                 </p>
