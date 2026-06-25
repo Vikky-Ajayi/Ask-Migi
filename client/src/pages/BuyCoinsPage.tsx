@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useEffect, useRef, useState } from "react";
 import { NavBar } from "@/components/NavBar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
@@ -7,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
-import { Loader2, CheckCircle2, CreditCard, Bitcoin } from "lucide-react";
+import { Loader2, CheckCircle2, CreditCard, Bitcoin, X } from "lucide-react";
 
 const coinPacks = [
   {
@@ -39,62 +38,125 @@ const coinPacks = [
 
 type PayMethod = "card" | "crypto";
 
+interface ActiveCheckout {
+  checkoutId: string;
+  reference: string;
+  coinsAmount: number;
+  price: string;
+}
+
+// ── SumUp card widget modal ────────────────────────────────────────────────
+const SUMUP_SDK = "https://gateway.sumup.com/gateway/ecom/card/v2/sdk.js";
+
+function SumUpModal({
+  checkout,
+  onSuccess,
+  onClose,
+}: {
+  checkout: ActiveCheckout;
+  onSuccess: () => void;
+  onClose: () => void;
+}) {
+  const didMount = useRef(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (didMount.current) return;
+    didMount.current = true;
+
+    const doMount = () => {
+      (window as any).SumUpCard?.mount({
+        id: "sumup-card-widget",
+        checkoutId: checkout.checkoutId,
+        onResponse: (type: string, body: any) => {
+          if (type === "success") {
+            onSuccess();
+          } else if (type === "error" || type === "failed") {
+            toast({
+              title: "Payment failed",
+              description: body?.message ?? "Please try again or use a different card.",
+              variant: "destructive",
+            });
+          }
+        },
+      });
+    };
+
+    const existing = document.getElementById("sumup-sdk-script");
+    if (existing && (window as any).SumUpCard) {
+      doMount();
+    } else if (existing) {
+      existing.addEventListener("load", doMount);
+    } else {
+      const script = document.createElement("script");
+      script.id = "sumup-sdk-script";
+      script.src = SUMUP_SDK;
+      script.async = true;
+      script.onload = doMount;
+      document.head.appendChild(script);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkout.checkoutId]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.72)" }}
+      data-testid="sumup-modal"
+    >
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <img src={coinImg} alt="coins" className="w-5 h-5 object-contain" />
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{checkout.coinsAmount} coins</p>
+              <p className="text-xs text-gray-400">Ask Migi</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-base font-bold text-gray-900">{checkout.price}</span>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+              data-testid="button-close-sumup"
+            >
+              <X size={17} />
+            </button>
+          </div>
+        </div>
+        {/* SumUp widget mounts here */}
+        <div className="p-5">
+          <div id="sumup-card-widget" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const BuyCoinsPage = (): JSX.Element => {
   const [authView, setAuthView] = useState<AuthView>(null);
-  const [, navigate] = useLocation();
-  const search = useSearch();
   const { isLoggedIn, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [payMethod, setPayMethod] = useState<PayMethod>("card");
+  const [activeCheckout, setActiveCheckout] = useState<ActiveCheckout | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
-  const [payMethod, setPayMethod] = useState<PayMethod>("card");
-
-  // ── Auto-verify after SumUp redirect back ─────────────────────────────────
-  useEffect(() => {
-    const params = new URLSearchParams(search);
-    const ref = params.get("ref");
-    const coins = params.get("coins");
-    const checkoutId = params.get("checkoutId");
-
-    if (!ref || !coins || !checkoutId || !isLoggedIn) return;
-
-    const coinsAmount = parseInt(coins, 10);
-    if (isNaN(coinsAmount)) return;
-
-    setVerifying(true);
-
-    const token = localStorage.getItem("askmigi_token");
-    fetch("/api/coins/verify-payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ checkoutId, coinsAmount, reference: ref }),
-    })
-      .then((r) => r.json())
-      .then(async (data) => {
-        if (data.success) {
-          await refreshUser();
-          setVerified(true);
-          toast({ title: "Payment confirmed!", description: `${coinsAmount} coins added to your account.` });
-          navigate("/buy-coins", { replace: true });
-        } else {
-          toast({ title: "Verification failed", description: data.message ?? "Please contact support.", variant: "destructive" });
-        }
-      })
-      .catch(() => {
-        toast({ title: "Verification error", description: "Please contact support.", variant: "destructive" });
-      })
-      .finally(() => setVerifying(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, isLoggedIn]);
 
   // ── SumUp card checkout ────────────────────────────────────────────────────
   const cardMutation = useMutation({
     mutationFn: async ({ coinsAmount, price, currency }: { coinsAmount: number; price: number; currency: string }) => {
       const res = await apiRequest("POST", "/api/coins/create-checkout", { coinsAmount, price, currency });
-      return res.json() as Promise<{ payUrl: string; checkoutId: string; reference: string; returnUrl: string }>;
+      return res.json() as Promise<{ checkoutId: string; reference: string }>;
     },
-    onSuccess: (data) => {
-      window.location.href = data.payUrl;
+    onSuccess: (data, variables) => {
+      const pack = coinPacks.find((p) => p.coins === variables.coinsAmount);
+      setActiveCheckout({
+        checkoutId: data.checkoutId,
+        reference: data.reference,
+        coinsAmount: variables.coinsAmount,
+        price: pack?.price ?? `£${variables.price.toFixed(2)}`,
+      });
     },
     onError: (e: any) => {
       toast({ title: "Could not start checkout", description: e.message || "Please try again.", variant: "destructive" });
@@ -111,7 +173,7 @@ export const BuyCoinsPage = (): JSX.Element => {
       window.open(data.invoiceUrl, "_blank", "noopener");
       toast({
         title: "Crypto payment opened",
-        description: "Complete your crypto payment in the new tab. Coins will be credited once confirmed.",
+        description: "Complete your payment in the new tab. Coins will be credited once confirmed.",
       });
     },
     onError: (e: any) => {
@@ -128,12 +190,51 @@ export const BuyCoinsPage = (): JSX.Element => {
     }
   };
 
+  // ── Called by SumUpModal on successful payment ─────────────────────────────
+  const handlePaymentSuccess = async () => {
+    if (!activeCheckout) return;
+    const { checkoutId, coinsAmount, reference } = activeCheckout;
+    setActiveCheckout(null);
+    setVerifying(true);
+
+    const token = localStorage.getItem("askmigi_token");
+    try {
+      const res = await fetch("/api/coins/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ checkoutId, coinsAmount, reference }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await refreshUser();
+        setVerified(true);
+        toast({ title: "Payment confirmed! 🎉", description: `${coinsAmount} coins added to your account.` });
+      } else {
+        toast({ title: "Verification failed", description: data.message ?? "Please contact support.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Verification error", description: "Please contact support.", variant: "destructive" });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const isPending = cardMutation.isPending || cryptoMutation.isPending;
 
   return (
     <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
+      {/* SumUp embedded payment modal */}
+      {activeCheckout && (
+        <SumUpModal
+          checkout={activeCheckout}
+          onSuccess={handlePaymentSuccess}
+          onClose={() => setActiveCheckout(null)}
+        />
+      )}
+
+      {/* Verifying overlay */}
       {verifying && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
           <div className="bg-th-sidebar border border-th-border-md rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm text-center">
