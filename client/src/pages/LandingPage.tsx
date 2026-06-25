@@ -66,11 +66,11 @@ function OthersAreAsking() {
   const items = [...OTHERS_ARE_ASKING, ...OTHERS_ARE_ASKING];
   return (
     <div className="w-full overflow-hidden">
-      <div className="flex gap-3 animate-marquee whitespace-nowrap">
+      <div className="flex gap-3 animate-marquee">
         {items.map((q, i) => (
           <span
             key={i}
-            className="inline-flex shrink-0 items-center px-4 py-2 rounded-full border border-th-border-md bg-th-hover text-xs text-th-text-60 hover:text-th-text-80 hover:border-th-border-strong transition-colors cursor-default leading-4"
+            className="inline-flex shrink-0 items-start px-4 py-2 rounded-2xl border border-th-border-md bg-th-hover text-xs text-th-text-60 hover:text-th-text-80 hover:border-th-border-strong transition-colors cursor-default leading-5 max-w-[220px] whitespace-normal"
           >
             {q}
           </span>
