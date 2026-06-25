@@ -200,7 +200,7 @@ export const BuyCoinsPage = (): JSX.Element => {
                 </div>
               )}
               <div className="flex justify-center">
-                <div className="inline-flex items-center gap-2 bg-[#252729] rounded-full px-4 py-2">
+                <div className="inline-flex items-center gap-2 bg-white dark:bg-[#252729] border border-th-border-md dark:border-transparent rounded-full px-4 py-2">
                   <img src={coinImg} alt="coins" className="w-5 h-5 object-contain" />
                   <span className="text-sm font-semibold text-th-text">{pack.coins} coins</span>
                 </div>
