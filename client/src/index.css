@@ -353,7 +353,7 @@ html { transition: background-color 0.2s ease, color 0.2s ease; }
 }
 
 .animate-marquee {
-  animation: marquee 70s linear infinite;
+  animation: marquee 90s linear infinite;
   will-change: transform;
   width: max-content;
 }
