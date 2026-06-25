@@ -481,8 +481,9 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
 
-    const nowpaymentsKey = process.env.NOWPAYMENTS_API_KEY;
+    const nowpaymentsKey = process.env.NOWPAYMENTS_API_KEY?.trim();
     if (!nowpaymentsKey) return res.status(503).json({ message: "Crypto payments are not yet configured. Please use card payment." });
+    console.log(`[NOWPAYMENTS] key length: ${nowpaymentsKey.length}, starts with: ${nowpaymentsKey.slice(0, 4)}...`);
 
     const userId = (req as any).userId as string;
     const { coinsAmount, price } = parsed.data;
