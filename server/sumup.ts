@@ -12,7 +12,7 @@ let cachedMerchantCode: string | null = null;
 export async function getMerchantCode(): Promise<string> {
   if (cachedMerchantCode) return cachedMerchantCode;
 
-  const res = await fetch(`${SUMUP_API}/v1/me`, {
+  const res = await fetch(`${SUMUP_API}/v0.1/me`, {
     headers: { Authorization: `Bearer ${getApiKey()}` },
   });
   if (!res.ok) {
