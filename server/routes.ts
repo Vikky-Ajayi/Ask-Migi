@@ -223,6 +223,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       question: z.string().min(1, "Please enter a question"),
       expertType: z.enum(["immigration", "travel", "tour"]).default("immigration"),
       country: z.string().default("United Kingdom"),
+      attachment: z.string().optional().nullable(),
+      attachmentName: z.string().optional().nullable(),
     });
     const result = schema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
@@ -251,6 +253,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       country: result.data.country,
       coinsUsed: coinsNeeded,
       analysis: analysis || null,
+      attachment: result.data.attachment ?? null,
+      attachmentName: result.data.attachmentName ?? null,
     });
 
     if (!user.unlimitedCoins) {

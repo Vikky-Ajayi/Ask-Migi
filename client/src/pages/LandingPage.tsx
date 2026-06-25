@@ -1,13 +1,88 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { NavBar } from "@/components/NavBar";
-import { ChatInput } from "@/components/ChatInput";
+import { ChatInput, type AttachmentData } from "@/components/ChatInput";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+const OTHERS_ARE_ASKING = [
+  "I've applied to 100 jobs and received no interviews. What am I doing wrong?",
+  "Why am I getting rejected for jobs abroad?",
+  "My Graduate Visa expires in 8 months. How do I find a sponsored job?",
+  "How do I find a sponsored job in the UK, Canada, or Australia?",
+  "How do I get a sponsored job abroad?",
+  "How do I find a cyber security job in the UK from India?",
+  "How do I stand out from hundreds of applicants?",
+  "Why do recruiters ignore international applicants?",
+  "Can you create a sponsorship strategy based on my profile?",
+  "How do I get more interview callbacks?",
+  "How do I find jobs that explicitly offer visa sponsorship?",
+  "What mistakes are stopping me from getting interviews?",
+  "How do I make my CV stand out internationally?",
+  "Why am I not getting job interviews?",
+  "How do recruiters view international applicants?",
+  "Which countries are hiring foreign tech professionals right now?",
+  "What skills should I learn to get hired faster?",
+  "Which certifications actually help me get hired?",
+  "How do I increase my chances of getting a visa-sponsored job?",
+  "How do I compete with local candidates abroad?",
+  "How do I get a job abroad from my country?",
+  "How do I apply for jobs in the UK, Canada, or Australia?",
+  "Can I get a job abroad with no international experience?",
+  "What is wrong with my CV?",
+  "Why do I get interviews but no job offers?",
+  "How do I pass technical interviews?",
+  "How do I prepare for interviews confidently?",
+  "How do I switch from a student visa to a work visa?",
+  "What salary do I need to qualify for sponsorship?",
+  "How do I find companies hiring international candidates?",
+  "What skills are most in demand globally right now?",
+  "How do I fix a CV that keeps getting rejected?",
+  "How do I write a CV for foreign employers?",
+  "What makes a CV pass ATS filters?",
+  "Can small companies sponsor foreign workers?",
+  "How many jobs should I apply to get interviews?",
+  "How do I handle tough interview questions?",
+  "How do I turn interviews into job offers?",
+  "What are common interview mistakes?",
+  "How do I stop freezing during interviews?",
+  "Which industries hire foreign workers the most?",
+  "How do I get into a high-paying career quickly?",
+  "Can I move into tech from a non-tech background?",
+  "How do I switch careers without starting over?",
+  "Can I change careers at 30 or 40?",
+  "What careers are easiest to switch into?",
+  "How do I build a clear career path from where I am now?",
+  "What skills help me switch careers faster?",
+  "How do I extend my stay abroad through a job?",
+  "Can I get a job abroad with no experience?",
+];
+
+function OthersAreAsking() {
+  const items = [...OTHERS_ARE_ASKING, ...OTHERS_ARE_ASKING];
+  return (
+    <div className="w-full">
+      <p className="text-[11px] font-semibold tracking-widest text-white/35 uppercase mb-3 px-1">Others are asking</p>
+      <div className="relative overflow-hidden">
+        <div className="flex gap-2 animate-marquee whitespace-nowrap">
+          {items.map((q, i) => (
+            <span
+              key={i}
+              className="inline-flex shrink-0 items-center px-3 py-2 rounded-full border border-white/10 bg-white/4 text-xs text-white/55 hover:text-white/80 hover:border-white/20 transition-colors cursor-default leading-4"
+              style={{ maxWidth: 260 }}
+            >
+              <span className="truncate">{q}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const LandingPage = (): JSX.Element => {
   const [, navigate] = useLocation();
@@ -16,22 +91,21 @@ export const LandingPage = (): JSX.Element => {
   const { toast } = useToast();
   const qc = useQueryClient();
 
+  const pendingRef = useRef<{ question: string; country: string; attachment?: AttachmentData | null } | null>(null);
+
   const { data: enquiries = [] } = useQuery<any[]>({
     queryKey: ["/api/enquiries"],
     enabled: isLoggedIn,
     refetchInterval: 5000,
   });
 
-  const handleQuestionSubmit = async (q: string, _expertType: string, country: string) => {
-    if (!isLoggedIn) {
-      setAuthView("login");
-      return;
-    }
+  const submitQuestion = useCallback(async (q: string, country: string, attachment?: AttachmentData | null) => {
     try {
       const res = await apiRequest("POST", "/api/enquiries", {
         question: q,
         expertType: "immigration",
         country,
+        ...(attachment ? { attachment: attachment.data, attachmentName: attachment.name } : {}),
       });
       const data = await res.json();
       await qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
@@ -47,7 +121,24 @@ export const LandingPage = (): JSX.Element => {
         toast({ title: "Error", description: e.message || "Failed to submit question.", variant: "destructive" });
       }
     }
+  }, [qc, refreshUser, navigate, toast]);
+
+  const handleQuestionSubmit = (q: string, _expertType: string, country: string, attachment?: AttachmentData | null) => {
+    if (!isLoggedIn) {
+      pendingRef.current = { question: q, country, attachment };
+      setAuthView("login");
+      return;
+    }
+    submitQuestion(q, country, attachment);
   };
+
+  const handleAuthSuccess = useCallback(async () => {
+    const pending = pendingRef.current;
+    if (pending) {
+      pendingRef.current = null;
+      await submitQuestion(pending.question, pending.country, pending.attachment);
+    }
+  }, [submitQuestion]);
 
   const sidebarItems: SidebarEnquiry[] = enquiries.map((e: any) => ({
     id: e.id,
@@ -124,6 +215,8 @@ export const LandingPage = (): JSX.Element => {
               showAudienceTabs={true}
             />
 
+            <OthersAreAsking />
+
             <p className="text-center text-xs md:text-sm text-white/50 leading-6">
               By messaging Ask MiGi, you agree to our{" "}
               <button onClick={() => navigate("/terms")} className="text-white underline underline-offset-2">Terms of Use,</button>{" "}
@@ -136,7 +229,12 @@ export const LandingPage = (): JSX.Element => {
         </div>
       </div>
 
-      <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
+      <AuthSheets
+        view={authView}
+        onViewChange={setAuthView}
+        onClose={() => setAuthView(null)}
+        onSuccess={handleAuthSuccess}
+      />
     </main>
   );
 };

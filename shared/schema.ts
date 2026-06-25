@@ -39,6 +39,8 @@ export const enquiries = pgTable("enquiries", {
   answeredByPic: text("answered_by_pic"), // expert profile pic at time of answer
   answerEditedAt: timestamp("answer_edited_at"), // last edit timestamp
   coinsUsed: integer("coins_used").notNull().default(3),
+  attachment: text("attachment"), // base64 data URL of uploaded file (e.g. CV/resume)
+  attachmentName: text("attachment_name"), // original filename
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [
   index("enquiries_user_id_idx").on(t.userId),

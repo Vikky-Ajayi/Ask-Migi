@@ -151,7 +151,7 @@ export const BuyCoinsPage = (): JSX.Element => {
       <div className="flex flex-1 flex-col items-center justify-center px-4 md:px-6 py-10 md:py-16">
         <div className="text-center mb-8 md:mb-10">
           <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight">Buy coins</h1>
-          <p className="mt-4 text-sm md:text-base text-white/50">Coins help you get answers to your questions</p>
+          <p className="mt-4 text-sm md:text-base text-white/50">Coins unlock expert answers to your questions. Choose the payment method that works best for you and get started in seconds.</p>
         </div>
 
         {verified && (
@@ -183,7 +183,7 @@ export const BuyCoinsPage = (): JSX.Element => {
 
         {payMethod === "crypto" && (
           <div className="mb-6 max-w-md text-center px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
-            <p className="text-xs text-amber-300/80 leading-5">Crypto payments are processed via NOWPayments. Coins are credited once the transaction is confirmed on-chain (typically 10–30 minutes).</p>
+            <p className="text-xs text-amber-300/80 leading-5">Cryptocurrency payments are credited after the transaction has been confirmed on the blockchain, which usually takes 10–30 minutes.</p>
           </div>
         )}
 
@@ -233,8 +233,8 @@ export const BuyCoinsPage = (): JSX.Element => {
 
         <p className="mt-8 text-xs text-white/30 text-center">
           {payMethod === "card"
-            ? "Card payments processed securely by SumUp. All purchases are final. Coins are non-refundable."
-            : "Crypto payments processed by NOWPayments. Prices shown in GBP equivalent. Coins are non-refundable."}
+            ? "Card payments processed securely. All purchases are final. Coins are non-refundable."
+            : "Cryptocurrency payments are credited after the transaction has been confirmed on the blockchain, which usually takes 10–30 minutes."}
         </p>
       </div>
 

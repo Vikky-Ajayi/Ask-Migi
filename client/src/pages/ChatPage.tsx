@@ -252,7 +252,7 @@ export const ChatPage = (): JSX.Element => {
                         <div className="mt-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
                           <img src={coinImg} alt="coins" className="w-5 h-5 object-contain shrink-0" />
                           <p className="text-xs text-white/60 leading-5">
-                            Want more detail? Ask a follow-up question below using your coins.
+                            Want more detail? Ask a follow-up question below.
                           </p>
                         </div>
                       </div>

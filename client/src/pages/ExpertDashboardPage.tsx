@@ -205,6 +205,18 @@ export const ExpertDashboardPage = () => {
             <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Question</p>
             <p className="text-base text-white leading-relaxed">{selectedEnquiry.question}</p>
             {selectedEnquiry.country && <p className="text-xs text-white/40 mt-3">📍 {selectedEnquiry.country}</p>}
+            {selectedEnquiry.attachment && selectedEnquiry.attachmentName && (
+              <div className="mt-4 pt-4 border-t border-white/8">
+                <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Attached File</p>
+                <a
+                  href={selectedEnquiry.attachment}
+                  download={selectedEnquiry.attachmentName}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/8 border border-white/15 text-xs text-white/70 hover:text-white hover:bg-white/12 transition-colors"
+                >
+                  📎 {selectedEnquiry.attachmentName}
+                </a>
+              </div>
+            )}
           </div>
           {isEditMode && (
             <div className="bg-[#2a1a0d] border border-[#5a3a1a] rounded-2xl p-4 mb-4 flex items-start gap-3">
