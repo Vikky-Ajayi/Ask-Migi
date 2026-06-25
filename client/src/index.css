@@ -357,6 +357,10 @@ html { transition: background-color 0.2s ease, color 0.2s ease; }
   will-change: transform;
 }
 
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 .preloader-scanline {
   position: absolute;
   inset: 0;
