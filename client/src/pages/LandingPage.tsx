@@ -65,20 +65,16 @@ const OTHERS_ARE_ASKING = [
 function OthersAreAsking() {
   const items = [...OTHERS_ARE_ASKING, ...OTHERS_ARE_ASKING];
   return (
-    <div className="w-full">
-      <p className="text-[11px] font-semibold tracking-widest text-white/35 uppercase mb-3 px-1">Others are asking</p>
-      <div className="relative overflow-hidden">
-        <div className="flex gap-2 animate-marquee whitespace-nowrap">
-          {items.map((q, i) => (
-            <span
-              key={i}
-              className="inline-flex shrink-0 items-center px-3 py-2 rounded-full border border-white/10 bg-white/4 text-xs text-white/55 hover:text-white/80 hover:border-white/20 transition-colors cursor-default leading-4"
-              style={{ maxWidth: 260 }}
-            >
-              <span className="truncate">{q}</span>
-            </span>
-          ))}
-        </div>
+    <div className="w-full overflow-hidden">
+      <div className="flex gap-3 animate-marquee whitespace-nowrap">
+        {items.map((q, i) => (
+          <span
+            key={i}
+            className="inline-flex shrink-0 items-center px-4 py-2 rounded-full border border-white/10 bg-white/4 text-xs text-white/55 hover:text-white/80 hover:border-white/20 transition-colors cursor-default leading-4"
+          >
+            {q}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -173,50 +169,62 @@ export const LandingPage = (): JSX.Element => {
           </div>
         )}
 
-        <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 md:py-12">
-          <div className="w-full max-w-2xl flex flex-col gap-6 md:gap-8">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <img className="h-10 md:h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-              <p className="max-w-xl text-sm md:text-base text-white/70 leading-7">
-                Get expert career guidance every step of the way—whether you're planning your next move, navigating a career change, or seeking professional advice, our experts help you succeed with confidence.
-              </p>
-            </div>
+        {/* Right panel — stacks vertically so ticker can be full-width */}
+        <div className="flex flex-1 flex-col min-w-0">
 
-            {isLoggedIn && sidebarItems.length > 0 && (
-              <div className="md:hidden flex flex-col gap-2">
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-1">Recent Conversations</p>
-                <div className="flex flex-col gap-1">
-                  {sidebarItems.slice(0, 3).map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => navigate(`/chat?id=${item.id}`)}
-                      className="w-full text-left px-3 py-2.5 rounded-xl bg-white/5 border border-white/8 hover:bg-white/10 transition-colors flex items-center justify-between gap-3"
-                    >
-                      <span className="text-sm text-white/70 truncate leading-5">{item.question}</span>
-                      <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${item.status === "answered" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
-                        {item.status === "answered" ? "Answered" : "Pending"}
-                      </span>
-                    </button>
-                  ))}
-                  {sidebarItems.length > 3 && (
-                    <button
-                      onClick={() => navigate("/enquiries")}
-                      className="text-xs text-white/40 hover:text-white/60 text-center py-1 transition-colors"
-                    >
-                      View all {sidebarItems.length} conversations →
-                    </button>
-                  )}
-                </div>
+          {/* Centred content block */}
+          <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 md:py-12">
+            <div className="w-full max-w-2xl flex flex-col gap-6 md:gap-8">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <img className="h-10 md:h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+                <p className="max-w-xl text-sm md:text-base text-white/70 leading-7">
+                  Get expert career guidance every step of the way—whether you're planning your next move, navigating a career change, or seeking professional advice, our experts help you succeed with confidence.
+                </p>
               </div>
-            )}
 
-            <ChatInput
-              onSubmit={handleQuestionSubmit}
-              showAudienceTabs={true}
-            />
+              {isLoggedIn && sidebarItems.length > 0 && (
+                <div className="md:hidden flex flex-col gap-2">
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-1">Recent Conversations</p>
+                  <div className="flex flex-col gap-1">
+                    {sidebarItems.slice(0, 3).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => navigate(`/chat?id=${item.id}`)}
+                        className="w-full text-left px-3 py-2.5 rounded-xl bg-white/5 border border-white/8 hover:bg-white/10 transition-colors flex items-center justify-between gap-3"
+                      >
+                        <span className="text-sm text-white/70 truncate leading-5">{item.question}</span>
+                        <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${item.status === "answered" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                          {item.status === "answered" ? "Answered" : "Pending"}
+                        </span>
+                      </button>
+                    ))}
+                    {sidebarItems.length > 3 && (
+                      <button
+                        onClick={() => navigate("/enquiries")}
+                        className="text-xs text-white/40 hover:text-white/60 text-center py-1 transition-colors"
+                      >
+                        View all {sidebarItems.length} conversations →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
+              <ChatInput
+                onSubmit={handleQuestionSubmit}
+                showAudienceTabs={true}
+              />
+            </div>
+          </div>
+
+          {/* Full-width ticker strip — spans edge-to-edge of the right panel */}
+          <div className="w-full border-t border-b border-white/5 py-4">
+            <p className="text-[11px] font-semibold tracking-widest text-white/35 uppercase mb-3 px-4 md:px-6">Others are asking</p>
             <OthersAreAsking />
+          </div>
 
+          {/* Terms — centred below ticker */}
+          <div className="flex justify-center px-4 py-6">
             <p className="text-center text-xs md:text-sm text-white/50 leading-6">
               By messaging Ask MiGi, you agree to our{" "}
               <button onClick={() => navigate("/terms")} className="text-white underline underline-offset-2">Terms of Use,</button>{" "}
@@ -226,6 +234,7 @@ export const LandingPage = (): JSX.Element => {
               <button onClick={() => navigate("/refund-policy")} className="text-white underline underline-offset-2">Refund Policy</button>.
             </p>
           </div>
+
         </div>
       </div>
 
