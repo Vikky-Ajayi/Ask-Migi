@@ -77,7 +77,7 @@ const CURRENCIES: { code: string; flag?: string; flagImg?: string }[] = [
 function Checkbox({ checked }: { checked: boolean }) {
   return (
     <span className={`flex-shrink-0 h-[18px] w-[18px] rounded-[4px] border flex items-center justify-center transition-colors ${
-      checked ? "bg-white border-white" : "border-white/30 bg-transparent"
+      checked ? "bg-white border-white" : "border-th-border-strong bg-transparent"
     }`}>
       {checked && <Check size={11} strokeWidth={3} className="text-black" />}
     </span>
@@ -115,49 +115,49 @@ function CountryMultiSelect({
     <div ref={ref} className="relative">
       <div
         onClick={() => setOpen((o) => !o)}
-        className="min-h-[44px] w-full rounded-xl bg-[#1e2022] border border-[#2e3032] px-3 py-2 flex items-center gap-2 flex-wrap cursor-pointer hover:border-white/20 transition-colors"
+        className="min-h-[44px] w-full rounded-xl bg-th-card-alt border border-th-border-md px-3 py-2 flex items-center gap-2 flex-wrap cursor-pointer hover:border-th-border-strong transition-colors"
       >
         {selected.map((c) => (
           <span
             key={c}
             onClick={(e) => { e.stopPropagation(); toggle(c); }}
-            className="flex items-center gap-1 bg-[#2a2c2e] border border-[#3e4042] text-white text-xs rounded-md px-2 py-1 cursor-pointer hover:border-white/20"
+            className="flex items-center gap-1 bg-th-card-hover border border-th-border-md text-th-text text-xs rounded-md px-2 py-1 cursor-pointer hover:border-th-border-strong"
           >
             {c}
-            <X size={10} className="text-white/50" />
+            <X size={10} className="text-th-text-50" />
           </span>
         ))}
         {selected.length === 0 && (
-          <span className="text-sm text-white/30">Select countries…</span>
+          <span className="text-sm text-th-text-30">Select countries…</span>
         )}
-        <ChevronDown size={16} className={`ml-auto text-white/40 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={16} className={`ml-auto text-th-text-40 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </div>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-[#1a1c1e] border border-[#2e3032] rounded-xl shadow-2xl z-20 flex flex-col">
-          <div className="p-2 border-b border-[#2e3032]">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-th-sidebar border border-th-border-md rounded-xl shadow-2xl z-20 flex flex-col">
+          <div className="p-2 border-b border-th-border-md">
             <input
               autoFocus
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search countries…"
-              className="w-full h-9 bg-[#1e2022] border border-[#2e3032] rounded-lg px-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+              className="w-full h-9 bg-th-card-alt border border-th-border-md rounded-lg px-3 text-sm text-th-text placeholder:text-th-text-30 focus:outline-none focus:border-th-border-strong"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
           <div className="max-h-48 overflow-y-auto">
             {filtered.length === 0 ? (
-              <p className="text-center text-sm text-white/40 py-4">No results</p>
+              <p className="text-center text-sm text-th-text-40 py-4">No results</p>
             ) : (
               filtered.map((c) => (
                 <button
                   key={c}
                   onClick={() => { toggle(c); setSearch(""); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-between"
+                  className="w-full text-left px-4 py-2.5 text-sm text-th-text-70 hover:text-th-text hover:bg-th-hover transition-colors flex items-center justify-between"
                 >
                   {c}
-                  {selected.includes(c) && <Check size={13} className="text-white/60" />}
+                  {selected.includes(c) && <Check size={13} className="text-th-text-60" />}
                 </button>
               ))
             )}
@@ -171,10 +171,10 @@ function CountryMultiSelect({
 function SuccessModal({ onClose, onPromote }: { onClose: () => void; onPromote: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-[#0f1011] border border-[#2e3032] rounded-2xl p-7 shadow-2xl flex flex-col items-center text-center gap-5 relative">
+      <div className="w-full max-w-sm bg-[#0f1011] border border-th-border-md rounded-2xl p-7 shadow-2xl flex flex-col items-center text-center gap-5 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-[#1e2022] text-white/50 hover:text-white transition-colors"
+          className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-th-card-alt text-th-text-50 hover:text-th-text transition-colors"
         >
           <X size={15} />
         </button>
@@ -184,8 +184,8 @@ function SuccessModal({ onClose, onPromote }: { onClose: () => void; onPromote: 
         </div>
 
         <div>
-          <h2 className="text-xl font-bold text-white mb-2">Service Created Successfully</h2>
-          <p className="text-sm text-white/55 leading-6">
+          <h2 className="text-xl font-bold text-th-text mb-2">Service Created Successfully</h2>
+          <p className="text-sm text-th-text-60 leading-6">
             Your travel agency service is live! Promote it to boost visibility and start getting bookings faster.
           </p>
         </div>
@@ -193,13 +193,13 @@ function SuccessModal({ onClose, onPromote }: { onClose: () => void; onPromote: 
         <div className="w-full flex flex-col gap-3">
           <button
             onClick={onClose}
-            className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+            className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
           >
             Proceed Without Promotion
           </button>
           <button
             onClick={onPromote}
-            className="w-full h-12 rounded-full bg-[#1a1c1e] border border-[#2e3032] text-white font-semibold text-sm hover:bg-[#2a2c2e] transition-colors"
+            className="w-full h-12 rounded-full bg-th-sidebar border border-th-border-md text-th-text font-semibold text-sm hover:bg-th-card-hover transition-colors"
           >
             Promote with coins
           </button>
@@ -284,22 +284,22 @@ export const ExpertCreateServicePage = () => {
         {/* Back + title */}
         <button
           onClick={() => step === 1 ? navigate("/expert-dashboard") : setStep(1)}
-          className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-4"
+          className="flex items-center gap-1.5 text-sm text-th-text-50 hover:text-th-text transition-colors mb-4"
         >
           <ArrowLeft size={14} />
           Back
         </button>
-        <h1 className="text-2xl font-bold text-white mb-5">Set up your service</h1>
+        <h1 className="text-2xl font-bold text-th-text mb-5">Set up your service</h1>
 
         {/* Card */}
-        <div className="bg-[#161618] border border-[#2e3032] rounded-2xl overflow-hidden">
+        <div className="bg-th-page border border-th-border-md rounded-2xl overflow-hidden">
 
           {/* Card header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-[#2e3032]">
-            <h2 className="text-base font-semibold text-white">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-th-border-md">
+            <h2 className="text-base font-semibold text-th-text">
               {step === 1 ? "What type of services do you provide" : "Select the type of Visa assistance you offer"}
             </h2>
-            <span className="text-xs font-medium text-white/50 bg-[#1e2022] border border-[#2e3032] rounded-lg px-2.5 py-1 shrink-0 ml-4">
+            <span className="text-xs font-medium text-th-text-50 bg-th-card-alt border border-th-border-md rounded-lg px-2.5 py-1 shrink-0 ml-4">
               {step} of 2
             </span>
           </div>
@@ -312,20 +312,20 @@ export const ExpertCreateServicePage = () => {
               <>
                 {/* Business name (hidden from reference but needed for API) */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-white/55">Business / Agency Name</label>
+                  <label className="text-sm text-th-text-60">Business / Agency Name</label>
                   <input
                     type="text"
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="e.g. Global Journeys Travel"
-                    className="h-11 rounded-xl bg-[#1e2022] border border-[#2e3032] px-4 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none transition-colors"
+                    className="h-11 rounded-xl bg-th-card-alt border border-th-border-md px-4 text-sm text-th-text placeholder:text-th-text-30 focus:border-th-border-strong focus:outline-none transition-colors"
                   />
                 </div>
 
                 {/* Service types checkboxes */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm text-white/55">What type of Services do you provide</label>
-                  <div className="border border-[#2e3032] rounded-xl overflow-hidden divide-y divide-[#2e3032]">
+                  <label className="text-sm text-th-text-60">What type of Services do you provide</label>
+                  <div className="border border-th-border-md rounded-xl overflow-hidden divide-y divide-[#2e3032]">
                     {SERVICE_TYPES.map((t) => (
                       <button
                         key={t}
@@ -333,7 +333,7 @@ export const ExpertCreateServicePage = () => {
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-white/[0.03] transition-colors"
                       >
                         <Checkbox checked={serviceTypes.includes(t)} />
-                        <span className={serviceTypes.includes(t) ? "text-white" : "text-white/70"}>{t}</span>
+                        <span className={serviceTypes.includes(t) ? "text-th-text" : "text-th-text-70"}>{t}</span>
                       </button>
                     ))}
                   </div>
@@ -341,39 +341,39 @@ export const ExpertCreateServicePage = () => {
 
                 {/* Countries multi-select */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-white/55">What countries do you provide visa assistance for?</label>
+                  <label className="text-sm text-th-text-60">What countries do you provide visa assistance for?</label>
                   <CountryMultiSelect selected={countries} onChange={setCountries} />
                 </div>
 
                 {/* Price */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm text-white/55">What's the average price of your service</label>
-                  <div className="flex h-11 rounded-xl bg-[#1e2022] border border-[#2e3032] overflow-hidden focus-within:border-white/20 transition-colors">
+                  <label className="text-sm text-th-text-60">What's the average price of your service</label>
+                  <div className="flex h-11 rounded-xl bg-th-card-alt border border-th-border-md overflow-hidden focus-within:border-th-border-strong transition-colors">
                     {/* Currency selector */}
                     <div ref={currencyRef} className="relative">
                       <button
                         onClick={() => setShowCurrencyMenu((o) => !o)}
-                        className="h-full flex items-center gap-1.5 px-3 border-r border-[#2e3032] text-sm text-white hover:bg-white/5 transition-colors whitespace-nowrap"
+                        className="h-full flex items-center gap-1.5 px-3 border-r border-th-border-md text-sm text-th-text hover:bg-th-hover transition-colors whitespace-nowrap"
                       >
                         {selectedCurrency.flagImg === "uk"
                           ? <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
                           : <span className="text-base leading-none">{selectedCurrency.flag}</span>}
                         <span>{selectedCurrency.code}</span>
-                        <ChevronDown size={13} className="text-white/40" />
+                        <ChevronDown size={13} className="text-th-text-40" />
                       </button>
                       {showCurrencyMenu && (
-                        <div className="absolute left-0 top-full mt-1 bg-[#1a1c1e] border border-[#2e3032] rounded-xl shadow-2xl z-20 min-w-[120px]">
+                        <div className="absolute left-0 top-full mt-1 bg-th-sidebar border border-th-border-md rounded-xl shadow-2xl z-20 min-w-[120px]">
                           {CURRENCIES.map((c) => (
                             <button
                               key={c.code}
                               onClick={() => { setCurrency(c.code); setShowCurrencyMenu(false); }}
-                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-th-text-70 hover:text-th-text hover:bg-th-hover transition-colors"
                             >
                               {c.flagImg === "uk"
                                 ? <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
                                 : <span>{c.flag}</span>}
                               <span>{c.code}</span>
-                              {c.code === currency && <Check size={12} className="ml-auto text-white/60" />}
+                              {c.code === currency && <Check size={12} className="ml-auto text-th-text-60" />}
                             </button>
                           ))}
                         </div>
@@ -384,7 +384,7 @@ export const ExpertCreateServicePage = () => {
                       value={averagePrice}
                       onChange={(e) => setAveragePrice(e.target.value)}
                       placeholder="Enter amount, e.g 10"
-                      className="flex-1 bg-transparent px-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                      className="flex-1 bg-transparent px-3 text-sm text-th-text placeholder:text-th-text-30 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -394,8 +394,8 @@ export const ExpertCreateServicePage = () => {
             {/* ── STEP 2 ── */}
             {step === 2 && (
               <>
-                <label className="text-sm text-white/55">What type of Services do you provide</label>
-                <div className="border border-[#2e3032] rounded-xl overflow-hidden divide-y divide-[#2e3032] -mt-3">
+                <label className="text-sm text-th-text-60">What type of Services do you provide</label>
+                <div className="border border-th-border-md rounded-xl overflow-hidden divide-y divide-[#2e3032] -mt-3">
                   {VISA_TYPES.map((v) => (
                     <button
                       key={v.label}
@@ -404,10 +404,10 @@ export const ExpertCreateServicePage = () => {
                     >
                       <Checkbox checked={visaServices.includes(v.label)} />
                       <div className="flex flex-col">
-                        <span className={`text-sm font-medium leading-snug ${visaServices.includes(v.label) ? "text-white" : "text-white/80"}`}>
+                        <span className={`text-sm font-medium leading-snug ${visaServices.includes(v.label) ? "text-th-text" : "text-th-text-80"}`}>
                           {v.label}
                         </span>
-                        <span className="text-xs text-white/40 mt-0.5 leading-snug">{v.sub}</span>
+                        <span className="text-xs text-th-text-40 mt-0.5 leading-snug">{v.sub}</span>
                       </div>
                     </button>
                   ))}
@@ -421,10 +421,10 @@ export const ExpertCreateServicePage = () => {
           </div>
 
           {/* Card footer */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-[#2e3032]">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-th-border-md">
             <button
               onClick={() => step === 1 ? navigate("/expert-dashboard") : setStep(1)}
-              className="h-10 px-5 rounded-full border border-[#2e3032] text-white/70 font-medium text-sm hover:bg-white/5 hover:text-white transition-colors flex items-center gap-1"
+              className="h-10 px-5 rounded-full border border-th-border-md text-th-text-70 font-medium text-sm hover:bg-th-hover hover:text-th-text transition-colors flex items-center gap-1"
             >
               <ArrowLeft size={13} />
               Previous
@@ -432,7 +432,7 @@ export const ExpertCreateServicePage = () => {
             {step === 1 ? (
               <button
                 onClick={handleNext}
-                className="h-10 px-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors flex items-center gap-1"
+                className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors flex items-center gap-1"
               >
                 Next
                 <span className="text-base leading-none ml-0.5">›</span>
@@ -441,7 +441,7 @@ export const ExpertCreateServicePage = () => {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="h-10 px-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {loading ? "Creating…" : <>Create Service <span className="text-base leading-none ml-0.5">›</span></>}
               </button>

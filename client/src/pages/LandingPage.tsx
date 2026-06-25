@@ -70,7 +70,7 @@ function OthersAreAsking() {
         {items.map((q, i) => (
           <span
             key={i}
-            className="inline-flex shrink-0 items-center px-4 py-2 rounded-full border border-white/10 bg-white/4 text-xs text-white/55 hover:text-white/80 hover:border-white/20 transition-colors cursor-default leading-4"
+            className="inline-flex shrink-0 items-center px-4 py-2 rounded-full border border-th-border-md bg-th-hover text-xs text-th-text-60 hover:text-th-text-80 hover:border-th-border-strong transition-colors cursor-default leading-4"
           >
             {q}
           </span>
@@ -144,14 +144,14 @@ export const LandingPage = (): JSX.Element => {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+      <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
         <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+    <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
       <NavBar
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
@@ -159,7 +159,7 @@ export const LandingPage = (): JSX.Element => {
 
       <div className="flex flex-1">
         {isLoggedIn && (
-          <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
+          <div className="w-52 shrink-0 border-r border-th-border overflow-y-auto px-3 py-3 hidden md:block">
             <ChatSidebar
               enquiries={sidebarItems}
               activeId=""
@@ -177,22 +177,22 @@ export const LandingPage = (): JSX.Element => {
             <div className="w-full max-w-2xl flex flex-col gap-6 md:gap-8">
               <div className="flex flex-col items-center gap-4 text-center">
                 <img className="h-10 md:h-14" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-                <p className="max-w-xl text-sm md:text-base text-white/70 leading-7">
+                <p className="max-w-xl text-sm md:text-base text-th-text-70 leading-7">
                   Get expert career guidance every step of the way—whether you're planning your next move, navigating a career change, or seeking professional advice, our experts help you succeed with confidence.
                 </p>
               </div>
 
               {isLoggedIn && sidebarItems.length > 0 && (
                 <div className="md:hidden flex flex-col gap-2">
-                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-1">Recent Conversations</p>
+                  <p className="text-xs font-semibold text-th-text-40 uppercase tracking-wider px-1">Recent Conversations</p>
                   <div className="flex flex-col gap-1">
                     {sidebarItems.slice(0, 3).map((item) => (
                       <button
                         key={item.id}
                         onClick={() => navigate(`/chat?id=${item.id}`)}
-                        className="w-full text-left px-3 py-2.5 rounded-xl bg-white/5 border border-white/8 hover:bg-white/10 transition-colors flex items-center justify-between gap-3"
+                        className="w-full text-left px-3 py-2.5 rounded-xl bg-th-hover border border-th-border hover:bg-th-hover transition-colors flex items-center justify-between gap-3"
                       >
-                        <span className="text-sm text-white/70 truncate leading-5">{item.question}</span>
+                        <span className="text-sm text-th-text-70 truncate leading-5">{item.question}</span>
                         <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${item.status === "answered" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
                           {item.status === "answered" ? "Answered" : "Pending"}
                         </span>
@@ -201,7 +201,7 @@ export const LandingPage = (): JSX.Element => {
                     {sidebarItems.length > 3 && (
                       <button
                         onClick={() => navigate("/enquiries")}
-                        className="text-xs text-white/40 hover:text-white/60 text-center py-1 transition-colors"
+                        className="text-xs text-th-text-40 hover:text-th-text-60 text-center py-1 transition-colors"
                       >
                         View all {sidebarItems.length} conversations →
                       </button>
@@ -218,20 +218,20 @@ export const LandingPage = (): JSX.Element => {
           </div>
 
           {/* Full-width ticker strip — spans edge-to-edge of the right panel */}
-          <div className="w-full border-t border-b border-white/5 py-4">
-            <p className="text-[11px] font-semibold tracking-widest text-white/35 uppercase mb-3 px-4 md:px-6">Others are asking</p>
+          <div className="w-full border-t border-b border-th-border py-4">
+            <p className="text-[11px] font-semibold tracking-widest text-th-text-40 uppercase mb-3 px-4 md:px-6">Others are asking</p>
             <OthersAreAsking />
           </div>
 
           {/* Terms — centred below ticker */}
           <div className="flex justify-center px-4 py-6">
-            <p className="text-center text-xs md:text-sm text-white/50 leading-6">
+            <p className="text-center text-xs md:text-sm text-th-text-50 leading-6">
               By messaging Ask MiGi, you agree to our{" "}
-              <button onClick={() => navigate("/terms")} className="text-white underline underline-offset-2">Terms of Use,</button>{" "}
-              <button onClick={() => navigate("/privacy-policy")} className="text-white underline underline-offset-2">Privacy Policy</button>,{" "}
-              <button onClick={() => navigate("/disclaimer")} className="text-white underline underline-offset-2">Disclaimer</button>{" "}
+              <button onClick={() => navigate("/terms")} className="text-th-text underline underline-offset-2">Terms of Use,</button>{" "}
+              <button onClick={() => navigate("/privacy-policy")} className="text-th-text underline underline-offset-2">Privacy Policy</button>,{" "}
+              <button onClick={() => navigate("/disclaimer")} className="text-th-text underline underline-offset-2">Disclaimer</button>{" "}
               and{" "}
-              <button onClick={() => navigate("/refund-policy")} className="text-white underline underline-offset-2">Refund Policy</button>.
+              <button onClick={() => navigate("/refund-policy")} className="text-th-text underline underline-offset-2">Refund Policy</button>.
             </p>
           </div>
 

@@ -52,7 +52,7 @@ export const AppHeader = ({
         <Button
           type="button"
           onClick={onSignUpClick}
-          className="h-9 rounded-[48px] bg-white/10 px-3 text-xs font-medium text-white hover:bg-white/20 border border-white/20 flex items-center gap-1.5"
+          className="h-9 rounded-[48px] bg-th-hover px-3 text-xs font-medium text-th-text hover:bg-th-card-hover border border-th-border-strong flex items-center gap-1.5"
           data-testid="button-signup"
         >
           <img className="h-5 w-5" alt="Profile" src="/figmaAssets/frame-1410105890.svg" />

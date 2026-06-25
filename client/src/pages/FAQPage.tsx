@@ -106,29 +106,29 @@ const faqs: { q: string; a: string; bullets?: string[]; note?: string }[] = [
 const FAQItem = ({ q, a, bullets, note }: typeof faqs[0]) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-[#2e3032]">
+    <div className="border-b border-th-border-md">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between py-5 text-left gap-4"
         data-testid={`faq-item-${q.slice(0, 20).replace(/\s+/g, "-").toLowerCase()}`}
       >
-        <span className="text-sm font-semibold text-white leading-5">{q}</span>
-        {open ? <Minus size={18} className="shrink-0 text-white/40" /> : <Plus size={18} className="shrink-0 text-white/40" />}
+        <span className="text-sm font-semibold text-th-text leading-5">{q}</span>
+        {open ? <Minus size={18} className="shrink-0 text-th-text-40" /> : <Plus size={18} className="shrink-0 text-th-text-40" />}
       </button>
       {open && (
         <div className="pb-5 flex flex-col gap-2">
-          <p className="text-sm text-white/60 leading-6">{a}</p>
+          <p className="text-sm text-th-text-60 leading-6">{a}</p>
           {bullets && bullets.length > 0 && (
             <ul className="flex flex-col gap-1 pl-1">
               {bullets.map((b, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-white/60 leading-6">
+                <li key={i} className="flex items-start gap-2 text-sm text-th-text-60 leading-6">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/30 shrink-0" />
                   {b}
                 </li>
               ))}
             </ul>
           )}
-          {note && <p className="text-sm text-white/50 leading-6 italic">{note}</p>}
+          {note && <p className="text-sm text-th-text-50 leading-6 italic">{note}</p>}
         </div>
       )}
     </div>
@@ -140,20 +140,20 @@ export const FAQPage = (): JSX.Element => {
   const [authView, setAuthView] = useState<AuthView>(null);
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+    <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       <div className="flex flex-col items-center px-4 md:px-6 py-10 md:py-12">
         <div className="w-full max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight text-center mb-8">FAQ's</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-th-text tracking-tight text-center mb-8">FAQ's</h1>
           <div className="flex flex-col">
             {faqs.map((item) => <FAQItem key={item.q} {...item} />)}
           </div>
-          <div className="mt-12 pt-8 border-t border-[#2e3032] flex flex-col items-center gap-4">
+          <div className="mt-12 pt-8 border-t border-th-border-md flex flex-col items-center gap-4">
             <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-            <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-white/40">
+            <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-th-text-40">
               {[["Terms of Use", "/terms"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"]].map(([label, path]) => (
-                <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">{label}</button>
+                <button key={label} onClick={() => navigate(path)} className="hover:text-th-text transition-colors">{label}</button>
               ))}
             </div>
           </div>

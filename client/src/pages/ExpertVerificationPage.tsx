@@ -41,7 +41,7 @@ const YES_NO = ["Yes", "No"];
 /* ─── Shared field components ─────────────────────────────────────────── */
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-sm text-white/70 mb-1.5">{children}</p>
+  <p className="text-sm text-th-text-70 mb-1.5">{children}</p>
 );
 
 const TextInput = ({
@@ -52,7 +52,7 @@ const TextInput = ({
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
-    className="w-full h-12 rounded-xl bg-[#252729] border border-[#2e3032] px-4 text-sm text-white placeholder:text-white/25 focus:border-white/25 focus:outline-none transition-colors"
+    className="w-full h-12 rounded-xl bg-[#252729] border border-th-border-md px-4 text-sm text-th-text placeholder:text-th-text-30 focus:border-white/25 focus:outline-none transition-colors"
   />
 );
 
@@ -65,21 +65,21 @@ const SelectDropdown = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full h-12 rounded-xl bg-[#252729] border border-[#2e3032] px-4 text-sm text-left flex items-center justify-between focus:border-white/25 focus:outline-none transition-colors"
+        className="w-full h-12 rounded-xl bg-[#252729] border border-th-border-md px-4 text-sm text-left flex items-center justify-between focus:border-white/25 focus:outline-none transition-colors"
       >
-        <span className={value ? "text-white" : "text-white/25"}>{value || placeholder}</span>
-        <ChevronDown size={15} className={`text-white/40 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className={value ? "text-th-text" : "text-th-text-30"}>{value || placeholder}</span>
+        <ChevronDown size={15} className={`text-th-text-40 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e2022] border border-[#2e3032] rounded-xl overflow-y-auto z-20 shadow-xl max-h-52">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-th-card-alt border border-th-border-md rounded-xl overflow-y-auto z-20 shadow-xl max-h-52">
             {options.map((opt) => (
               <button
                 key={opt}
                 type="button"
                 onClick={() => { onChange(opt); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${value === opt ? "text-white font-medium" : "text-white/70"}`}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-th-hover ${value === opt ? "text-th-text font-medium" : "text-th-text-70"}`}
               >
                 {opt}
               </button>
@@ -103,37 +103,37 @@ const MultiSelectCountry = ({
     <div className="relative">
       <div
         onClick={() => setOpen((v) => !v)}
-        className="min-h-12 rounded-xl bg-[#252729] border border-[#2e3032] px-3 py-2 flex items-center flex-wrap gap-1.5 cursor-pointer"
+        className="min-h-12 rounded-xl bg-[#252729] border border-th-border-md px-3 py-2 flex items-center flex-wrap gap-1.5 cursor-pointer"
       >
         {selected.map((s) => (
           <span
             key={s}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white text-xs font-medium"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-th-hover text-th-text text-xs font-medium"
           >
             {s}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onChange(selected.filter((x) => x !== s)); }}
-              className="text-white/50 hover:text-white"
+              className="text-th-text-50 hover:text-th-text"
             >
               <X size={11} />
             </button>
           </span>
         ))}
-        {selected.length === 0 && <span className="text-white/25 text-sm">{placeholder}</span>}
-        <ChevronDown size={14} className="text-white/40 ml-auto shrink-0" />
+        {selected.length === 0 && <span className="text-th-text-30 text-sm">{placeholder}</span>}
+        <ChevronDown size={14} className="text-th-text-40 ml-auto shrink-0" />
       </div>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e2022] border border-[#2e3032] rounded-xl z-20 shadow-xl">
-            <div className="p-2 border-b border-[#2e3032]">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-th-card-alt border border-th-border-md rounded-xl z-20 shadow-xl">
+            <div className="p-2 border-b border-th-border-md">
               <input
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search countries..."
-                className="w-full h-9 bg-[#252729] rounded-lg px-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
+                className="w-full h-9 bg-[#252729] rounded-lg px-3 text-sm text-th-text placeholder:text-th-text-30 focus:outline-none"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
@@ -143,12 +143,12 @@ const MultiSelectCountry = ({
                   key={c}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onChange([...selected, c]); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                  className="w-full text-left px-4 py-2.5 text-sm text-th-text-70 hover:text-th-text hover:bg-th-hover transition-colors"
                 >
                   {c}
                 </button>
               ))}
-              {filtered.length === 0 && <p className="px-4 py-3 text-sm text-white/30">No results</p>}
+              {filtered.length === 0 && <p className="px-4 py-3 text-sm text-th-text-30">No results</p>}
             </div>
           </div>
         </>
@@ -164,7 +164,7 @@ const CheckItem = ({
     <span
       onClick={() => onChange(!checked)}
       className={`shrink-0 mt-0.5 h-5 w-5 rounded-[5px] border-2 flex items-center justify-center transition-colors cursor-pointer ${
-        checked ? "bg-white border-white" : "border-white/30 bg-transparent hover:border-white/50"
+        checked ? "bg-white border-white" : "border-th-border-strong bg-transparent hover:border-white/50"
       }`}
     >
       {checked && (
@@ -173,7 +173,7 @@ const CheckItem = ({
         </svg>
       )}
     </span>
-    <span className="text-sm text-white/80 leading-5 select-none" onClick={() => onChange(!checked)}>{label}</span>
+    <span className="text-sm text-th-text-80 leading-5 select-none" onClick={() => onChange(!checked)}>{label}</span>
   </label>
 );
 
@@ -184,13 +184,13 @@ const FileUploadZone = ({
     <div className="flex flex-col gap-2">
       <FieldLabel>{label}{optional && " (Optional)"}</FieldLabel>
       <label
-        className="border border-dashed border-[#3a3c3e] rounded-xl p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-white/30 transition-colors bg-[#252729]"
+        className="border border-dashed border-th-border-md rounded-xl p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-th-border-strong transition-colors bg-[#252729]"
       >
-        <Upload size={20} className="text-white/50" />
-        <p className="text-sm font-semibold text-white text-center">
+        <Upload size={20} className="text-th-text-50" />
+        <p className="text-sm font-semibold text-th-text text-center">
           {fileName || "Click to upload or drag and drop"}
         </p>
-        {!fileName && <p className="text-xs text-white/40">PDF, DOC, JPG, PNG (max 10MB)</p>}
+        {!fileName && <p className="text-xs text-th-text-40">PDF, DOC, JPG, PNG (max 10MB)</p>}
         <input
           type="file"
           className="hidden"
@@ -214,11 +214,11 @@ const StepCard = ({
   onPrev: () => void; onNext: () => void; onComplete?: () => void;
   isLast?: boolean; loading?: boolean;
 }) => (
-  <div className="bg-[#1a1c1e] border border-[#2a2c2e] rounded-2xl overflow-hidden">
+  <div className="bg-th-sidebar border border-[#2a2c2e] rounded-2xl overflow-hidden">
     {/* Header */}
     <div className="flex items-center justify-between px-5 md:px-7 py-5 border-b border-[#2a2c2e]">
-      <h2 className="text-base md:text-lg font-bold text-white">{title}</h2>
-      <span className="text-xs font-semibold text-white/50 bg-[#252729] px-2.5 py-1 rounded-lg shrink-0">
+      <h2 className="text-base md:text-lg font-bold text-th-text">{title}</h2>
+      <span className="text-xs font-semibold text-th-text-50 bg-[#252729] px-2.5 py-1 rounded-lg shrink-0">
         {step} of {total}
       </span>
     </div>
@@ -231,7 +231,7 @@ const StepCard = ({
       <button
         type="button"
         onClick={onPrev}
-        className="h-10 px-5 rounded-full border border-[#3a3c3e] text-sm text-white/70 font-medium hover:bg-white/5 hover:text-white transition-colors flex items-center gap-1"
+        className="h-10 px-5 rounded-full border border-th-border-md text-sm text-th-text-70 font-medium hover:bg-th-hover hover:text-th-text transition-colors flex items-center gap-1"
       >
         <ChevronLeft size={14} />
         Previous
@@ -241,7 +241,7 @@ const StepCard = ({
           type="button"
           onClick={onComplete}
           disabled={loading}
-          className="h-10 px-6 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center gap-1"
+          className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center gap-1"
         >
           {loading ? "Submitting…" : "Complete ›"}
         </button>
@@ -249,7 +249,7 @@ const StepCard = ({
         <button
           type="button"
           onClick={onNext}
-          className="h-10 px-6 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors flex items-center gap-1"
+          className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors flex items-center gap-1"
         >
           Next ›
         </button>
@@ -363,14 +363,14 @@ export const ExpertVerificationPage = () => {
         {/* Back */}
         <button
           onClick={() => step === 1 ? navigate("/expert-dashboard") : setStep((s) => s - 1)}
-          className="flex items-center gap-1 text-sm text-white/50 hover:text-white transition-colors mb-5"
+          className="flex items-center gap-1 text-sm text-th-text-50 hover:text-th-text transition-colors mb-5"
           data-testid="button-back-verify"
         >
           <ChevronLeft size={15} />
           Back
         </button>
 
-        <h1 className="text-xl md:text-2xl font-bold text-white mb-5">
+        <h1 className="text-xl md:text-2xl font-bold text-th-text mb-5">
           Complete your account verification
         </h1>
 
@@ -393,18 +393,18 @@ export const ExpertVerificationPage = () => {
             </div>
             <div>
               <FieldLabel>Phone number</FieldLabel>
-              <div className="flex h-12 rounded-xl bg-[#252729] border border-[#2e3032] overflow-hidden focus-within:border-white/25 transition-colors">
-                <div className="flex items-center gap-1.5 px-3 border-r border-[#2e3032] shrink-0">
+              <div className="flex h-12 rounded-xl bg-[#252729] border border-th-border-md overflow-hidden focus-within:border-white/25 transition-colors">
+                <div className="flex items-center gap-1.5 px-3 border-r border-th-border-md shrink-0">
                   <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
-                  <span className="text-sm text-white">+44</span>
-                  <ChevronDown size={13} className="text-white/40" />
+                  <span className="text-sm text-th-text">+44</span>
+                  <ChevronDown size={13} className="text-th-text-40" />
                 </div>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Enter phone number"
-                  className="flex-1 bg-transparent px-3 text-sm text-white placeholder:text-white/25 focus:outline-none"
+                  className="flex-1 bg-transparent px-3 text-sm text-th-text placeholder:text-th-text-30 focus:outline-none"
                 />
               </div>
             </div>
@@ -623,21 +623,21 @@ export const ExpertVerificationPage = () => {
           <>
             <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="w-full max-w-sm bg-[#1a1c1e] border border-[#2e3032] rounded-3xl p-8 flex flex-col items-center text-center gap-5 shadow-2xl">
+              <div className="w-full max-w-sm bg-th-sidebar border border-th-border-md rounded-3xl p-8 flex flex-col items-center text-center gap-5 shadow-2xl">
                 <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center">
-                  <CircleCheck size={30} className="text-white" />
+                  <CircleCheck size={30} className="text-th-text" />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-xl font-bold text-white leading-tight">
+                  <h2 className="text-xl font-bold text-th-text leading-tight">
                     Your application has been submitted and is under review.
                   </h2>
-                  <p className="text-sm text-white/55 leading-6">
+                  <p className="text-sm text-th-text-60 leading-6">
                     Once approved, you'll be able to view and answer questions to start earning
                   </p>
                 </div>
                 <button
                   onClick={() => navigate("/expert-dashboard")}
-                  className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+                  className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
                   data-testid="button-go-dashboard"
                 >
                   Go to Dashboard

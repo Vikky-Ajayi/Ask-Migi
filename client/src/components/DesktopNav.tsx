@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, CircleUser, User, Settings, LogOut, Phone } from "lucide-react";
-
+import { ChevronDown, CircleUser, User, Settings, LogOut, Phone, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import coinImg from "@assets/coins_1781943901685.png";
 import { CallExpertModal } from "./CallExpertModal";
 
@@ -14,6 +14,7 @@ interface DesktopNavProps {
 
 export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: DesktopNavProps) => {
   const { user, isLoggedIn, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [, navigate] = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -38,59 +39,33 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
 
   return (
     <>
-    <nav className="w-full flex items-center justify-between px-8 py-4 bg-[#161618] border-b border-white/5">
-      {/* Logo */}
+    <nav className="w-full flex items-center justify-between px-8 py-4 bg-th-nav border-b border-th-border">
       <button onClick={() => navigate("/")} className="focus:outline-none" data-testid="nav-logo">
-        <img className="h-7" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+        <img className="h-7 logo-adaptive" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
       </button>
 
-      {/* Right side — nav links + auth */}
-      <div className="flex items-center gap-6">
-        {/* About */}
-        <button
-          onClick={() => navigate("/about")}
-          className="text-sm text-white/80 hover:text-white transition-colors"
-          data-testid="nav-about"
-        >
+      <div className="flex items-center gap-5">
+        <button onClick={() => navigate("/about")} className="text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-about">
           About
         </button>
-
-        {/* Buy Coins */}
-        <button
-          onClick={() => navigate("/buy-coins")}
-          className="text-sm text-white/80 hover:text-white transition-colors"
-          data-testid="nav-buy-coins"
-        >
+        <button onClick={() => navigate("/buy-coins")} className="text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-buy-coins">
           Buy Coins
         </button>
-
-        {/* Call an Expert */}
-        <button
-          onClick={() => setCallModalOpen(true)}
-          className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors"
-          data-testid="nav-call-expert"
-        >
+        <button onClick={() => setCallModalOpen(true)} className="flex items-center gap-1.5 text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-call-expert">
           <Phone size={14} />
           Call an Expert
         </button>
 
-        {/* Help */}
+        {/* Help dropdown */}
         <div className="relative" ref={helpRef}>
-          <button
-            onClick={() => setHelpOpen((v) => !v)}
-            className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
-            data-testid="nav-help"
-          >
+          <button onClick={() => setHelpOpen((v) => !v)} className="flex items-center gap-1 text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-help">
             Help <ChevronDown size={14} className={`transition-transform ${helpOpen ? "rotate-180" : ""}`} />
           </button>
           {helpOpen && (
-            <div className="absolute top-full left-0 mt-2 w-36 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 w-36 bg-th-card rounded-xl border border-th-border-md shadow-xl z-50 py-1 overflow-hidden">
               {([["FAQ", "/faq"], ["Contact Us", "/contact"]] as const).map(([label, path]) => (
-                <button
-                  key={label}
-                  onClick={() => { navigate(path); setHelpOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5"
-                >
+                <button key={label} onClick={() => { navigate(path); setHelpOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-th-text-80 hover:text-th-text hover:bg-th-hover transition-colors">
                   {label}
                 </button>
               ))}
@@ -98,45 +73,42 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
           )}
         </div>
 
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="h-8 w-8 flex items-center justify-center rounded-full border border-th-border-md text-th-text-60 hover:text-th-text hover:bg-th-hover transition-colors"
+          aria-label="Toggle theme"
+          data-testid="button-theme-toggle"
+        >
+          {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
+
         {/* Auth / profile */}
         {isLoggedIn && user ? (
           <>
-            {/* Coin balance */}
-            <button
-              onClick={() => navigate("/buy-coins")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#242628] border border-white/10 text-sm text-white/90 hover:bg-[#2a2c2e]"
-              data-testid="nav-coins"
-            >
+            <button onClick={() => navigate("/buy-coins")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-th-card border border-th-border-md text-sm text-th-text-80 hover:bg-th-card-hover transition-colors"
+              data-testid="nav-coins">
               <img src={coinImg} alt="coins" className="w-[18px] h-[18px] object-contain" style={{ imageRendering: "auto" }} />
               <span className="font-medium">{user.coins} Coins</span>
             </button>
-            {/* Avatar */}
             <div className="relative" ref={profileRef}>
-              <button
-                onClick={() => setProfileOpen((v) => !v)}
-                className="h-9 w-9 rounded-full bg-[#242628] border border-white/20 flex items-center justify-center hover:bg-[#2a2c2e] transition-colors"
-                data-testid="nav-avatar"
-                title={`${user.firstName} ${user.lastName}`}
-              >
-                <User size={16} className="text-white/70" />
+              <button onClick={() => setProfileOpen((v) => !v)}
+                className="h-9 w-9 rounded-full bg-th-card border border-th-border-strong flex items-center justify-center hover:bg-th-card-hover transition-colors"
+                data-testid="nav-avatar" title={`${user.firstName} ${user.lastName}`}>
+                <User size={16} className="text-th-text-70" />
               </button>
               {profileOpen && (
-                <div className="absolute top-full right-0 mt-2 w-36 bg-[#242628] rounded-xl border border-white/10 shadow-xl z-50 py-1 overflow-hidden">
-                  <button
-                    onClick={() => { onSettingsClick?.(); setProfileOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2.5"
-                    data-testid="nav-settings"
-                  >
-                    <Settings size={14} className="text-white/50" />
-                    Settings
+                <div className="absolute top-full right-0 mt-2 w-40 bg-th-card rounded-xl border border-th-border-md shadow-xl z-50 py-1 overflow-hidden">
+                  <button onClick={() => { onSettingsClick?.(); setProfileOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-th-text-80 hover:text-th-text hover:bg-th-hover flex items-center gap-2.5 transition-colors"
+                    data-testid="nav-settings">
+                    <Settings size={14} className="text-th-text-50" /> Settings
                   </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/5 flex items-center gap-2.5"
-                    data-testid="nav-logout"
-                  >
-                    <LogOut size={14} className="text-white/50" />
-                    Log out
+                  <button onClick={handleLogout}
+                    className="w-full text-left px-4 py-2.5 text-sm text-th-text-80 hover:text-th-text hover:bg-th-hover flex items-center gap-2.5 transition-colors"
+                    data-testid="nav-logout">
+                    <LogOut size={14} className="text-th-text-50" /> Log out
                   </button>
                 </div>
               )}
@@ -144,21 +116,14 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
           </>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Sign Up — pill with CircleUser icon matching design */}
-            <button
-              onClick={onSignUpClick}
-              className="flex items-center gap-2 h-9 px-4 rounded-full bg-white text-sm text-black font-medium hover:bg-white/90 transition-colors"
-              data-testid="nav-signup"
-            >
-              <CircleUser size={18} className="text-black" />
-              Sign Up
+            <button onClick={onSignUpClick}
+              className="flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium transition-colors bg-[#0f0f11] text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
+              data-testid="nav-signup">
+              <CircleUser size={18} /> Sign Up
             </button>
-            {/* Log In — simple outlined pill */}
-            <button
-              onClick={onLoginClick}
-              className="flex items-center h-9 px-4 rounded-full border border-white/30 text-sm text-white font-medium hover:bg-white/10 transition-colors"
-              data-testid="nav-login"
-            >
+            <button onClick={onLoginClick}
+              className="flex items-center h-9 px-4 rounded-full border border-th-border-strong text-sm text-th-text font-medium hover:bg-th-hover transition-colors"
+              data-testid="nav-login">
               Log In
             </button>
           </div>

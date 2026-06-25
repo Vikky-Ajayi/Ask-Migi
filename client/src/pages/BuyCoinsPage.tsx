@@ -135,23 +135,23 @@ export const BuyCoinsPage = (): JSX.Element => {
   const isPending = cardMutation.isPending || cryptoMutation.isPending;
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+    <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       {verifying && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-          <div className="bg-[#1a1c1e] border border-[#2e3032] rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm text-center">
-            <Loader2 className="w-10 h-10 text-white animate-spin" />
-            <p className="text-base font-semibold text-white">Confirming your payment…</p>
-            <p className="text-sm text-white/50">This will only take a moment.</p>
+          <div className="bg-th-sidebar border border-th-border-md rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm text-center">
+            <Loader2 className="w-10 h-10 text-th-text animate-spin" />
+            <p className="text-base font-semibold text-th-text">Confirming your payment…</p>
+            <p className="text-sm text-th-text-50">This will only take a moment.</p>
           </div>
         </div>
       )}
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 md:px-6 py-10 md:py-16">
         <div className="text-center mb-8 md:mb-10">
-          <h1 className="text-5xl md:text-6xl font-bold text-white tracking-tight">Buy coins</h1>
-          <p className="mt-4 text-sm md:text-base text-white/50">Coins unlock expert answers to your questions. Choose the payment method that works best for you and get started in seconds.</p>
+          <h1 className="text-5xl md:text-6xl font-bold text-th-text tracking-tight">Buy coins</h1>
+          <p className="mt-4 text-sm md:text-base text-th-text-50">Coins unlock expert answers to your questions. Choose the payment method that works best for you and get started in seconds.</p>
         </div>
 
         {verified && (
@@ -162,10 +162,10 @@ export const BuyCoinsPage = (): JSX.Element => {
         )}
 
         {/* Payment method selector */}
-        <div className="mb-8 flex items-center gap-2 bg-[#1e2022] border border-[#2e3032] rounded-full p-1">
+        <div className="mb-8 flex items-center gap-2 bg-th-card-alt border border-th-border-md rounded-full p-1">
           <button
             onClick={() => setPayMethod("card")}
-            className={`flex items-center gap-2 h-9 px-5 rounded-full text-sm font-semibold transition-colors ${payMethod === "card" ? "bg-white text-black" : "text-white/60 hover:text-white"}`}
+            className={`flex items-center gap-2 h-9 px-5 rounded-full text-sm font-semibold transition-colors ${payMethod === "card" ? "bg-[#0f0f11] text-white dark:bg-white dark:text-black" : "text-th-text-60 hover:text-th-text"}`}
             data-testid="button-pay-card"
           >
             <CreditCard size={15} />
@@ -173,7 +173,7 @@ export const BuyCoinsPage = (): JSX.Element => {
           </button>
           <button
             onClick={() => setPayMethod("crypto")}
-            className={`flex items-center gap-2 h-9 px-5 rounded-full text-sm font-semibold transition-colors ${payMethod === "crypto" ? "bg-white text-black" : "text-white/60 hover:text-white"}`}
+            className={`flex items-center gap-2 h-9 px-5 rounded-full text-sm font-semibold transition-colors ${payMethod === "crypto" ? "bg-[#0f0f11] text-white dark:bg-white dark:text-black" : "text-th-text-60 hover:text-th-text"}`}
             data-testid="button-pay-crypto"
           >
             <Bitcoin size={15} />
@@ -191,31 +191,31 @@ export const BuyCoinsPage = (): JSX.Element => {
           {coinPacks.map((pack) => (
             <div
               key={pack.coins}
-              className={`relative rounded-3xl border px-6 md:px-7 py-8 md:py-10 flex flex-col gap-5 ${pack.popular ? "border-white/30 bg-[#1e2022]" : "border-[#2e3032] bg-[#1a1c1e]"}`}
+              className={`relative rounded-3xl border px-6 md:px-7 py-8 md:py-10 flex flex-col gap-5 ${pack.popular ? "border-th-border-strong bg-th-card-alt" : "border-th-border-md bg-th-sidebar"}`}
               data-testid={`coin-pack-${pack.coins}`}
             >
               {pack.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-white text-black text-[11px] font-bold px-3 py-1 rounded-full">Most Popular</span>
+                  <span className="bg-[#0f0f11] text-white text-[11px] font-bold dark:bg-white dark:text-black px-3 py-1 rounded-full">Most Popular</span>
                 </div>
               )}
               <div className="flex justify-center">
                 <div className="inline-flex items-center gap-2 bg-[#252729] rounded-full px-4 py-2">
                   <img src={coinImg} alt="coins" className="w-5 h-5 object-contain" />
-                  <span className="text-sm font-semibold text-white">{pack.coins} coins</span>
+                  <span className="text-sm font-semibold text-th-text">{pack.coins} coins</span>
                 </div>
               </div>
 
-              <p className="text-5xl font-bold text-white leading-none text-center">{pack.price}</p>
+              <p className="text-5xl font-bold text-th-text leading-none text-center">{pack.price}</p>
 
-              <p className="flex-1 text-center text-white/55" style={{ fontSize: "15px", fontWeight: 400, lineHeight: "150%", letterSpacing: "-0.02em" }}>
+              <p className="flex-1 text-center text-th-text-60" style={{ fontSize: "15px", fontWeight: 400, lineHeight: "150%", letterSpacing: "-0.02em" }}>
                 {pack.description}
               </p>
 
               <button
                 onClick={() => handlePurchase(pack)}
                 disabled={isPending}
-                className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 data-testid={`button-buy-${pack.coins}`}
               >
                 {isPending ? (
@@ -231,7 +231,7 @@ export const BuyCoinsPage = (): JSX.Element => {
           ))}
         </div>
 
-        <p className="mt-8 text-xs text-white/30 text-center">
+        <p className="mt-8 text-xs text-th-text-30 text-center">
           {payMethod === "card"
             ? "Card payments processed securely. All purchases are final. Coins are non-refundable."
             : "Cryptocurrency payments are credited after the transaction has been confirmed on the blockchain, which usually takes 10–30 minutes."}

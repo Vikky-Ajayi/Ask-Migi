@@ -49,7 +49,7 @@ export const MobileEnquirySidebar = ({
 
       {/* Slide-in panel */}
       <aside
-        className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-sm bg-[#1a1c1e] flex flex-col overflow-hidden"
+        className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-sm bg-th-sidebar flex flex-col overflow-hidden"
         style={{
           transform: slideVisible ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -58,10 +58,10 @@ export const MobileEnquirySidebar = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
-          <img className="h-7" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+          <img className="h-7 logo-adaptive" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
           <button
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-th-hover text-th-text transition-colors"
             data-testid="button-close-enquiry-sidebar"
           >
             <X size={18} />

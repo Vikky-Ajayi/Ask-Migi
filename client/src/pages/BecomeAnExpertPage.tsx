@@ -14,29 +14,29 @@ export const BecomeAnExpertPage = (): JSX.Element => {
   const [authView, setAuthView] = useState<AuthView>(null);
 
   return (
-    <main className="min-h-screen w-full bg-[#0f1011] text-white flex flex-col">
+    <main className="min-h-screen w-full bg-[#0f1011] text-th-text flex flex-col">
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       {/* Hero */}
       <section className="flex flex-col items-center text-center px-4 md:px-6 pt-12 md:pt-16 pb-8 md:pb-10">
         <div className="max-w-2xl flex flex-col gap-5 md:gap-6">
-          <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-bold text-th-text leading-tight tracking-tight">
             Help Migrants Thrive &amp; Get Paid for your Expertise
           </h1>
-          <p className="text-sm md:text-base text-white/55 leading-7 max-w-lg mx-auto">
+          <p className="text-sm md:text-base text-th-text-60 leading-7 max-w-lg mx-auto">
             Are you a certified professional with a passion for helping people achieve their goals? Join our platform and earn by sharing your expertise with a global audience in need of guidance.
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
               onClick={() => { setAuthView("register"); }}
-              className="h-11 md:h-12 px-6 md:px-7 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+              className="h-11 md:h-12 px-6 md:px-7 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
               data-testid="button-create-account"
             >
               Create Account
             </button>
             <button
               onClick={() => setAuthView("login")}
-              className="h-11 md:h-12 px-6 md:px-7 rounded-full border border-white/25 text-white font-medium text-sm hover:bg-white/10 transition-colors"
+              className="h-11 md:h-12 px-6 md:px-7 rounded-full border border-white/25 text-th-text font-medium text-sm hover:bg-th-hover transition-colors"
               data-testid="button-login"
             >
               Log in
@@ -55,13 +55,13 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Application Process */}
-      <section className="flex flex-col items-center px-4 md:px-8 py-12 md:py-20 bg-[#161618]">
+      <section className="flex flex-col items-center px-4 md:px-8 py-12 md:py-20 bg-th-page">
         <div className="w-full max-w-[1400px] flex flex-col gap-10 md:gap-16">
 
           {/* Section header */}
           <div className="text-center flex flex-col gap-4">
             <h2
-              className="text-4xl text-white"
+              className="text-4xl text-th-text"
               style={{
                 fontFamily: "'Roobert TRIAL', sans-serif",
                 fontWeight: 700,
@@ -72,7 +72,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
             >
               The Application Process
             </h2>
-            <p className="text-sm md:text-base text-white/55 leading-7 max-w-xl mx-auto">
+            <p className="text-sm md:text-base text-th-text-60 leading-7 max-w-xl mx-auto">
               Getting started is easy — and there are no sign-up fees. Just complete the quick application, and we'll support you every step of the way so you can start helping clients and earning money fast.
             </p>
           </div>
@@ -85,14 +85,14 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                 className={`flex ${step.align === "right" ? "justify-end" : "justify-start"}`}
                 data-testid={`step-${step.number}`}
               >
-                <div className="w-full md:w-[608px] md:min-h-[135px] rounded-[24px] border border-white/[0.08] bg-[#1e2022] p-5 md:px-[36px] md:py-[28px] flex flex-col gap-[16px]">
+                <div className="w-full md:w-[608px] md:min-h-[135px] rounded-[24px] border border-th-border bg-th-card-alt p-5 md:px-[36px] md:py-[28px] flex flex-col gap-[16px]">
                   {/* Number + Title row */}
                   <div className="flex items-center gap-5">
-                    <div className="flex items-center justify-center h-11 w-11 rounded-full bg-[#0f1011] border border-white/20 text-white text-sm font-bold shrink-0">
+                    <div className="flex items-center justify-center h-11 w-11 rounded-full bg-[#0f1011] border border-th-border-strong text-th-text text-sm font-bold shrink-0">
                       {step.number}
                     </div>
                     <h3
-                      className="text-white"
+                      className="text-th-text"
                       style={{
                         fontFamily: "'Roobert TRIAL', sans-serif",
                         fontWeight: 650,
@@ -105,7 +105,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
                     </h3>
                   </div>
                   {/* Description */}
-                  <p className="text-sm md:text-[15px] text-white/55 leading-6">{step.description}</p>
+                  <p className="text-sm md:text-[15px] text-th-text-60 leading-6">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -115,11 +115,11 @@ export const BecomeAnExpertPage = (): JSX.Element => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#2e3032] px-4 md:px-8 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#0f1011]">
+      <footer className="border-t border-th-border-md px-4 md:px-8 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#0f1011]">
         <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-        <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-white/40">
+        <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-th-text-40">
           {[["Terms of Use", "/terms"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"]].map(([label, path]) => (
-            <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">{label}</button>
+            <button key={label} onClick={() => navigate(path)} className="hover:text-th-text transition-colors">{label}</button>
           ))}
         </div>
       </footer>

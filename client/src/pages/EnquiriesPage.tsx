@@ -69,12 +69,12 @@ export const EnquiriesPage = (): JSX.Element => {
 
   if (!authLoading && !isLoggedIn) {
     return (
-      <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+      <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
         <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="text-center">
-            <p className="text-white/60 mb-4">Please log in to view your enquiries.</p>
-            <button onClick={() => setAuthView("login")} className="px-6 py-3 rounded-full bg-white text-black font-semibold">Log In</button>
+            <p className="text-th-text-60 mb-4">Please log in to view your enquiries.</p>
+            <button onClick={() => setAuthView("login")} className="px-6 py-3 rounded-full bg-[#0f0f11] text-white font-semibold dark:bg-white dark:text-black">Log In</button>
           </div>
         </div>
         <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
@@ -89,7 +89,7 @@ export const EnquiriesPage = (): JSX.Element => {
   }));
 
   return (
-    <main className="h-screen w-full bg-[#161618] text-white flex flex-col overflow-hidden">
+    <main className="h-screen w-full bg-th-page text-th-text flex flex-col overflow-hidden">
       <NavBar
         onLoginClick={() => setAuthView("login")}
         onSignUpClick={() => setAuthView("register")}
@@ -97,7 +97,7 @@ export const EnquiriesPage = (): JSX.Element => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-52 shrink-0 border-r border-white/5 overflow-y-auto px-3 py-3 hidden md:block">
+        <div className="w-52 shrink-0 border-r border-th-border overflow-y-auto px-3 py-3 hidden md:block">
           <ChatSidebar
             enquiries={sidebarItems}
             activeId={activeId}
@@ -108,15 +108,15 @@ export const EnquiriesPage = (): JSX.Element => {
         </div>
 
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <div className="w-full bg-[#1e2022] border-b border-white/5 px-3 md:px-6 py-3 text-xs md:text-sm text-white/70 text-center shrink-0">
-            <span className="font-semibold text-white">Please note:</span>{" "}
+          <div className="w-full bg-th-card-alt border-b border-th-border px-3 md:px-6 py-3 text-xs md:text-sm text-th-text-70 text-center shrink-0">
+            <span className="font-semibold text-th-text">Please note:</span>{" "}
             Expert responses are not instant. You'll receive a response in 3-5 Business days
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 md:py-6">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-6">
               {!activeEnquiry && !enqLoading && (
-                <div className="text-center text-white/40 py-16">
+                <div className="text-center text-th-text-40 py-16">
                   <p>No enquiries yet. Ask your first question below!</p>
                 </div>
               )}
@@ -124,17 +124,17 @@ export const EnquiriesPage = (): JSX.Element => {
               {activeEnquiry && (
                 <>
                   <div className="flex justify-end">
-                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-[#2a2c2e] border border-[#3a3c3e] px-4 py-3">
-                      <p className="text-sm text-white/90 leading-6">{activeEnquiry.question}</p>
+                    <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-th-card-hover border border-th-border-md px-4 py-3">
+                      <p className="text-sm text-th-text-90 leading-6">{activeEnquiry.question}</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       {activeEnquiry.answeredByPic ? (
-                        <img src={activeEnquiry.answeredByPic} alt="Expert" className="h-8 w-8 rounded-full object-cover border border-[#3a3c3e] shrink-0" />
+                        <img src={activeEnquiry.answeredByPic} alt="Expert" className="h-8 w-8 rounded-full object-cover border border-th-border-md shrink-0" />
                       ) : (
-                        <div className="h-8 w-8 rounded-full bg-[#242628] border border-[#3a3c3e] flex items-center justify-center text-xs font-bold text-white shrink-0">E</div>
+                        <div className="h-8 w-8 rounded-full bg-th-card border border-th-border-md flex items-center justify-center text-xs font-bold text-th-text shrink-0">E</div>
                       )}
                       <span className="text-sm font-semibold text-yellow-400">Expert</span>
                       <span className="text-xs text-yellow-400/70">· {activeEnquiry.status === "answered" ? "Answered" : "Pending response"}</span>
@@ -142,14 +142,14 @@ export const EnquiriesPage = (): JSX.Element => {
                     {activeEnquiry.status === "answered" && activeEnquiry.answer ? (
                       <div className="ml-10">
                         {activeEnquiry.answer.split("\n\n").map((para: string, i: number) => (
-                          <p key={i} className="text-sm text-white/80 leading-6 mb-3 last:mb-0">{para}</p>
+                          <p key={i} className="text-sm text-th-text-80 leading-6 mb-3 last:mb-0">{para}</p>
                         ))}
                         {activeEnquiry.answeredBy && (
-                          <p className="text-xs text-white/30 mt-3 italic">— {activeEnquiry.answeredBy}</p>
+                          <p className="text-xs text-th-text-30 mt-3 italic">— {activeEnquiry.answeredBy}</p>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-white/60 leading-6 ml-10">
+                      <p className="text-sm text-th-text-60 leading-6 ml-10">
                         Thank you for your question! An expert will review and respond as soon as possible. You'll be notified when your response is ready.
                       </p>
                     )}
@@ -160,16 +160,16 @@ export const EnquiriesPage = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="border-t border-white/5 px-3 md:px-6 py-3 md:py-4 shrink-0">
+          <div className="border-t border-th-border px-3 md:px-6 py-3 md:py-4 shrink-0">
             <div className="mx-auto w-full max-w-2xl flex flex-col gap-3">
               <ChatInput onSubmit={handleSubmit} showAudienceTabs={false} isSubmitting={submitMutation.isPending} />
-              <p className="text-center text-xs text-white/40 leading-5">
+              <p className="text-center text-xs text-th-text-40 leading-5">
                 By messaging Ask MiGi, you agree to our{" "}
-                <button onClick={() => navigate("/terms")} className="text-white/60 underline underline-offset-2">Terms of Use,</button>{" "}
-                <button onClick={() => navigate("/privacy-policy")} className="text-white/60 underline underline-offset-2">Privacy Policy</button>,{" "}
-                <button onClick={() => navigate("/disclaimer")} className="text-white/60 underline underline-offset-2">Disclaimer</button>{" "}
+                <button onClick={() => navigate("/terms")} className="text-th-text-60 underline underline-offset-2">Terms of Use,</button>{" "}
+                <button onClick={() => navigate("/privacy-policy")} className="text-th-text-60 underline underline-offset-2">Privacy Policy</button>,{" "}
+                <button onClick={() => navigate("/disclaimer")} className="text-th-text-60 underline underline-offset-2">Disclaimer</button>{" "}
                 and{" "}
-                <button onClick={() => navigate("/refund-policy")} className="text-white/60 underline underline-offset-2">Refund Policy</button>.
+                <button onClick={() => navigate("/refund-policy")} className="text-th-text-60 underline underline-offset-2">Refund Policy</button>.
               </p>
             </div>
           </div>

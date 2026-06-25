@@ -73,6 +73,62 @@
   --text-color7: rgba(230, 230, 231, 1);
 }
 
+/* ── Theme tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* LIGHT MODE (default) */
+  --th-page:        #f7f7f8;
+  --th-nav:         #ffffff;
+  --th-card:        #ffffff;
+  --th-card-alt:    #f0f1f3;
+  --th-card-hover:  #eaebee;
+  --th-input:       #f3f4f6;
+  --th-close:       #e2e4e8;
+  --th-sidebar:     #f2f3f5;
+  --th-hover:       rgba(0,0,0,0.04);
+  --th-border:      rgba(0,0,0,0.07);
+  --th-border-md:   rgba(0,0,0,0.1);
+  --th-border-strong: rgba(0,0,0,0.18);
+  --th-text:        #0f0f11;
+  --th-text-90:     rgba(15,15,17,0.9);
+  --th-text-80:     rgba(15,15,17,0.8);
+  --th-text-70:     rgba(15,15,17,0.7);
+  --th-text-60:     rgba(15,15,17,0.6);
+  --th-text-50:     rgba(15,15,17,0.5);
+  --th-text-40:     rgba(15,15,17,0.4);
+  --th-text-30:     rgba(15,15,17,0.3);
+}
+
+.dark {
+  /* DARK MODE */
+  --th-page:        #161618;
+  --th-nav:         #161618;
+  --th-card:        #242628;
+  --th-card-alt:    #1e2022;
+  --th-card-hover:  #2a2c2e;
+  --th-input:       #242628;
+  --th-close:       #2e3032;
+  --th-sidebar:     #1a1c1e;
+  --th-hover:       rgba(255,255,255,0.05);
+  --th-border:      rgba(255,255,255,0.07);
+  --th-border-md:   rgba(255,255,255,0.1);
+  --th-border-strong: rgba(255,255,255,0.2);
+  --th-text:        #ffffff;
+  --th-text-90:     rgba(255,255,255,0.9);
+  --th-text-80:     rgba(255,255,255,0.8);
+  --th-text-70:     rgba(255,255,255,0.7);
+  --th-text-60:     rgba(255,255,255,0.6);
+  --th-text-50:     rgba(255,255,255,0.5);
+  --th-text-40:     rgba(255,255,255,0.4);
+  --th-text-30:     rgba(255,255,255,0.3);
+}
+
+/* Logo stays readable in both modes */
+.logo-adaptive { filter: brightness(0); }
+.dark .logo-adaptive { filter: none; }
+
+/* Transition the page bg/text smoothly on theme change */
+html { transition: background-color 0.2s ease, color 0.2s ease; }
+
 :root {
   --animate-spin: spin 1s linear infinite;
 }

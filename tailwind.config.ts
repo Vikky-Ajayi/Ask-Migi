@@ -7,6 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        /* Existing design tokens */
         "backgrounds-4": "var(--backgrounds-4)",
         "black-1": "var(--black-1)",
         "black-100": "var(--black-100)",
@@ -54,6 +55,27 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* ── Theme-adaptive tokens ── */
+        "th-page":          "var(--th-page)",
+        "th-nav":           "var(--th-nav)",
+        "th-card":          "var(--th-card)",
+        "th-card-alt":      "var(--th-card-alt)",
+        "th-card-hover":    "var(--th-card-hover)",
+        "th-input":         "var(--th-input)",
+        "th-close":         "var(--th-close)",
+        "th-sidebar":       "var(--th-sidebar)",
+        "th-hover":         "var(--th-hover)",
+        "th-border":        "var(--th-border)",
+        "th-border-md":     "var(--th-border-md)",
+        "th-border-strong": "var(--th-border-strong)",
+        "th-text":          "var(--th-text)",
+        "th-text-90":       "var(--th-text-90)",
+        "th-text-80":       "var(--th-text-80)",
+        "th-text-70":       "var(--th-text-70)",
+        "th-text-60":       "var(--th-text-60)",
+        "th-text-50":       "var(--th-text-50)",
+        "th-text-40":       "var(--th-text-40)",
+        "th-text-30":       "var(--th-text-30)",
       },
       fontFamily: {
         "caption1-medium": "var(--caption1-medium-font-family)",

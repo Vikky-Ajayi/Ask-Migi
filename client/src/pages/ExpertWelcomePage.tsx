@@ -31,13 +31,13 @@ export const ExpertWelcomePage = (): JSX.Element => {
       {/* Email-style header */}
       <div className="bg-black px-6 pt-8 pb-6">
         <img className="h-8 w-[120px]" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-        <p className="mt-2 text-sm text-white/60">Clear answers. Trusted experts. Real help.</p>
+        <p className="mt-2 text-sm text-th-text-60">Clear answers. Trusted experts. Real help.</p>
       </div>
 
       <div className="px-6 py-8 flex flex-col gap-6">
         {/* New Response badge */}
         <div className="inline-flex items-center gap-2 bg-green-500 rounded-full px-3 py-1.5 w-fit">
-          <span className="text-white text-xs font-semibold">📧 New Response</span>
+          <span className="text-th-text text-xs font-semibold">📧 New Response</span>
         </div>
 
         <div>
@@ -71,7 +71,7 @@ export const ExpertWelcomePage = (): JSX.Element => {
           </p>
           <button
             onClick={() => navigate("/")}
-            className="w-full h-12 rounded-full bg-black text-white font-semibold text-sm hover:bg-black/90 transition-colors"
+            className="w-full h-12 rounded-full bg-black text-th-text font-semibold text-sm hover:bg-black/90 transition-colors"
             data-testid="button-read-response"
           >
             Read Expert Response
@@ -129,21 +129,21 @@ export const ExpertWelcomePage = (): JSX.Element => {
       {/* Footer */}
       <div className="bg-black px-6 py-8 flex flex-col items-center gap-4">
         <div className="flex items-center gap-5">
-          <a href="#" className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+          <a href="#" className="h-9 w-9 rounded-full bg-th-hover flex items-center justify-center text-th-text hover:bg-white/20">
             <SiFacebook size={16} />
           </a>
-          <a href="#" className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+          <a href="#" className="h-9 w-9 rounded-full bg-th-hover flex items-center justify-center text-th-text hover:bg-white/20">
             <SiInstagram size={16} />
           </a>
-          <a href="#" className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+          <a href="#" className="h-9 w-9 rounded-full bg-th-hover flex items-center justify-center text-th-text hover:bg-white/20">
             <SiX size={16} />
           </a>
         </div>
-        <p className="text-xs text-white/50 text-center">
+        <p className="text-xs text-th-text-50 text-center">
           If you ever need support, we're always here:{" "}
-          <a href="mailto:support@askmigi.com" className="text-white underline">support@askmigi.com</a>
+          <a href="mailto:support@askmigi.com" className="text-th-text underline">support@askmigi.com</a>
         </p>
-        <p className="text-xs text-white/30">Copyright ©AskMigi. All rights reserved.</p>
+        <p className="text-xs text-th-text-30">Copyright ©AskMigi. All rights reserved.</p>
       </div>
     </main>
   );

@@ -72,26 +72,26 @@ export const PolicyPage = ({ type }: PolicyPageProps): JSX.Element => {
   const policy = policies[type];
 
   return (
-    <main className="min-h-screen w-full bg-[#161618] text-white flex flex-col">
+    <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
       <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
 
       <div className="flex flex-col items-center px-4 md:px-6 py-10 md:py-12">
         <div className="w-full max-w-2xl">
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{policy.title}</h1>
-          <p className="text-sm text-white/40 mt-1 mb-8">Effective Date: {policy.effectiveDate}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-th-text tracking-tight">{policy.title}</h1>
+          <p className="text-sm text-th-text-40 mt-1 mb-8">Effective Date: {policy.effectiveDate}</p>
           <div className="flex flex-col gap-6">
             {policy.sections.map((section, i) => (
               <div key={i} className="flex flex-col gap-2">
-                {section.heading && <h2 className="text-sm font-bold text-white">{section.heading}</h2>}
-                <p className="text-sm text-white/65 leading-7 whitespace-pre-line">{section.body}</p>
+                {section.heading && <h2 className="text-sm font-bold text-th-text">{section.heading}</h2>}
+                <p className="text-sm text-th-text-60 leading-7 whitespace-pre-line">{section.body}</p>
               </div>
             ))}
           </div>
-          <div className="mt-12 pt-8 border-t border-[#2e3032] flex flex-col items-center gap-4">
+          <div className="mt-12 pt-8 border-t border-th-border-md flex flex-col items-center gap-4">
             <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
-            <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-white/40">
+            <div className="flex items-center gap-4 flex-wrap justify-center text-xs text-th-text-40">
               {[["Terms of Use", "/terms"], ["Privacy Policy", "/privacy-policy"], ["Disclaimer", "/disclaimer"], ["Refund Policy", "/refund-policy"]].map(([label, path]) => (
-                <button key={label} onClick={() => navigate(path)} className="hover:text-white transition-colors">{label}</button>
+                <button key={label} onClick={() => navigate(path)} className="hover:text-th-text transition-colors">{label}</button>
               ))}
             </div>
           </div>

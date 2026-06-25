@@ -43,15 +43,15 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
               onClick={() => { navigate(item.path); onNavigate?.(); }}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 active
-                  ? "bg-white/10 text-white"
-                  : "text-white/55 hover:text-white hover:bg-white/5"
+                  ? "bg-th-hover text-th-text"
+                  : "text-th-text-60 hover:text-th-text hover:bg-th-hover"
               }`}
               data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
             >
               {item.icon}
               <span className="flex-1 text-left">{item.label}</span>
               {item.badge > 0 && (
-                <span className="h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-th-text text-[10px] font-bold flex items-center justify-center">
                   {item.badge}
                 </span>
               )}
@@ -61,17 +61,17 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
       </nav>
       <div className="px-2 pb-4">
         <div className="flex items-center gap-2.5 px-3 py-2.5">
-          <div className="h-8 w-8 rounded-full bg-[#2e3032] flex items-center justify-center text-xs font-bold text-white shrink-0">
+          <div className="h-8 w-8 rounded-full bg-th-close flex items-center justify-center text-xs font-bold text-th-text shrink-0">
             {initials}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[13px] font-semibold text-white truncate leading-tight">{fullName}</span>
-            <span className="text-[11px] text-white/40 truncate leading-tight">Career Expert</span>
+            <span className="text-[13px] font-semibold text-th-text truncate leading-tight">{fullName}</span>
+            <span className="text-[11px] text-th-text-40 truncate leading-tight">Career Expert</span>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-white/55 hover:text-white transition-colors rounded-xl hover:bg-white/5"
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-th-text-60 hover:text-th-text transition-colors rounded-xl hover:bg-th-hover"
           data-testid="button-logout"
         >
           <LogOut size={15} />
@@ -82,7 +82,7 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
   );
 
   return (
-    <div className="min-h-screen w-full bg-[#0f1011] text-white flex">
+    <div className="min-h-screen w-full bg-[#0f1011] text-th-text flex">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-[200px] min-h-screen bg-[#141516] border-r border-[#232527] fixed top-0 left-0 bottom-0 z-20">
         <SidebarContent />
@@ -103,7 +103,7 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
         }`}
       >
         <div className="absolute top-4 right-4">
-          <button onClick={() => setSidebarOpen(false)} className="text-white/50 hover:text-white p-1">
+          <button onClick={() => setSidebarOpen(false)} className="text-th-text-50 hover:text-th-text p-1">
             <X size={18} />
           </button>
         </div>
@@ -116,20 +116,20 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
         <header className="sticky top-0 z-30 bg-[#0f1011] border-b border-[#232527] px-4 md:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
-              className="md:hidden shrink-0 text-white/60 hover:text-white transition-colors"
+              className="md:hidden shrink-0 text-th-text-60 hover:text-th-text transition-colors"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={20} />
             </button>
-            <span className="md:hidden font-bold text-white text-base tracking-tight">Ask MiGi®</span>
-            <span className="hidden md:block text-lg font-bold text-white tracking-tight truncate">{title}</span>
+            <span className="md:hidden font-bold text-th-text text-base tracking-tight">Ask MiGi®</span>
+            <span className="hidden md:block text-lg font-bold text-th-text tracking-tight truncate">{title}</span>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
             <div className="relative hidden md:block">
               <button
                 onClick={() => setHelpOpen(!helpOpen)}
-                className="flex items-center gap-1 text-[13px] font-medium text-white/60 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-white/5"
+                className="flex items-center gap-1 text-[13px] font-medium text-th-text-60 hover:text-th-text transition-colors px-2 py-1.5 rounded-lg hover:bg-th-hover"
               >
                 <HelpCircle size={15} className="mr-0.5" />
                 Help
@@ -138,15 +138,15 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
               {helpOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setHelpOpen(false)} />
-                  <div className="absolute right-0 top-9 w-36 bg-[#1a1c1e] border border-[#2e3032] rounded-xl shadow-xl overflow-hidden z-50">
-                    <button onClick={() => { navigate("/faq"); setHelpOpen(false); }} className="w-full text-left px-4 py-2.5 text-[13px] text-white/70 hover:text-white hover:bg-white/5 transition-colors">FAQ</button>
-                    <button onClick={() => { navigate("/contact"); setHelpOpen(false); }} className="w-full text-left px-4 py-2.5 text-[13px] text-white/70 hover:text-white hover:bg-white/5 transition-colors">Contact</button>
+                  <div className="absolute right-0 top-9 w-36 bg-th-sidebar border border-th-border-md rounded-xl shadow-xl overflow-hidden z-50">
+                    <button onClick={() => { navigate("/faq"); setHelpOpen(false); }} className="w-full text-left px-4 py-2.5 text-[13px] text-th-text-70 hover:text-th-text hover:bg-th-hover transition-colors">FAQ</button>
+                    <button onClick={() => { navigate("/contact"); setHelpOpen(false); }} className="w-full text-left px-4 py-2.5 text-[13px] text-th-text-70 hover:text-th-text hover:bg-th-hover transition-colors">Contact</button>
                   </div>
                 </>
               )}
             </div>
 
-            <button className="h-8 w-8 rounded-full bg-[#2e3032] flex items-center justify-center text-white/70 hover:text-white transition-colors shrink-0">
+            <button className="h-8 w-8 rounded-full bg-th-close flex items-center justify-center text-th-text-70 hover:text-th-text transition-colors shrink-0">
               <User size={15} />
             </button>
           </div>
@@ -154,7 +154,7 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
 
         {/* Page title on mobile */}
         <div className="md:hidden px-4 pt-4 pb-0">
-          <h1 className="text-xl font-bold text-white tracking-tight">{title}</h1>
+          <h1 className="text-xl font-bold text-th-text tracking-tight">{title}</h1>
         </div>
 
         <main className="flex-1 overflow-auto">

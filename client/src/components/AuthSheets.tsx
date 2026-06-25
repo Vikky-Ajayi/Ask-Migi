@@ -72,7 +72,7 @@ export const AuthSheets = ({ view, onViewChange, onClose, registerRole, onSucces
 
       {/* Mobile: bottom sheet with slide-up animation */}
       <div
-        className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-[#1a1c1e] rounded-t-2xl flex flex-col overflow-hidden"
+        className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-th-sidebar rounded-t-2xl flex flex-col overflow-hidden"
         style={{
           top: 60,
           transform: sheetVisible ? "translateY(0)" : "translateY(100%)",
@@ -115,14 +115,14 @@ const AuthInput = ({
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full h-12 rounded-xl bg-[#242628] px-4 text-sm text-white placeholder:text-white/40 border border-transparent focus:border-white/20 focus:outline-none"
+      className="w-full h-12 rounded-xl bg-th-card px-4 text-sm text-th-text placeholder:text-th-text-40 border border-transparent focus:border-th-border-strong focus:outline-none"
       data-testid={testId}
     />
     {showToggle && (
       <button
         type="button"
         onClick={onToggle}
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-th-text-40 hover:text-th-text-70"
       >
         {type === "password" ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
@@ -147,7 +147,7 @@ const PrimaryButton = ({
     type="button"
     onClick={onClick}
     disabled={loading || disabled}
-    className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+    className="w-full h-12 rounded-full bg-[#0f0f11] text-white text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
     data-testid={testId}
   >
     {loading ? "Loading…" : children}
@@ -173,10 +173,10 @@ const DialogWrapper = ({
     return (
       <div className="flex flex-col h-full" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 pt-6 pb-5">
-          <h2 className="text-2xl font-bold text-white tracking-tight">{title}</h2>
+          <h2 className="text-2xl font-bold text-th-text tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-th-close text-th-text-60 hover:text-th-text transition-colors"
             data-testid="button-close-sheet"
           >
             <X size={15} />
@@ -190,14 +190,14 @@ const DialogWrapper = ({
 
   return (
     <div
-      className="w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 pt-6 pb-8 border border-white/10 shadow-2xl"
+      className="w-full max-w-sm bg-th-sidebar rounded-3xl px-6 pt-6 pb-8 border border-th-border-md shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white tracking-tight">{title}</h2>
+        <h2 className="text-xl font-semibold text-th-text tracking-tight">{title}</h2>
         <button
           onClick={onClose}
-          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white transition-colors"
+          className="h-8 w-8 flex items-center justify-center rounded-full bg-th-close text-th-text-60 hover:text-th-text transition-colors"
           data-testid="button-close-sheet"
         >
           <X size={15} />
@@ -257,9 +257,9 @@ const LoginDialog = ({
       footer={
         <div className="flex flex-col gap-4">
           <PrimaryButton onClick={handleLogin} loading={loading} testId="button-login">Log in</PrimaryButton>
-          <p className="text-center text-sm text-white/60">
+          <p className="text-center text-sm text-th-text-60">
             Don't have an account?{" "}
-            <button onClick={() => onViewChange("register")} className="text-white font-semibold underline underline-offset-2" data-testid="link-create-account">
+            <button onClick={() => onViewChange("register")} className="text-th-text font-semibold underline underline-offset-2" data-testid="link-create-account">
               Create Account
             </button>
           </p>
@@ -280,7 +280,7 @@ const LoginDialog = ({
       </div>
       <button
         onClick={() => onViewChange("forgot")}
-        className="block text-center w-full mb-4 text-sm text-white underline underline-offset-2"
+        className="block text-center w-full mb-4 text-sm text-th-text underline underline-offset-2"
         data-testid="link-forgot-password"
       >
         Forgot Password?
@@ -321,23 +321,23 @@ const SelectInput = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full h-12 rounded-xl bg-[#242628] px-4 text-sm text-left flex items-center justify-between border border-transparent focus:border-white/20 focus:outline-none"
+        className="w-full h-12 rounded-xl bg-th-card px-4 text-sm text-left flex items-center justify-between border border-transparent focus:border-th-border-strong focus:outline-none"
         data-testid={testId}
       >
-        <span className={value ? "text-white" : "text-white/40"}>{value || placeholder}</span>
-        <ChevronDown size={15} className={`text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className={value ? "text-th-text" : "text-th-text-40"}>{value || placeholder}</span>
+        <ChevronDown size={15} className={`text-th-text-40 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e2022] border border-[#2e3032] rounded-xl overflow-y-auto z-20 shadow-xl max-h-48">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-th-card-alt border border-th-border-md rounded-xl overflow-y-auto z-20 shadow-xl max-h-48">
             {options.map((opt) => (
               <button
                 key={opt}
                 type="button"
                 onClick={() => { onChange(opt); setOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${
-                  value === opt ? "text-white font-medium" : "text-white/70"
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-th-hover ${
+                  value === opt ? "text-th-text font-medium" : "text-th-text-70"
                 }`}
               >
                 {opt}
@@ -403,11 +403,11 @@ const ExpertRegisterDialog = ({
           <PrimaryButton onClick={handleRegister} loading={loading} testId="button-create-expert-account">
             Create Account
           </PrimaryButton>
-          <p className="text-center text-sm text-white/60">
+          <p className="text-center text-sm text-th-text-60">
             Already have an account?{" "}
             <button
               onClick={() => onViewChange("login")}
-              className="text-white font-semibold underline underline-offset-2"
+              className="text-th-text font-semibold underline underline-offset-2"
               data-testid="link-login-expert"
             >
               Log in
@@ -436,7 +436,7 @@ const ExpertRegisterDialog = ({
           <AuthInput placeholder="Last name" value={last} onChange={setLast} testId="input-expert-last-name" />
         </div>
         <div className="flex gap-2">
-          <div className="h-12 flex items-center gap-1.5 px-3 rounded-xl bg-[#242628] text-sm text-white shrink-0">
+          <div className="h-12 flex items-center gap-1.5 px-3 rounded-xl bg-th-card text-sm text-th-text shrink-0">
             <img src={ukFlagImg} alt="UK" className="w-5 h-5 object-contain" />
             +44
           </div>
@@ -445,7 +445,7 @@ const ExpertRegisterDialog = ({
             placeholder="Phone number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="flex-1 h-12 rounded-xl bg-[#242628] px-4 text-sm text-white placeholder:text-white/40 border border-transparent focus:border-white/20 focus:outline-none"
+            className="flex-1 h-12 rounded-xl bg-th-card px-4 text-sm text-th-text placeholder:text-th-text-40 border border-transparent focus:border-th-border-strong focus:outline-none"
             data-testid="input-expert-phone"
           />
         </div>
@@ -518,9 +518,9 @@ const RegisterDialog = ({
       footer={
         <div className="flex flex-col gap-4">
           <PrimaryButton onClick={handleRegister} loading={loading} testId="button-create-account">Create Account</PrimaryButton>
-          <p className="text-center text-sm text-white/60">
+          <p className="text-center text-sm text-th-text-60">
             Already have an account?{" "}
-            <button onClick={() => onViewChange("login")} className="text-white font-semibold underline underline-offset-2" data-testid="link-login">
+            <button onClick={() => onViewChange("login")} className="text-th-text font-semibold underline underline-offset-2" data-testid="link-login">
               Log in
             </button>
           </p>
@@ -593,10 +593,10 @@ const ForgotPasswordDialog = ({
       }
     >
       <div className="flex items-center gap-2 mb-1">
-        <Mail size={16} className="text-white" />
-        <p className="text-sm font-semibold text-white">Enter your email address.</p>
+        <Mail size={16} className="text-th-text" />
+        <p className="text-sm font-semibold text-th-text">Enter your email address.</p>
       </div>
-      <p className="text-sm text-white/50 mb-5">We will send you a 6-digit code to reset your password</p>
+      <p className="text-sm text-th-text-50 mb-5">We will send you a 6-digit code to reset your password</p>
       <AuthInput placeholder="Email" type="email" value={email} onChange={setEmail} testId="input-email" />
       {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
     </DialogWrapper>
@@ -650,11 +650,11 @@ const OTPDialog = ({
       mobile={mobile}
       footer={
         <div className="flex flex-col gap-4">
-          <p className="text-center text-sm text-white/60">
+          <p className="text-center text-sm text-th-text-60">
             Didn't get Code?{" "}
             <button
               onClick={() => onViewChange("forgot")}
-              className="text-white font-semibold underline underline-offset-2"
+              className="text-th-text font-semibold underline underline-offset-2"
               data-testid="link-reset-code"
             >
               Reset Code
@@ -664,8 +664,8 @@ const OTPDialog = ({
         </div>
       }
     >
-      <p className="text-sm text-white/60 mb-1">Enter the 6-digit code sent to</p>
-      <p className="text-sm font-semibold text-white mb-5">{email || "your email"}</p>
+      <p className="text-sm text-th-text-60 mb-1">Enter the 6-digit code sent to</p>
+      <p className="text-sm font-semibold text-th-text mb-5">{email || "your email"}</p>
       {otpHint && (
         <p className="text-xs text-yellow-400/70 mb-3">Demo hint: your OTP is <strong>{otpHint}</strong></p>
       )}
@@ -772,7 +772,7 @@ const SuccessDialog = ({
         <div className="flex justify-end px-5 pt-5">
           <button
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-th-close text-th-text-60 hover:text-th-text"
             data-testid="button-close-success"
           >
             <X size={15} />
@@ -780,16 +780,16 @@ const SuccessDialog = ({
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
           <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center">
-            <CircleCheck size={32} className="text-white" />
+            <CircleCheck size={32} className="text-th-text" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Password reset successful</h2>
-          <p className="text-sm text-white/60">You have successfully reset your password. Proceed to log in.</p>
+          <h2 className="text-2xl font-bold text-th-text">Password reset successful</h2>
+          <p className="text-sm text-th-text-60">You have successfully reset your password. Proceed to log in.</p>
         </div>
         <div className="px-5 pb-10 pt-3">
           <button
             type="button"
             onClick={() => onViewChange("login")}
-            className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+            className="w-full h-12 rounded-full bg-[#0f0f11] text-white text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
             data-testid="button-continue-success"
           >
             Continue
@@ -801,13 +801,13 @@ const SuccessDialog = ({
 
   return (
     <div
-      className="w-full max-w-sm bg-[#1a1c1e] rounded-3xl px-6 py-8 border border-white/10 shadow-2xl"
+      className="w-full max-w-sm bg-th-sidebar rounded-3xl px-6 py-8 border border-th-border-md shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex justify-end mb-2">
         <button
           onClick={onClose}
-          className="h-8 w-8 flex items-center justify-center rounded-full bg-[#2e3032] text-white/60 hover:text-white"
+          className="h-8 w-8 flex items-center justify-center rounded-full bg-th-close text-th-text-60 hover:text-th-text"
           data-testid="button-close-success"
         >
           <X size={15} />
@@ -815,16 +815,16 @@ const SuccessDialog = ({
       </div>
       <div className="flex flex-col items-center gap-4 text-center py-4">
         <div className="h-16 w-16 rounded-full border-2 border-white flex items-center justify-center">
-          <CircleCheck size={32} className="text-white" />
+          <CircleCheck size={32} className="text-th-text" />
         </div>
-        <h2 className="text-xl font-semibold text-white">Password reset successful</h2>
-        <p className="text-sm text-white/60">You have successfully reset your password. Proceed to log in.</p>
+        <h2 className="text-xl font-semibold text-th-text">Password reset successful</h2>
+        <p className="text-sm text-th-text-60">You have successfully reset your password. Proceed to log in.</p>
       </div>
       <div className="mt-6">
         <button
           type="button"
           onClick={() => onViewChange("login")}
-          className="w-full h-12 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors"
+          className="w-full h-12 rounded-full bg-[#0f0f11] text-white text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
           data-testid="button-continue-success"
         >
           Continue

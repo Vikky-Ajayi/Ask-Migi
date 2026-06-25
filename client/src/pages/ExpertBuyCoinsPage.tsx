@@ -131,10 +131,10 @@ export const ExpertBuyCoinsPage = () => {
       {/* Verifying overlay */}
       {verifying && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-          <div className="bg-[#1a1c1e] border border-[#2e3032] rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm text-center">
-            <Loader2 className="w-10 h-10 text-white animate-spin" />
-            <p className="text-base font-semibold text-white">Confirming your payment…</p>
-            <p className="text-sm text-white/50">This will only take a moment.</p>
+          <div className="bg-th-sidebar border border-th-border-md rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm text-center">
+            <Loader2 className="w-10 h-10 text-th-text animate-spin" />
+            <p className="text-base font-semibold text-th-text">Confirming your payment…</p>
+            <p className="text-sm text-th-text-50">This will only take a moment.</p>
           </div>
         </div>
       )}
@@ -142,7 +142,7 @@ export const ExpertBuyCoinsPage = () => {
       <div className="px-4 md:px-8 py-6 max-w-2xl">
         <button
           onClick={() => navigate("/expert-dashboard")}
-          className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
+          className="flex items-center gap-1.5 text-sm text-th-text-50 hover:text-th-text transition-colors mb-6"
         >
           <ArrowLeft size={15} />
           Back to Dashboard
@@ -151,25 +151,25 @@ export const ExpertBuyCoinsPage = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
-            <div className="h-12 w-12 rounded-full bg-[#1e2022] flex items-center justify-center shrink-0">
+            <div className="h-12 w-12 rounded-full bg-th-card-alt flex items-center justify-center shrink-0">
               <img src={coinImg} alt="coins" className="w-6 h-6 object-contain" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Buy Coins</h1>
-              <p className="text-sm text-white/50 mt-0.5">
+              <h1 className="text-2xl font-bold text-th-text">Buy Coins</h1>
+              <p className="text-sm text-th-text-50 mt-0.5">
                 Current balance:{" "}
-                <span className="font-semibold text-white">{user?.coins ?? 0} coins</span>
+                <span className="font-semibold text-th-text">{user?.coins ?? 0} coins</span>
               </p>
             </div>
           </div>
-          <p className="text-sm text-white/55 leading-6">
+          <p className="text-sm text-th-text-60 leading-6">
             Use coins to promote your business, boost visibility, and unlock premium features on the platform.
           </p>
         </div>
 
         {/* What coins are used for */}
-        <div className="bg-[#161618] border border-[#2e3032] rounded-2xl p-5 mb-6">
-          <h2 className="text-sm font-bold text-white mb-3">What are coins used for?</h2>
+        <div className="bg-th-page border border-th-border-md rounded-2xl p-5 mb-6">
+          <h2 className="text-sm font-bold text-th-text mb-3">What are coins used for?</h2>
           <ul className="flex flex-col gap-2">
             {[
               ["5 coins", "Promote your business for 1 week"],
@@ -179,9 +179,9 @@ export const ExpertBuyCoinsPage = () => {
               <li key={coins} className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 w-20 shrink-0">
                   <img src={coinImg} alt="" className="w-4 h-4 object-contain" />
-                  <span className="text-sm font-bold text-white">{coins}</span>
+                  <span className="text-sm font-bold text-th-text">{coins}</span>
                 </div>
-                <span className="text-sm text-white/55">{desc}</span>
+                <span className="text-sm text-th-text-60">{desc}</span>
               </li>
             ))}
           </ul>
@@ -201,25 +201,25 @@ export const ExpertBuyCoinsPage = () => {
             <div
               key={i}
               data-testid={`expert-coin-pack-${pkg.coins}`}
-              className={`relative bg-[#161618] border rounded-2xl p-5 flex items-center justify-between gap-4 transition-colors ${
-                pkg.popular ? "border-[#2d7dd2]/60" : "border-[#2e3032]"
+              className={`relative bg-th-page border rounded-2xl p-5 flex items-center justify-between gap-4 transition-colors ${
+                pkg.popular ? "border-[#2d7dd2]/60" : "border-th-border-md"
               }`}
             >
               {pkg.popular && (
                 <div className="absolute -top-3 left-5 px-3 py-0.5 bg-[#2d7dd2] rounded-full">
-                  <span className="text-xs font-bold text-white">Most Popular</span>
+                  <span className="text-xs font-bold text-th-text">Most Popular</span>
                 </div>
               )}
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-[#1e2022] flex items-center justify-center shrink-0">
+                <div className="h-10 w-10 rounded-full bg-th-card-alt flex items-center justify-center shrink-0">
                   <img src={coinImg} alt="" className="w-5 h-5 object-contain" />
                 </div>
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-base font-bold text-white">{pkg.coins} Coins</span>
-                    <span className="text-sm font-bold text-white/60">{pkg.price}</span>
+                    <span className="text-base font-bold text-th-text">{pkg.coins} Coins</span>
+                    <span className="text-sm font-bold text-th-text-60">{pkg.price}</span>
                   </div>
-                  <p className="text-xs text-white/40 mt-0.5">{pkg.label} — {pkg.description}</p>
+                  <p className="text-xs text-th-text-40 mt-0.5">{pkg.label} — {pkg.description}</p>
                 </div>
               </div>
               <button
@@ -228,7 +228,7 @@ export const ExpertBuyCoinsPage = () => {
                 data-testid={`button-expert-buy-${pkg.coins}`}
                 className={`shrink-0 h-9 px-5 rounded-full font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                   pkg.popular
-                    ? "bg-[#2d7dd2] hover:bg-[#3a8de2] text-white"
+                    ? "bg-[#2d7dd2] hover:bg-[#3a8de2] text-th-text"
                     : "bg-white text-black hover:bg-white/90"
                 }`}
               >
@@ -238,7 +238,7 @@ export const ExpertBuyCoinsPage = () => {
           ))}
         </div>
 
-        <p className="mt-6 text-xs text-white/30 text-center">
+        <p className="mt-6 text-xs text-th-text-30 text-center">
           Payments processed securely by SumUp. All purchases are final. Coins are non-refundable. Prices in GBP.
         </p>
       </div>

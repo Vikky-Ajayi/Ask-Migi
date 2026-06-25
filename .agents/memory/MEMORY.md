@@ -3,3 +3,4 @@
 - [Career platform restructuring](career-platform-restructuring.md) — Major restructuring: travel agent pages removed, platform renamed to career guidance, new ai_draft question flow, EXPERT_EMAIL env var needed.
 - [Schema extras](schema-extras.md) — users: unlimitedCoins bool + profilePic text; enquiries: answeredByPic text + answerEditedAt timestamp. AuthUser interface must include unlimitedCoins and profilePic fields.
 - [Admin & crypto routes](admin-crypto-routes.md) — POST /api/admin/set-coins requires ADMIN_SECRET env; POST /api/coins/create-crypto-checkout + crypto-webhook require NOWPAYMENTS_API_KEY env; both are soft-fail (503) when env vars missing.
+- [Dark/light theme system](theme-system.md) — ThemeContext at context/ThemeContext.tsx, CSS vars in :root (light) + .dark (dark) in index.css, all th-* tokens in tailwind.config.ts; logo uses .logo-adaptive filter; CTAs use bg-[#0f0f11] text-white dark:bg-white dark:text-black pattern.

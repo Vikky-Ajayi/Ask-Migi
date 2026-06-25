@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Menu, CircleUser } from "lucide-react";
+import { Menu, CircleUser, Sun, Moon } from "lucide-react";
 import { DesktopNav } from "./DesktopNav";
 import { Sidebar } from "./Sidebar";
 import { SettingsModal } from "./SettingsModal";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 
 interface NavBarProps {
   onLoginClick?: () => void;
@@ -16,6 +17,7 @@ export const NavBar = ({ onLoginClick, onSignUpClick, onMenuClick }: NavBarProps
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { isLoggedIn } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [, navigate] = useLocation();
 
   return (
@@ -28,35 +30,46 @@ export const NavBar = ({ onLoginClick, onSignUpClick, onMenuClick }: NavBarProps
         />
       </div>
 
-      <header className="md:hidden w-full flex items-center justify-between px-4 py-3 bg-[#161618] border-b border-white/5 sticky top-0 z-30">
+      <header className="md:hidden w-full flex items-center justify-between px-4 py-3 bg-th-nav border-b border-th-border sticky top-0 z-30">
         <button
           onClick={onMenuClick ?? (() => setSidebarOpen(true))}
-          className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+          className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-th-hover transition-colors"
           aria-label="Open menu"
         >
-          <Menu size={20} className="text-white" />
+          <Menu size={20} className="text-th-text" />
         </button>
 
         <button onClick={() => navigate("/")} className="focus:outline-none">
-          <img className="h-6" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
+          <img className="h-6 logo-adaptive" alt="Ask MiGi" src="/figmaAssets/vector.svg" />
         </button>
 
-        {isLoggedIn ? (
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={() => setSettingsOpen(true)}
-            className="h-9 w-9 flex items-center justify-center rounded-full border border-white/20 hover:bg-white/10 transition-colors"
+            onClick={toggleTheme}
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-th-border-md text-th-text-60 hover:text-th-text hover:bg-th-hover transition-colors"
+            aria-label="Toggle theme"
+            data-testid="button-theme-toggle-mobile"
           >
-            <CircleUser size={18} className="text-white/70" />
+            {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
           </button>
-        ) : (
-          <button
-            onClick={onSignUpClick}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-full bg-white text-black text-xs font-semibold hover:bg-white/90 transition-colors"
-          >
-            <CircleUser size={13} className="text-black" />
-            Sign Up
-          </button>
-        )}
+
+          {isLoggedIn ? (
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="h-9 w-9 flex items-center justify-center rounded-full border border-th-border-strong hover:bg-th-hover transition-colors"
+            >
+              <CircleUser size={18} className="text-th-text-70" />
+            </button>
+          ) : (
+            <button
+              onClick={onSignUpClick}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-colors bg-[#0f0f11] text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
+            >
+              <CircleUser size={13} />
+              Sign Up
+            </button>
+          )}
+        </div>
       </header>
 
       <Sidebar

@@ -148,10 +148,10 @@ export const ExpertDashboardPage = () => {
 
   if (magicLoading) {
     return (
-      <main className="min-h-screen w-full bg-[#161618] text-white flex items-center justify-center">
+      <main className="min-h-screen w-full bg-th-page text-th-text flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-          <p className="text-sm text-white/50">Authenticating…</p>
+          <div className="h-8 w-8 border-2 border-th-border-strong border-t-white rounded-full animate-spin" />
+          <p className="text-sm text-th-text-50">Authenticating…</p>
         </div>
       </main>
     );
@@ -161,28 +161,28 @@ export const ExpertDashboardPage = () => {
     return (
       <ExpertLayout title="Preview Response" pendingCount={pendingCount}>
         <div className="px-4 md:px-8 py-6 max-w-2xl">
-          <button onClick={() => setView("answer")} className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-5">
+          <button onClick={() => setView("answer")} className="flex items-center gap-1.5 text-sm text-th-text-50 hover:text-th-text transition-colors mb-5">
             ← Back to Edit
           </button>
-          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 mb-4">
-            <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Question from User</p>
-            <p className="text-base text-white leading-relaxed">{selectedEnquiry.question}</p>
-            {selectedEnquiry.country && <p className="text-xs text-white/40 mt-3">📍 {selectedEnquiry.country}</p>}
+          <div className="bg-th-card-alt border border-th-border-md rounded-2xl p-5 mb-4">
+            <p className="text-xs text-th-text-40 uppercase tracking-wide mb-2">Question from User</p>
+            <p className="text-base text-th-text leading-relaxed">{selectedEnquiry.question}</p>
+            {selectedEnquiry.country && <p className="text-xs text-th-text-40 mt-3">📍 {selectedEnquiry.country}</p>}
           </div>
-          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 mb-6">
-            <p className="text-xs text-white/40 uppercase tracking-wide mb-3">Your Response (Preview)</p>
+          <div className="bg-th-card-alt border border-th-border-md rounded-2xl p-5 mb-6">
+            <p className="text-xs text-th-text-40 uppercase tracking-wide mb-3">Your Response (Preview)</p>
             {answerText.split("\n\n").map((para, i) => (
-              <p key={i} className="text-sm text-white/80 leading-6 mb-3 last:mb-0">{para}</p>
+              <p key={i} className="text-sm text-th-text-80 leading-6 mb-3 last:mb-0">{para}</p>
             ))}
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setView("answer")} className="h-10 px-5 rounded-full border border-white/20 text-white/70 hover:text-white text-sm font-medium transition-colors">
+            <button onClick={() => setView("answer")} className="h-10 px-5 rounded-full border border-th-border-strong text-th-text-70 hover:text-th-text text-sm font-medium transition-colors">
               Edit Response
             </button>
             <button
               onClick={handleSendAnswer}
               disabled={answerMutation.isPending}
-              className="h-10 px-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-10 px-6 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               data-testid="button-confirm-send"
             >
               <Send size={14} />
@@ -198,20 +198,20 @@ export const ExpertDashboardPage = () => {
     return (
       <ExpertLayout title={isEditMode ? "Edit Sent Response" : "Edit Response"} pendingCount={pendingCount}>
         <div className="px-4 md:px-8 py-6 max-w-2xl">
-          <button onClick={() => { setView("dashboard"); setSelectedEnquiry(null); }} className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-5">
+          <button onClick={() => { setView("dashboard"); setSelectedEnquiry(null); }} className="flex items-center gap-1.5 text-sm text-th-text-50 hover:text-th-text transition-colors mb-5">
             ← Back to Dashboard
           </button>
-          <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5 mb-4">
-            <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Question</p>
-            <p className="text-base text-white leading-relaxed">{selectedEnquiry.question}</p>
-            {selectedEnquiry.country && <p className="text-xs text-white/40 mt-3">📍 {selectedEnquiry.country}</p>}
+          <div className="bg-th-card-alt border border-th-border-md rounded-2xl p-5 mb-4">
+            <p className="text-xs text-th-text-40 uppercase tracking-wide mb-2">Question</p>
+            <p className="text-base text-th-text leading-relaxed">{selectedEnquiry.question}</p>
+            {selectedEnquiry.country && <p className="text-xs text-th-text-40 mt-3">📍 {selectedEnquiry.country}</p>}
             {selectedEnquiry.attachment && selectedEnquiry.attachmentName && (
-              <div className="mt-4 pt-4 border-t border-white/8">
-                <p className="text-xs text-white/40 uppercase tracking-wide mb-2">Attached File</p>
+              <div className="mt-4 pt-4 border-t border-th-border">
+                <p className="text-xs text-th-text-40 uppercase tracking-wide mb-2">Attached File</p>
                 <a
                   href={selectedEnquiry.attachment}
                   download={selectedEnquiry.attachmentName}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/8 border border-white/15 text-xs text-white/70 hover:text-white hover:bg-white/12 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-th-hover border border-th-border-md text-xs text-th-text-70 hover:text-th-text hover:bg-white/12 transition-colors"
                 >
                   📎 {selectedEnquiry.attachmentName}
                 </a>
@@ -219,7 +219,7 @@ export const ExpertDashboardPage = () => {
             )}
           </div>
           {isEditMode && (
-            <div className="bg-[#2a1a0d] border border-[#5a3a1a] rounded-2xl p-4 mb-4 flex items-start gap-3">
+            <div className="bg-amber-950 border border-amber-800/40 rounded-2xl p-4 mb-4 flex items-start gap-3">
               <Info size={16} className="text-amber-400 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-300/80 leading-5">You're editing a sent response. The user will see the updated version immediately. No notification email will be sent.</p>
             </div>
@@ -227,8 +227,8 @@ export const ExpertDashboardPage = () => {
           <div className="bg-[#0d2a4d] border border-[#1a4a7a] rounded-2xl p-4 mb-5 flex items-start gap-3">
             <Info size={16} className="text-[#4da6ff] shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-white mb-1">Response Guidelines</p>
-              <ul className="text-xs text-white/60 leading-5 list-disc list-inside space-y-0.5">
+              <p className="text-sm font-semibold text-th-text mb-1">Response Guidelines</p>
+              <ul className="text-xs text-th-text-60 leading-5 list-disc list-inside space-y-0.5">
                 <li>Be clear, professional, and accurate</li>
                 <li>Only answer within your area of expertise</li>
                 <li>Do not share personal contact information</li>
@@ -237,21 +237,21 @@ export const ExpertDashboardPage = () => {
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            <label className="text-sm font-medium text-white">Your Response</label>
+            <label className="text-sm font-medium text-th-text">Your Response</label>
             <textarea
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               placeholder="Type your expert response here..."
               rows={8}
-              className="w-full rounded-xl bg-[#1e2022] border border-[#2e3032] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none resize-none"
+              className="w-full rounded-xl bg-th-card-alt border border-th-border-md px-4 py-3 text-sm text-th-text placeholder:text-th-text-30 focus:border-th-border-strong focus:outline-none resize-none"
               data-testid="textarea-answer"
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-white/30">{answerText.length} characters</span>
+              <span className="text-xs text-th-text-30">{answerText.length} characters</span>
               <button
                 onClick={() => setView("preview")}
                 disabled={answerText.trim().length < 50}
-                className="h-10 px-6 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                className="h-10 px-6 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
                 data-testid="button-preview-answer"
               >
                 <Eye size={14} />
@@ -269,37 +269,37 @@ export const ExpertDashboardPage = () => {
       <div className="px-4 md:px-8 py-6 flex flex-col gap-8">
 
         {/* ── Profile Photo ─────────────────────────────────────────────── */}
-        <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl p-5">
-          <h2 className="text-sm font-bold text-white mb-4">Your Profile Photo</h2>
+        <div className="bg-th-card-alt border border-th-border-md rounded-2xl p-5">
+          <h2 className="text-sm font-bold text-th-text mb-4">Your Profile Photo</h2>
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               {user?.profilePic ? (
                 <img
                   src={user.profilePic}
                   alt="Profile"
-                  className="h-16 w-16 rounded-full object-cover border-2 border-white/20"
+                  className="h-16 w-16 rounded-full object-cover border-2 border-th-border-strong"
                 />
               ) : (
-                <div className="h-16 w-16 rounded-full bg-[#242628] border-2 border-[#3a3c3e] flex items-center justify-center text-xl font-bold text-white">
+                <div className="h-16 w-16 rounded-full bg-th-card border-2 border-th-border-md flex items-center justify-center text-xl font-bold text-th-text">
                   {user?.firstName?.[0] ?? "E"}
                 </div>
               )}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={picMutation.isPending}
-                className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-white text-black flex items-center justify-center hover:bg-white/90 transition-colors"
+                className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full flex items-center justify-center hover:bg-black/90 transition-colors bg-[#0f0f11] text-white dark:bg-white dark:text-black dark:hover:bg-white/90"
                 data-testid="button-upload-pic"
               >
                 <Camera size={12} />
               </button>
             </div>
             <div>
-              <p className="text-sm text-white font-medium">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-white/40 mt-0.5">This photo appears next to your expert responses</p>
+              <p className="text-sm text-th-text font-medium">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-th-text-40 mt-0.5">This photo appears next to your expert responses</p>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={picMutation.isPending}
-                className="mt-2 text-xs text-white/60 hover:text-white underline underline-offset-2 transition-colors"
+                className="mt-2 text-xs text-th-text-60 hover:text-th-text underline underline-offset-2 transition-colors"
                 data-testid="button-change-photo"
               >
                 {picMutation.isPending ? "Uploading…" : user?.profilePic ? "Change photo" : "Upload photo"}
@@ -311,15 +311,15 @@ export const ExpertDashboardPage = () => {
 
         {/* ── Pending Questions ─────────────────────────────────────────── */}
         <div>
-          <h2 className="text-base font-bold text-white mb-3">Live Questions Feed</h2>
+          <h2 className="text-base font-bold text-th-text mb-3">Live Questions Feed</h2>
           {qLoading ? (
             <div className="flex flex-col gap-3">
-              {[1, 2, 3].map((n) => <div key={n} className="h-20 rounded-2xl bg-[#1e2022] animate-pulse" />)}
+              {[1, 2, 3].map((n) => <div key={n} className="h-20 rounded-2xl bg-th-card-alt animate-pulse" />)}
             </div>
           ) : questions.length === 0 ? (
-            <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl py-12 flex flex-col items-center gap-2 text-center">
-              <p className="text-white/40 text-sm">No pending questions at the moment.</p>
-              <p className="text-white/25 text-xs">Check back later for new questions from users.</p>
+            <div className="bg-th-card-alt border border-th-border-md rounded-2xl py-12 flex flex-col items-center gap-2 text-center">
+              <p className="text-th-text-40 text-sm">No pending questions at the moment.</p>
+              <p className="text-th-text-30 text-xs">Check back later for new questions from users.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -332,14 +332,14 @@ export const ExpertDashboardPage = () => {
 
         {/* ── Sent Answers (edit history) ───────────────────────────────── */}
         <div>
-          <h2 className="text-base font-bold text-white mb-3">Sent Responses</h2>
+          <h2 className="text-base font-bold text-th-text mb-3">Sent Responses</h2>
           {aLoading ? (
             <div className="flex flex-col gap-3">
-              {[1, 2].map((n) => <div key={n} className="h-20 rounded-2xl bg-[#1e2022] animate-pulse" />)}
+              {[1, 2].map((n) => <div key={n} className="h-20 rounded-2xl bg-th-card-alt animate-pulse" />)}
             </div>
           ) : answeredQuestions.length === 0 ? (
-            <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl py-8 flex flex-col items-center gap-1 text-center">
-              <p className="text-white/40 text-sm">No sent responses yet.</p>
+            <div className="bg-th-card-alt border border-th-border-md rounded-2xl py-8 flex flex-col items-center gap-1 text-center">
+              <p className="text-th-text-40 text-sm">No sent responses yet.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -357,15 +357,15 @@ export const ExpertDashboardPage = () => {
 
 function QuestionCard({ enquiry, onAnswer }: { enquiry: any; onAnswer: () => void }) {
   return (
-    <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl px-5 py-4 flex items-start justify-between gap-4" data-testid={`card-question-${enquiry.id}`}>
+    <div className="bg-th-card-alt border border-th-border-md rounded-2xl px-5 py-4 flex items-start justify-between gap-4" data-testid={`card-question-${enquiry.id}`}>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-white leading-relaxed line-clamp-2">{enquiry.question}</p>
-        {enquiry.country && <p className="text-xs text-white/35 mt-1.5">📍 {enquiry.country}</p>}
+        <p className="text-sm text-th-text leading-relaxed line-clamp-2">{enquiry.question}</p>
+        {enquiry.country && <p className="text-xs text-th-text-40 mt-1.5">📍 {enquiry.country}</p>}
         {enquiry.status === "ai_draft" && (
           <span className="inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">AI draft ready</span>
         )}
       </div>
-      <button onClick={onAnswer} className="shrink-0 flex items-center gap-1 h-9 px-4 rounded-full bg-white text-black text-xs font-bold hover:bg-white/90 transition-colors" data-testid={`button-answer-${enquiry.id}`}>
+      <button onClick={onAnswer} className="shrink-0 flex items-center gap-1 h-9 px-4 rounded-full bg-[#0f0f11] text-white text-xs font-bold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors" data-testid={`button-answer-${enquiry.id}`}>
         Review & Send <ChevronRight size={13} />
       </button>
     </div>
@@ -375,19 +375,19 @@ function QuestionCard({ enquiry, onAnswer }: { enquiry: any; onAnswer: () => voi
 function AnsweredCard({ enquiry, onEdit }: { enquiry: any; onEdit: () => void }) {
   const editedAt = enquiry.answerEditedAt ? new Date(enquiry.answerEditedAt) : null;
   return (
-    <div className="bg-[#1e2022] border border-[#2e3032] rounded-2xl px-5 py-4 flex items-start justify-between gap-4" data-testid={`card-answered-${enquiry.id}`}>
+    <div className="bg-th-card-alt border border-th-border-md rounded-2xl px-5 py-4 flex items-start justify-between gap-4" data-testid={`card-answered-${enquiry.id}`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
           <span className="text-[10px] font-semibold text-emerald-400">Answered</span>
-          {editedAt && <span className="text-[10px] text-white/30">· Edited {editedAt.toLocaleDateString()}</span>}
+          {editedAt && <span className="text-[10px] text-th-text-30">· Edited {editedAt.toLocaleDateString()}</span>}
         </div>
-        <p className="text-sm text-white leading-relaxed line-clamp-2">{enquiry.question}</p>
+        <p className="text-sm text-th-text leading-relaxed line-clamp-2">{enquiry.question}</p>
         {enquiry.answer && (
-          <p className="text-xs text-white/40 mt-1.5 line-clamp-1 italic">{enquiry.answer.slice(0, 80)}…</p>
+          <p className="text-xs text-th-text-40 mt-1.5 line-clamp-1 italic">{enquiry.answer.slice(0, 80)}…</p>
         )}
       </div>
-      <button onClick={onEdit} className="shrink-0 flex items-center gap-1 h-9 px-4 rounded-full border border-white/20 text-white/70 hover:text-white text-xs font-medium hover:bg-white/5 transition-colors" data-testid={`button-edit-${enquiry.id}`}>
+      <button onClick={onEdit} className="shrink-0 flex items-center gap-1 h-9 px-4 rounded-full border border-th-border-strong text-th-text-70 hover:text-th-text text-xs font-medium hover:bg-th-hover transition-colors" data-testid={`button-edit-${enquiry.id}`}>
         <Pencil size={12} />
         Edit
       </button>

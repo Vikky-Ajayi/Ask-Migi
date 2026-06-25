@@ -54,10 +54,10 @@ export function PromoteModal({ onClose, coins, onSuccess }: PromoteModalProps) {
       <div className="w-full sm:max-w-md bg-[#0f1011] sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Promote Business</h2>
+          <h2 className="text-lg font-bold text-th-text">Promote Business</h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 flex items-center justify-center rounded-full bg-[#1e2022] text-white/50 hover:text-white transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-th-card-alt text-th-text-50 hover:text-th-text transition-colors"
           >
             <X size={15} />
           </button>
@@ -71,16 +71,16 @@ export function PromoteModal({ onClose, coins, onSuccess }: PromoteModalProps) {
               onClick={() => setSelected(i)}
               className={`flex items-center justify-between px-4 py-4 rounded-xl border transition-colors text-left ${
                 selected === i
-                  ? "border-white bg-white/5"
-                  : "border-[#2e3032] hover:border-white/30 hover:bg-white/[0.02]"
+                  ? "border-white bg-th-hover"
+                  : "border-th-border-md hover:border-th-border-strong hover:bg-white/[0.02]"
               }`}
             >
-              <span className="text-sm text-white">
+              <span className="text-sm text-th-text">
                 {opt.label}({opt.days} days)
               </span>
               <div className="flex items-center gap-1.5 shrink-0">
                 <img src={coinImg} alt="coin" className="w-5 h-5 object-contain" />
-                <span className="text-sm font-bold text-white">{opt.coins} coins</span>
+                <span className="text-sm font-bold text-th-text">{opt.coins} coins</span>
               </div>
             </button>
           ))}
@@ -98,7 +98,7 @@ export function PromoteModal({ onClose, coins, onSuccess }: PromoteModalProps) {
         <button
           onClick={handlePay}
           disabled={loading || coins < selectedOpt.coins}
-          className="w-full h-12 rounded-full bg-white text-black font-bold text-sm hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-bold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? "Processing…" : `PAY ${selectedOpt.coins} coins`}
         </button>
