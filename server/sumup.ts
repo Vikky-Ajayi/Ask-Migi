@@ -68,7 +68,7 @@ export async function createCheckout(params: CreateCheckoutParams): Promise<Chec
   const checkoutId: string = data.id;
   return {
     checkoutId,
-    payUrl: `https://pay.sumup.com/b2c/${checkoutId}`,
+    payUrl: `https://checkout.sumup.com/pay/c-${checkoutId}`,
   };
 }
 
