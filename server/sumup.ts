@@ -56,6 +56,7 @@ export async function createCheckout(params: CreateCheckoutParams): Promise<Chec
       merchant_code: merchantCode,
       description: params.description,
       return_url: params.returnUrl,
+      hosted_checkout: { enabled: true },
     }),
   });
 
@@ -66,10 +67,11 @@ export async function createCheckout(params: CreateCheckoutParams): Promise<Chec
 
   const data = await res.json();
   const checkoutId: string = data.id;
-  return {
-    checkoutId,
-    payUrl: `https://checkout.sumup.com/pay/c-${checkoutId}`,
-  };
+  // SumUp returns hosted_checkout_url as a top-level field when hosted_checkout.enabled = true
+  const payUrl: string =
+    data.hosted_checkout_url ?? `https://checkout.sumup.com/pay/c-${checkoutId}`;
+  console.log(`[SUMUP] checkout ${checkoutId} payUrl=${payUrl}`);
+  return { checkoutId, payUrl };
 }
 
 // ── Retrieve checkout status ──────────────────────────────────────────────────
