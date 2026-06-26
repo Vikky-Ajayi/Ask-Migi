@@ -13,6 +13,9 @@ import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail } from "./email";
 
+// reference → checkoutId  (populated when checkout is created, survives until server restarts)
+const checkoutCache = new Map<string, string>();
+
 function getExpertMagicToken(): string {
   return createHmac("sha256", process.env.TOKEN_SECRET || "secret")
     .update("expert_dashboard_access")
@@ -456,16 +459,19 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     try {
       const { createCheckout } = await import("./sumup.js");
-      const placeholderReturn = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}&checkoutId=PLACEHOLDER`;
+      // Return URL only needs ref + coins — checkoutId is resolved via checkoutCache on verify
+      const returnUrl = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}`;
       const checkout = await createCheckout({
         reference,
         amount: price,
         currency,
         description: `${coinsAmount} Coins – Ask Migi`,
-        returnUrl: placeholderReturn.replace("PLACEHOLDER", ""),
+        returnUrl,
       });
-      const finalReturnUrl = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}&checkoutId=${checkout.checkoutId}`;
-      return res.json({ checkoutId: checkout.checkoutId, payUrl: checkout.payUrl, reference, returnUrl: finalReturnUrl });
+      // Cache reference → checkoutId so verify-payment can resolve it without needing it in the URL
+      checkoutCache.set(reference, checkout.checkoutId);
+      console.log(`[SUMUP] checkout created: ${checkout.checkoutId} ref=${reference}`);
+      return res.json({ checkoutId: checkout.checkoutId, payUrl: checkout.payUrl, reference });
     } catch (err: any) {
       console.error("[SUMUP] create-checkout error:", err.message);
       return res.status(502).json({ message: "Payment provider unavailable. Please try again later." });
@@ -564,7 +570,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // POST /api/coins/verify-payment  — verifies SumUp checkout and credits coins (idempotent)
   app.post("/api/coins/verify-payment", requireAuth, async (req, res) => {
     const schema = z.object({
-      checkoutId: z.string().min(1),
+      checkoutId: z.string().optional(), // optional — resolved from checkoutCache if missing
       coinsAmount: z.number().int().positive(),
       reference: z.string().min(1),
     });
@@ -572,7 +578,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
 
     const userId = (req as any).userId as string;
-    const { checkoutId, coinsAmount, reference } = parsed.data;
+    const { coinsAmount, reference } = parsed.data;
+
+    // Resolve checkoutId: prefer what the client sent, fall back to server-side cache
+    const checkoutId = parsed.data.checkoutId || checkoutCache.get(reference) || "";
+    if (!checkoutId) {
+      return res.status(400).json({ message: "Cannot resolve checkout ID. Please contact support if you were charged." });
+    }
 
     // Idempotency: if already processed, return success without double-crediting
     const existing = await storage.getPurchaseBySumupRef(reference);
@@ -584,7 +596,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const { getCheckoutStatus } = await import("./sumup.js");
 
-      // Poll up to 8 times (×1.5 s apart = ~12 s total) — SumUp API lags behind the widget callback
+      // Poll up to 8 times (×1.5 s apart = ~12 s total) — SumUp API can lag after redirect
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
       let checkout = await getCheckoutStatus(checkoutId);
       let attempts = 1;
@@ -606,6 +618,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         sumupRef: reference,
       });
       const updatedUser = await storage.updateUserCoins(userId, coinsAmount);
+      // Clean up cache after successful verification
+      checkoutCache.delete(reference);
       return res.json({ success: true, coins: updatedUser?.coins, purchase });
     } catch (err: any) {
       console.error("[SUMUP] verify-payment error:", err.message);
