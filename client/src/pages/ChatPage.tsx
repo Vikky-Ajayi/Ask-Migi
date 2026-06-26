@@ -12,16 +12,32 @@ import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
 
 // ── Typing animation ──────────────────────────────────────────────────────────
-// Tracks which animKeys have already completed so re-mounts show text instantly
-const _animatedKeys = new Set<string>();
+// Only enquiry IDs created in this browser session get the typing effect.
+// Messages loaded from the DB on page open are shown instantly.
+const _sessionNewIds = new Set<string>(); // enquiry IDs just created this session
+const _animDone = new Set<string>();       // animKeys whose animation has finished
 
-function TypingText({ text, speed = 18, animKey }: { text: string; speed?: number; animKey?: string }) {
-  const alreadyDone = animKey ? _animatedKeys.has(animKey) : false;
-  const [displayed, setDisplayed] = useState(alreadyDone ? text : "");
-  const indexRef = useRef(alreadyDone ? text.length : 0);
+function TypingText({
+  text,
+  speed = 18,
+  animKey,
+  animate = false,
+}: {
+  text: string;
+  speed?: number;
+  animKey?: string;
+  animate?: boolean;
+}) {
+  const shouldAnimate = animate && !(animKey && _animDone.has(animKey));
+  const [displayed, setDisplayed] = useState(shouldAnimate ? "" : text);
+  const indexRef = useRef(shouldAnimate ? 0 : text.length);
 
   useEffect(() => {
-    if (alreadyDone) return;
+    if (!shouldAnimate) {
+      setDisplayed(text);
+      indexRef.current = text.length;
+      return;
+    }
     setDisplayed("");
     indexRef.current = 0;
     const interval = setInterval(() => {
@@ -29,11 +45,12 @@ function TypingText({ text, speed = 18, animKey }: { text: string; speed?: numbe
       setDisplayed(text.slice(0, indexRef.current));
       if (indexRef.current >= text.length) {
         clearInterval(interval);
-        if (animKey) _animatedKeys.add(animKey);
+        if (animKey) _animDone.add(animKey);
       }
     }, speed);
     return () => clearInterval(interval);
-  }, [text, speed, alreadyDone]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, speed, shouldAnimate]);
 
   return (
     <span>
@@ -132,6 +149,7 @@ export const ChatPage = (): JSX.Element => {
       return res.json();
     },
     onSuccess: (data) => {
+      _sessionNewIds.add(data.id); // mark so TypingText animates for this enquiry only
       qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
       refreshUser();
       setActiveId(data.id);
@@ -260,7 +278,11 @@ export const ChatPage = (): JSX.Element => {
                       <div className="ml-10 flex flex-col gap-3">
                         {activeEnquiry.analysis && (
                           <p className="text-sm text-th-text-70 leading-6">
-                            <TypingText text={activeEnquiry.analysis} animKey={`analysis-${activeEnquiry.id}`} />
+                            <TypingText
+                              text={activeEnquiry.analysis}
+                              animKey={`analysis-${activeEnquiry.id}`}
+                              animate={_sessionNewIds.has(activeEnquiry.id)}
+                            />
                           </p>
                         )}
                         <p className="text-sm text-th-text-60 leading-6">
@@ -268,6 +290,7 @@ export const ChatPage = (): JSX.Element => {
                             text="Your query has been sent to an expert who will get back to you within 6–12 hours. You'll be notified by email when your response is ready."
                             speed={12}
                             animKey={`pending-${activeEnquiry.id}`}
+                            animate={_sessionNewIds.has(activeEnquiry.id)}
                           />
                         </p>
                       </div>
@@ -295,7 +318,7 @@ export const ChatPage = (): JSX.Element => {
                     </div>
                     <div className="ml-10">
                       <p className="text-sm text-th-text-80 leading-6">
-                        <TypingText text={cm.aiReply} speed={16} />
+                        <TypingText text={cm.aiReply} speed={16} animate={true} />
                       </p>
                     </div>
                   </div>
