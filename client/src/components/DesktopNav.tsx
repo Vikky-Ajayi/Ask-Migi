@@ -51,7 +51,7 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
         <button onClick={() => navigate("/buy-coins")} className="text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-buy-coins">
           Buy Coins
         </button>
-        <button onClick={() => setCallModalOpen(true)} className="flex items-center gap-1.5 text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-call-expert">
+        <button onClick={() => { if (user && !user.unlimitedCoins && user.coins < 30) { navigate("/buy-coins"); } else { setCallModalOpen(true); } }} className="flex items-center gap-1.5 text-sm text-th-text-80 hover:text-th-text transition-colors" data-testid="nav-call-expert">
           <Phone size={14} />
           Call an Expert
         </button>

@@ -19,18 +19,6 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<Step>("reason");
   const [reason, setReason] = useState("");
 
-  /* Check coins on mount — redirect immediately if insufficient */
-  useEffect(() => {
-    if (user && !user.unlimitedCoins && user.coins < CALL_COST) {
-      onClose();
-      navigate("/buy-coins");
-      toast({
-        title: "Not enough coins",
-        description: `You need at least ${CALL_COST} coins to book a call with an expert.`,
-        variant: "destructive",
-      });
-    }
-  }, []);
 
   const bookMutation = useMutation({
     mutationFn: async () => {

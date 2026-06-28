@@ -15,7 +15,7 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
   const [, navigate] = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
   const [callModalOpen, setCallModalOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const go = (path: string) => { navigate(path); onClose(); };
 
@@ -53,7 +53,7 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
         <NavItem label="Previous Enquiries" onClick={() => go("/enquiries")} />
         <NavItem label="Buy Coins" onClick={() => go("/buy-coins")} />
         <NavItem label="About" onClick={() => go("/about")} />
-        <button onClick={() => setCallModalOpen(true)}
+        <button onClick={() => { if (!isLoggedIn) { onAuthAction?.("login"); onClose(); return; } if (user && !user.unlimitedCoins && user.coins < 30) { go("/buy-coins"); } else { setCallModalOpen(true); } }}
           className="w-full text-left py-3 px-2 text-th-text-80 hover:text-th-text font-medium rounded-lg hover:bg-th-hover transition-colors text-sm flex items-center gap-2"
           data-testid="sidebar-call-expert">
           <Phone size={15} className="text-th-text-50" />
