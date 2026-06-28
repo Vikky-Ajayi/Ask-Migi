@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Paperclip, ArrowUp, ChevronDown, MessageCircle, Phone, X } from "lucide-react";
 import coinImg from "@assets/coins_1781943901685.png";
 import { CallExpertModal } from "./CallExpertModal";
-import { useAuth } from "@/context/AuthContext";
-import { useLocation } from "wouter";
 
 export interface AttachmentData { data: string; name: string }
 
@@ -228,8 +226,6 @@ const CountryFlag = ({ code, name, size = 20 }: { code: string; name: string; si
 );
 
 export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = false, initialQuestion = "" }: ChatInputProps) => {
-  const { user } = useAuth();
-  const [, navigate] = useLocation();
   const [question, setQuestion] = useState(initialQuestion);
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]);
   const [langOpen, setLangOpen] = useState(false);
@@ -305,7 +301,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
             Chat an Expert
           </button>
           <button
-            onClick={() => { if (user && !user.unlimitedCoins && user.coins < 30) { navigate("/buy-coins"); } else { setCallModalOpen(true); } }}
+            onClick={() => setCallModalOpen(true)}
             className="h-9 rounded-full px-4 text-sm font-medium transition-colors flex items-center gap-2 border border-th-border-md text-th-text-70 hover:text-th-text hover:bg-th-hover"
             data-testid="button-call-expert"
             type="button"
