@@ -241,7 +241,7 @@ const StepCard = ({
           type="button"
           onClick={onComplete}
           disabled={loading}
-          className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-50 flex items-center gap-1"
+          className="h-10 px-6 rounded-full bg-[#0f0f11] text-white text-sm font-semibold hover:bg-black/90 transition-colors disabled:opacity-50 flex items-center gap-1"
         >
           {loading ? "Submitting…" : "Complete ›"}
         </button>
@@ -249,7 +249,7 @@ const StepCard = ({
         <button
           type="button"
           onClick={onNext}
-          className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text text-sm font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors flex items-center gap-1"
+          className="h-10 px-6 rounded-full bg-[#0f0f11] text-white text-sm font-semibold hover:bg-black/90 transition-colors flex items-center gap-1"
         >
           Next ›
         </button>
@@ -637,7 +637,7 @@ export const ExpertVerificationPage = () => {
                 </div>
                 <button
                   onClick={() => navigate("/expert-dashboard")}
-                  className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
+                  className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
                   data-testid="button-go-dashboard"
                 >
                   Go to Dashboard

@@ -85,7 +85,7 @@ export const ChatSidebar = ({
                 <span
                   className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full w-fit ${
                     enq.status === "answered"
-                      ? "bg-white/10 text-white border border-white/20"
+                      ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/30"
                       : "bg-th-hover text-th-text-40 border border-th-border-md"
                   }`}
                 >

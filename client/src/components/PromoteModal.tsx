@@ -98,7 +98,7 @@ export function PromoteModal({ onClose, coins, onSuccess }: PromoteModalProps) {
         <button
           onClick={handlePay}
           disabled={loading || coins < selectedOpt.coins}
-          className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-bold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full h-12 rounded-full bg-[#0f0f11] text-white font-bold text-sm hover:bg-black/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? "Processing…" : `PAY ${selectedOpt.coins} coins`}
         </button>

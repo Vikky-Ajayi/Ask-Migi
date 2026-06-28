@@ -29,7 +29,7 @@ export const BecomeAnExpertPage = (): JSX.Element => {
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
               onClick={() => { setAuthView("register"); }}
-              className="h-11 md:h-12 px-6 md:px-7 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
+              className="h-11 md:h-12 px-6 md:px-7 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 transition-colors"
               data-testid="button-create-account"
             >
               Create Account

@@ -148,7 +148,7 @@ export const SettingsPage = (): JSX.Element => {
                   <PasswordInput placeholder="New Password" value={newPw} onChange={setNewPw} show={showNew} onToggle={() => setShowNew((v) => !v)} testId="input-new-password" />
                   <PasswordInput placeholder="Confirm New Password" value={confirmPw} onChange={setConfirmPw} show={showConfirm} onToggle={() => setShowConfirm((v) => !v)} testId="input-confirm-password" />
                   {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-                  <button type="submit" disabled={loading} className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors mt-2 disabled:opacity-60" data-testid="button-save-password">
+                  <button type="submit" disabled={loading} className="w-full h-12 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 transition-colors mt-2 disabled:opacity-60" data-testid="button-save-password">
                     {loading ? "Saving…" : "Save Changes"}
                   </button>
                 </form>

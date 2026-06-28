@@ -59,7 +59,7 @@ function CallCard({ booking }: { booking: any }) {
   const booked = new Date(booking.createdAt);
   const statusColors: Record<string, string> = {
     booked: "bg-blue-950/60 text-blue-400 border-blue-800/30",
-    completed: "bg-white/10 text-white border-white/20",
+    completed: "bg-emerald-950/60 text-emerald-400 border-emerald-800/30",
     cancelled: "bg-red-950/60 text-red-400 border-red-800/30",
   };
   const statusColor = statusColors[booking.status] ?? statusColors.booked;

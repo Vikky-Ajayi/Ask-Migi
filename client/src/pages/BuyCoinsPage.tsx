@@ -158,9 +158,9 @@ export const BuyCoinsPage = (): JSX.Element => {
 
         {/* Success banner */}
         {verifyState === "success" && (
-          <div className="mb-8 flex items-center gap-3 bg-white/5 border border-white/20 rounded-xl px-5 py-4 max-w-md" data-testid="payment-success-banner">
-            <CheckCircle2 className="text-white shrink-0" size={20} />
-            <p className="text-sm text-white font-medium">{verifyMsg}</p>
+          <div className="mb-8 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-5 py-4 max-w-md" data-testid="payment-success-banner">
+            <CheckCircle2 className="text-emerald-400 shrink-0" size={20} />
+            <p className="text-sm text-emerald-300 font-medium">{verifyMsg}</p>
           </div>
         )}
 

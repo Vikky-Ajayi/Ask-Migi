@@ -189,9 +189,9 @@ export const ExpertBuyCoinsPage = () => {
 
         {/* Success banner */}
         {verified && (
-          <div className="mb-4 p-4 rounded-xl bg-white/5 border border-white/20 flex items-center gap-3">
-            <CheckCircle2 size={16} className="text-white shrink-0" />
-            <p className="text-sm text-white font-medium">Coins added to your account successfully!</p>
+          <div className="mb-4 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-3">
+            <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+            <p className="text-sm text-emerald-300 font-medium">Coins added to your account successfully!</p>
           </div>
         )}
 

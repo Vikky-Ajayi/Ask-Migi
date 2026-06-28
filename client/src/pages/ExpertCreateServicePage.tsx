@@ -193,7 +193,7 @@ function SuccessModal({ onClose, onPromote }: { onClose: () => void; onPromote: 
         <div className="w-full flex flex-col gap-3">
           <button
             onClick={onClose}
-            className="w-full h-12 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
+            className="w-full h-12 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 transition-colors"
           >
             Proceed Without Promotion
           </button>
@@ -432,7 +432,7 @@ export const ExpertCreateServicePage = () => {
             {step === 1 ? (
               <button
                 onClick={handleNext}
-                className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors flex items-center gap-1"
+                className="h-10 px-6 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 transition-colors flex items-center gap-1"
               >
                 Next
                 <span className="text-base leading-none ml-0.5">›</span>
@@ -441,7 +441,7 @@ export const ExpertCreateServicePage = () => {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="h-10 px-6 rounded-full bg-[#0f0f11] text-th-text font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="h-10 px-6 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {loading ? "Creating…" : <>Create Service <span className="text-base leading-none ml-0.5">›</span></>}
               </button>
