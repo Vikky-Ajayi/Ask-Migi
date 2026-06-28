@@ -12,7 +12,7 @@ const coinPacks = [
   {
     coins: 5,
     price: "£9.99",
-    rawPrice: 9.99,
+    rawPrice: 1.00,
     currency: "GBP",
     description: "Perfect for one or two quick questions. Ideal for users exploring career and job search options.",
     buttonLabel: "Get 5 coins",
@@ -20,7 +20,7 @@ const coinPacks = [
   {
     coins: 12,
     price: "£19.99",
-    rawPrice: 19.99,
+    rawPrice: 1.00,
     currency: "GBP",
     description: "Great for users with multiple questions across different career or job search topics.",
     buttonLabel: "Get 12 coins",
@@ -29,7 +29,7 @@ const coinPacks = [
   {
     coins: 30,
     price: "£49.99",
-    rawPrice: 49.99,
+    rawPrice: 1.00,
     currency: "GBP",
     description: "Designed for users who need detailed advice, follow-up questions, or plan to speak with experts multiple times.",
     buttonLabel: "Get 30 coins",
