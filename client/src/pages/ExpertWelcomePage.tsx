@@ -15,7 +15,7 @@ const reviews = [
 const StarRating = () => (
   <div className="flex gap-0.5">
     {[1,2,3,4,5].map((s) => (
-      <span key={s} className="text-green-500 text-sm">★</span>
+      <span key={s} className="text-yellow-400 text-sm">★</span>
     ))}
   </div>
 );
@@ -36,7 +36,7 @@ export const ExpertWelcomePage = (): JSX.Element => {
 
       <div className="px-6 py-8 flex flex-col gap-6">
         {/* New Response badge */}
-        <div className="inline-flex items-center gap-2 bg-green-500 rounded-full px-3 py-1.5 w-fit">
+        <div className="inline-flex items-center gap-2 bg-white rounded-full px-3 py-1.5 w-fit">
           <span className="text-th-text text-xs font-semibold">📧 New Response</span>
         </div>
 

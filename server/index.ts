@@ -21,7 +21,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://gateway.sumup.com", "https://js.sumup.com", "https://static.sumup.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://gateway.sumup.com", "https://js.sumup.com", "https://static.sumup.com", "https://connect.facebook.net", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://gateway.sumup.com", "https://static.sumup.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: ["'self'", "https:"],

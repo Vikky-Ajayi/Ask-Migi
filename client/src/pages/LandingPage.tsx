@@ -193,7 +193,7 @@ export const LandingPage = (): JSX.Element => {
                         className="w-full text-left px-3 py-2.5 rounded-xl bg-th-hover border border-th-border hover:bg-th-hover transition-colors flex items-center justify-between gap-3"
                       >
                         <span className="text-sm text-th-text-70 truncate leading-5">{item.question}</span>
-                        <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${item.status === "answered" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                        <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full ${item.status === "answered" ? "bg-white/15 text-white" : "bg-white/5 text-white/50"}`}>
                           {item.status === "answered" ? "Answered" : "Pending"}
                         </span>
                       </button>

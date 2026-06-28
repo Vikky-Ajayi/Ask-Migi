@@ -65,8 +65,8 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-full bg-[#22c55e]/15 flex items-center justify-center">
-                <Phone size={16} className="text-[#22c55e]" />
+              <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
+                <Phone size={16} className="text-white" />
               </div>
               <h2 className="text-base font-semibold text-th-text">Call an Expert</h2>
             </div>
@@ -86,9 +86,9 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
                 key={s}
                 className={`h-1 rounded-full flex-1 transition-colors ${
                   s === step
-                    ? "bg-[#22c55e]"
+                    ? "bg-white"
                     : i < (["reason", "calendly", "success"] as Step[]).indexOf(step)
-                    ? "bg-[#22c55e]/40"
+                    ? "bg-white/40"
                     : "bg-white/10"
                 }`}
               />
@@ -101,7 +101,7 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
               <div>
                 <p className="text-sm font-medium text-th-text mb-1">Describe your session</p>
                 <p className="text-xs text-th-text-40 leading-5 mb-3">
-                  This costs <span className="text-[#22c55e] font-semibold">{CALL_COST} coins</span> and will be deducted when you confirm your booking.
+                  This costs <span className="text-white font-semibold">{CALL_COST} coins</span> and will be deducted when you confirm your booking.
                 </p>
               </div>
 
@@ -120,7 +120,7 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
 
               <div className="flex items-center gap-2 pt-1">
                 <div className="flex items-center gap-1.5 text-xs text-th-text-40">
-                  <span className="inline-block h-4 w-4 rounded-full bg-[#22c55e]/15 text-[#22c55e] flex items-center justify-center text-[10px] font-bold">✓</span>
+                  <span className="inline-block h-4 w-4 rounded-full bg-white/15 text-white flex items-center justify-center text-[10px] font-bold">✓</span>
                   {CALL_COST} coins
                 </div>
                 <span className="text-th-text-20">·</span>
@@ -130,7 +130,7 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
               <button
                 onClick={() => setStep("calendly")}
                 disabled={reason.trim().length < 20}
-                className="w-full h-11 rounded-full bg-[#22c55e] text-black font-semibold text-sm hover:bg-[#16a34a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 data-testid="button-continue-to-calendly"
               >
                 Continue
@@ -158,10 +158,10 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
                     href={CALENDLY_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 w-full px-5 py-4 rounded-2xl bg-[#22c55e]/10 border border-[#22c55e]/30 hover:bg-[#22c55e]/20 transition-colors"
+                    className="flex items-center gap-3 w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/20 hover:bg-white/10 transition-colors"
                     data-testid="link-calendly"
                   >
-                    <Calendar size={18} className="text-[#22c55e] shrink-0" />
+                    <Calendar size={18} className="text-white shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-th-text">Open Calendly</p>
                       <p className="text-xs text-th-text-40 truncate">{CALENDLY_URL}</p>
@@ -186,7 +186,7 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={() => bookMutation.mutate()}
                   disabled={bookMutation.isPending}
-                  className="flex-1 h-11 rounded-full bg-[#22c55e] text-black font-semibold text-sm hover:bg-[#16a34a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 h-11 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   data-testid="button-confirm-booking"
                 >
                   {bookMutation.isPending ? "Confirming…" : "Confirm booking"}
@@ -202,8 +202,8 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
           {/* ── Step 3: Success ────────────────────────────── */}
           {step === "success" && (
             <div className="flex flex-col items-center gap-5 py-4">
-              <div className="h-16 w-16 rounded-full bg-[#22c55e]/15 flex items-center justify-center">
-                <CheckCircle2 size={30} className="text-[#22c55e]" />
+              <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center">
+                <CheckCircle2 size={30} className="text-white" />
               </div>
               <div className="text-center">
                 <p className="text-base font-semibold text-th-text mb-1">Booking confirmed!</p>
@@ -217,7 +217,7 @@ export function CallExpertModal({ onClose }: { onClose: () => void }) {
               </div>
               <button
                 onClick={onClose}
-                className="w-full h-11 rounded-full bg-[#22c55e] text-black font-semibold text-sm hover:bg-[#16a34a] transition-colors"
+                className="w-full h-11 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
                 data-testid="button-close-success"
               >
                 Done

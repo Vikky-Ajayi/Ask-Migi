@@ -241,14 +241,14 @@ export async function sendExpertWelcomeEmail(email: string, firstName: string): 
   const client = getResend();
   const profileUrl = `${SITE_URL}/expert/dashboard`;
 
-  const greenStar = `<span style="color:#22c55e;font-size:16px;">&#9733;</span>`;
+  const greenStar = `<span style="color:#f59e0b;font-size:16px;">&#9733;</span>`;
   const fiveStars = greenStar.repeat(5);
 
   const reviewCard = (name: string, date: string) => `
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px;">
       <tr>
         <td style="padding:14px 16px;">
-          <p style="margin:0 0 4px;font-size:13px;color:#22c55e;">${fiveStars}</p>
+          <p style="margin:0 0 4px;font-size:13px;">${fiveStars}</p>
           <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#111827;font-family:Arial,Helvetica,sans-serif;">They're really nice above anything...</p>
           <p style="margin:0 0 8px;font-size:12px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;line-height:1.5;">&ldquo;My career coach helped me completely transform my job search. I landed a position that I love in just 2 months!&rdquo;</p>
           <p style="margin:0;font-size:12px;font-weight:700;color:#374151;font-family:Arial,Helvetica,sans-serif;">${name} &nbsp;<span style="font-weight:400;color:#9ca3af;">${date}</span></p>

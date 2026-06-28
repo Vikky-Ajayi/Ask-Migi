@@ -41,7 +41,7 @@ const ExpertCard = ({ expert }: { expert: Expert }) => (
       <p className="text-xs text-th-text-40">Visa Services</p>
       <div className="flex flex-wrap gap-1.5">
         {expert.visaServices.map((v) => (
-          <span key={v} className="h-7 rounded-full bg-emerald-900/50 border border-emerald-700/40 text-emerald-300 text-xs font-medium px-3 flex items-center">{v}</span>
+          <span key={v} className="h-7 rounded-full bg-white/10 border border-white/15 text-white text-xs font-medium px-3 flex items-center">{v}</span>
         ))}
       </div>
     </div>
