@@ -719,6 +719,50 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     return res.json({ message: "Service deleted" });
   });
 
+  // ── Call Bookings ──────────────────────────────────────────────────────────
+
+  // POST /api/call-bookings — user books a call (deducts 30 coins)
+  app.post("/api/call-bookings", requireAuth, async (req, res) => {
+    const schema = z.object({
+      reason: z.string().min(20, "Please provide a more detailed reason"),
+    });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
+
+    const userId = (req as any).userId;
+    const user = (req as any).user;
+    const CALL_COST = 30;
+
+    if (!user.unlimitedCoins && user.coins < CALL_COST) {
+      return res.status(402).json({ message: "Insufficient coins. You need at least 30 coins to book a call." });
+    }
+
+    const booking = await storage.createCallBooking({
+      userId,
+      reason: result.data.reason,
+      coinsUsed: CALL_COST,
+      status: "booked",
+      userName: `${user.firstName} ${user.lastName}`,
+      userEmail: user.email,
+    });
+
+    if (!user.unlimitedCoins) {
+      await storage.updateUserCoins(userId, -CALL_COST);
+    }
+
+    return res.status(201).json(booking);
+  });
+
+  // GET /api/expert/call-schedule — expert views all booked calls
+  app.get("/api/expert/call-schedule", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    if (user.role !== "expert") {
+      return res.status(403).json({ message: "Expert access required" });
+    }
+    const bookings = await storage.getAllCallBookings();
+    return res.json(bookings);
+  });
+
   // POST /api/expert/promote — deduct coins for promotion
   app.post("/api/expert/promote", requireAuth, async (req, res) => {
     const schema = z.object({ coins: z.number().int().positive() });

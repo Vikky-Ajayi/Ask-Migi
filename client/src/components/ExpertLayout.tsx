@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
-import { LayoutDashboard, LogOut, Menu, X, User, ChevronDown, HelpCircle, CircleHelp } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X, User, ChevronDown, HelpCircle, CircleHelp, CalendarDays } from "lucide-react";
 
 interface ExpertLayoutProps {
   children: React.ReactNode;
@@ -19,6 +19,7 @@ export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayout
   const navItems = [
     { label: "Dashboard", path: "/expert-dashboard", icon: <LayoutDashboard size={15} />, badge: 0 },
     { label: "Questions", path: "/expert-questions", icon: <CircleHelp size={15} />, badge: pendingCount },
+    { label: "Call Schedule", path: "/expert-call-schedule", icon: <CalendarDays size={15} />, badge: 0 },
   ];
 
   const handleLogout = () => {

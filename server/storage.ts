@@ -3,9 +3,10 @@ import {
   type Enquiry, type InsertEnquiry,
   type Expert, type InsertExpert,
   type CoinPurchase, type InsertCoinPurchase,
+  type CallBooking, type InsertCallBooking,
   type PasswordReset,
   users, enquiries, experts, coinPurchases, passwordResets,
-  expertVerifications, expertServices,
+  expertVerifications, expertServices, callBookings,
 } from "@shared/schema";
 import { randomUUID, pbkdf2Sync, randomBytes, createHmac } from "crypto";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
@@ -92,6 +93,11 @@ export interface IStorage {
   createExpertService(data: Omit<ExpertService, "id" | "createdAt">): Promise<ExpertService>;
   deleteExpertService(id: string, userId: string): Promise<boolean>;
   updateExpertServiceViews(id: string, delta: number): Promise<void>;
+
+  // Call Bookings
+  createCallBooking(data: InsertCallBooking): Promise<CallBooking>;
+  getAllCallBookings(): Promise<CallBooking[]>;
+  getUserCallBookings(userId: string): Promise<CallBooking[]>;
 }
 
 // ─── Database storage ─────────────────────────────────────────────────────────
@@ -337,6 +343,30 @@ class DatabaseStorage implements IStorage {
     await db.update(expertServices)
       .set({ views: sql`${expertServices.views} + ${delta}` })
       .where(eq(expertServices.id, id));
+  }
+
+  // ── Call Bookings ──────────────────────────────────────────────────────────
+
+  async createCallBooking(data: InsertCallBooking): Promise<CallBooking> {
+    const [booking] = await db.insert(callBookings).values({
+      userId: data.userId,
+      reason: data.reason,
+      coinsUsed: data.coinsUsed ?? 30,
+      status: data.status ?? "booked",
+      userName: data.userName ?? "",
+      userEmail: data.userEmail ?? "",
+    }).returning();
+    return booking;
+  }
+
+  async getAllCallBookings(): Promise<CallBooking[]> {
+    return db.select().from(callBookings).orderBy(desc(callBookings.createdAt));
+  }
+
+  async getUserCallBookings(userId: string): Promise<CallBooking[]> {
+    return db.select().from(callBookings)
+      .where(eq(callBookings.userId, userId))
+      .orderBy(desc(callBookings.createdAt));
   }
 }
 

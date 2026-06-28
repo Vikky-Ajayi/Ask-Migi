@@ -128,6 +128,28 @@ export const expertVerifications = pgTable("expert_verifications", {
 
 export type ExpertVerification = typeof expertVerifications.$inferSelect;
 
+// ─── Call Bookings ────────────────────────────────────────────────────────────
+export const callBookings = pgTable("call_bookings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  reason: text("reason").notNull(),
+  coinsUsed: integer("coins_used").notNull().default(30),
+  status: text("status").notNull().default("booked"), // booked | completed | cancelled
+  userName: text("user_name").notNull().default(""),
+  userEmail: text("user_email").notNull().default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("call_bookings_user_id_idx").on(t.userId),
+]);
+
+export const insertCallBookingSchema = createInsertSchema(callBookings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCallBooking = z.infer<typeof insertCallBookingSchema>;
+export type CallBooking = typeof callBookings.$inferSelect;
+
 // ─── Expert Services ──────────────────────────────────────────────────────────
 export const expertServices = pgTable("expert_services", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

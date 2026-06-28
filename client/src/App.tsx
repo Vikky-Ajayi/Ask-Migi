@@ -20,6 +20,7 @@ import { FAQPage } from "@/pages/FAQPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { PolicyPage } from "@/pages/PolicyPage";
 import { ExpertDashboardPage } from "@/pages/ExpertDashboardPage";
+import { ExpertCallSchedulePage } from "@/pages/ExpertCallSchedulePage";
 
 const RedirectHome = () => {
   const [, navigate] = useLocation();
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/settings" component={RedirectHome} />
       <Route path="/expert-dashboard" component={ExpertDashboardPage} />
       <Route path="/expert-questions" component={ExpertDashboardPage} />
+      <Route path="/expert-call-schedule" component={ExpertCallSchedulePage} />
       <Route path="/disclaimer">
         {() => <PolicyPage type="disclaimer" />}
       </Route>
