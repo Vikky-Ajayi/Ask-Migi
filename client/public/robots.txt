@@ -1,2 +1,29 @@
 User-agent: *
 Allow: /
+
+# Public pages
+Allow: /$
+Allow: /about
+Allow: /experts
+Allow: /faq
+Allow: /contact
+Allow: /buy-coins
+Allow: /disclaimer
+Allow: /privacy-policy
+Allow: /refund-policy
+Allow: /terms
+
+# Block private/authenticated routes
+Disallow: /chat
+Disallow: /enquiries
+Disallow: /settings
+Disallow: /expert-dashboard
+Disallow: /expert-questions
+Disallow: /expert-call-schedule
+Disallow: /expert-verification
+Disallow: /expert-welcome
+
+# Block API
+Disallow: /api/
+
+Sitemap: https://askmigi.com/sitemap.xml
