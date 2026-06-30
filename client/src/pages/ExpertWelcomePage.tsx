@@ -27,7 +27,7 @@ export const ExpertWelcomePage = (): JSX.Element => {
   const [isLoggedIn] = useState(true);
 
   return (
-    <main className="min-h-screen w-full bg-white text-black">
+    <main className="min-h-screen w-full bg-th-page text-th-text">
       {/* Email-style header */}
       <div className="bg-black px-6 pt-8 pb-6">
         <img className="h-8 w-[120px]" alt="Ask MiGi" src="/figmaAssets/vector.svg" />

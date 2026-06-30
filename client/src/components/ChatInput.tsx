@@ -293,7 +293,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
       {showAudienceTabs && (
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <button
-            className="h-9 rounded-full px-4 text-sm font-medium transition-colors flex items-center gap-2 bg-white text-black"
+            className="h-9 rounded-full px-4 text-sm font-medium transition-colors flex items-center gap-2 bg-[#0f0f11] text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
             data-testid="button-chat-expert"
             type="button"
           >

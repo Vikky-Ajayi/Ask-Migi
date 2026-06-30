@@ -637,7 +637,7 @@ export const ExpertVerificationPage = () => {
                 </div>
                 <button
                   onClick={() => navigate("/expert-dashboard")}
-                  className="w-full h-12 rounded-full bg-white text-black font-semibold text-sm hover:bg-white/90 transition-colors"
+                  className="w-full h-12 rounded-full bg-[#0f0f11] text-white font-semibold text-sm hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
                   data-testid="button-go-dashboard"
                 >
                   Go to Dashboard

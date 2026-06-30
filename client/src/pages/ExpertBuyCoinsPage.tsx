@@ -229,7 +229,7 @@ export const ExpertBuyCoinsPage = () => {
                 className={`shrink-0 h-9 px-5 rounded-full font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
                   pkg.popular
                     ? "bg-[#2d7dd2] hover:bg-[#3a8de2] text-th-text"
-                    : "bg-white text-black hover:bg-white/90"
+                    : "bg-[#0f0f11] text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
                 }`}
               >
                 {loading === i ? <Loader2 className="inline animate-spin" size={14} /> : "Buy"}
