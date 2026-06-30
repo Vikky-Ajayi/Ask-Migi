@@ -459,7 +459,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     try {
       const { createCheckout } = await import("./sumup.js");
-      // Return URL only needs ref + coins — checkoutId is resolved via checkoutCache on verify
       const returnUrl = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}`;
       const checkout = await createCheckout({
         reference,
@@ -468,7 +467,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         description: `${coinsAmount} Coins – Ask Migi`,
         returnUrl,
       });
-      // Cache reference → checkoutId so verify-payment can resolve it without needing it in the URL
+      // Cache server-side (best-effort — may be lost on restart; client-side localStorage is primary)
       checkoutCache.set(reference, checkout.checkoutId);
       console.log(`[SUMUP] checkout created: ${checkout.checkoutId} ref=${reference}`);
       return res.json({ checkoutId: checkout.checkoutId, payUrl: checkout.payUrl, reference });

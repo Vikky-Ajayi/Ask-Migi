@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import coinImg from "@assets/coins_1781943901685.png";
 import { Loader2, CheckCircle2, CreditCard, Bitcoin, XCircle } from "lucide-react";
 
@@ -43,6 +44,7 @@ export const BuyCoinsPage = (): JSX.Element => {
   const [authView, setAuthView] = useState<AuthView>(null);
   const { isLoggedIn, refreshUser } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [payMethod, setPayMethod] = useState<PayMethod>("card");
   const [verifyState, setVerifyState] = useState<VerifyState>("idle");
   const [verifyMsg, setVerifyMsg] = useState("");
@@ -68,20 +70,26 @@ export const BuyCoinsPage = (): JSX.Element => {
       return;
     }
 
+    // Retrieve checkoutId saved to localStorage before the SumUp redirect
+    const checkoutId = localStorage.getItem(`askmigi_checkout_${ref}`) || undefined;
+
     setVerifyState("verifying");
 
-    // checkoutId is resolved server-side from the checkout cache (keyed by reference)
     fetch("/api/coins/verify-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ coinsAmount, reference: ref }),
+      body: JSON.stringify({ coinsAmount, reference: ref, checkoutId }),
     })
       .then((r) => r.json())
       .then(async (data) => {
+        // Clean up stored checkoutId regardless of outcome
+        localStorage.removeItem(`askmigi_checkout_${ref}`);
         if (data.success) {
           await refreshUser();
           setVerifyState("success");
-          setVerifyMsg(`${coinsAmount} coins have been added to your account.`);
+          setVerifyMsg(`${coinsAmount} coins have been added to your account!`);
+          // Redirect back to the main page after a short delay
+          setTimeout(() => navigate("/"), 3000);
         } else {
           setVerifyState("failed");
           setVerifyMsg(data.message ?? "Payment could not be confirmed. Please contact support.");
@@ -101,7 +109,8 @@ export const BuyCoinsPage = (): JSX.Element => {
       return res.json() as Promise<{ checkoutId: string; payUrl: string; reference: string }>;
     },
     onSuccess: (data) => {
-      // Redirect to SumUp's hosted checkout page
+      // Persist checkoutId before leaving — server cache may be lost on restart
+      localStorage.setItem(`askmigi_checkout_${data.reference}`, data.checkoutId);
       window.location.href = data.payUrl;
     },
     onError: (e: any) => {
@@ -158,9 +167,12 @@ export const BuyCoinsPage = (): JSX.Element => {
 
         {/* Success banner */}
         {verifyState === "success" && (
-          <div className="mb-8 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-5 py-4 max-w-md" data-testid="payment-success-banner">
-            <CheckCircle2 className="text-emerald-400 shrink-0" size={20} />
-            <p className="text-sm text-emerald-300 font-medium">{verifyMsg}</p>
+          <div className="mb-8 flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-5 py-4 max-w-md" data-testid="payment-success-banner">
+            <CheckCircle2 className="text-emerald-400 shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="text-sm text-emerald-300 font-medium">{verifyMsg}</p>
+              <p className="text-xs text-emerald-400/70 mt-1">Redirecting you back in 3 seconds… <button onClick={() => navigate("/")} className="underline">Go now</button></p>
+            </div>
           </div>
         )}
 
