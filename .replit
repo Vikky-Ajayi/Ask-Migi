@@ -49,3 +49,6 @@ expertMode = true
 
 [userenv.shared]
 TOKEN_SECRET = "924140f79a54bb01d357e4a45311f917d5b844dc9b72a0edf62a7f04b9ea6a9d"
+EXPERT_EMAIL = "admin@example.com"
+RESEND_FROM_EMAIL = "noreply@example.com"
+SITE_URL = "https://localhost:5000"
