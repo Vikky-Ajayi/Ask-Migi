@@ -412,7 +412,7 @@ export const ExpertVerificationPage = () => {
               <FieldLabel>Country of residence</FieldLabel>
               <div className="relative">
                 <SelectDropdown
-                  placeholder="Select country"
+                  placeholder="Choose country of residence"
                   options={ALL_COUNTRIES}
                   value={countryOfResidence}
                   onChange={setCountryOfResidence}

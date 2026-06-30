@@ -232,9 +232,23 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
   const [countrySearch, setCountrySearch] = useState("");
   const [callModalOpen, setCallModalOpen] = useState(false);
   const [attachment, setAttachment] = useState<AttachmentData | null>(null);
+  const [attachInfoOpen, setAttachInfoOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const attachInfoRef = useRef<HTMLDivElement>(null);
+
+  // Close attach info popover on outside click
+  useEffect(() => {
+    if (!attachInfoOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (attachInfoRef.current && !attachInfoRef.current.contains(e.target as Node)) {
+        setAttachInfoOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [attachInfoOpen]);
 
   const filteredCountries = countrySearch.trim()
     ? countries.filter((c) => c.name.toLowerCase().includes(countrySearch.toLowerCase()))
@@ -357,15 +371,39 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
               onChange={handleFileChange}
               data-testid="input-file"
             />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="h-9 w-9 flex items-center justify-center rounded-full bg-th-card-hover border border-th-border-md text-th-text-70 hover:text-th-text hover:bg-th-card-hover transition-colors"
-              aria-label="Attach file"
-              data-testid="button-attach"
-              type="button"
-            >
-              <Paperclip size={16} className="-rotate-45" />
-            </button>
+            <div className="relative" ref={attachInfoRef}>
+              <button
+                onClick={() => setAttachInfoOpen((o) => !o)}
+                className="h-9 w-9 flex items-center justify-center rounded-full bg-th-card-hover border border-th-border-md text-th-text-70 hover:text-th-text hover:bg-th-card-hover transition-colors"
+                aria-label="Attach file"
+                data-testid="button-attach"
+                type="button"
+              >
+                <Paperclip size={16} className="-rotate-45" />
+              </button>
+
+              {attachInfoOpen && (
+                <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl bg-th-sidebar border border-th-border-md shadow-xl p-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-2.5">
+                    <div className="h-7 w-7 rounded-full bg-th-text/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Paperclip size={13} className="text-th-text -rotate-45" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-th-text leading-snug">Attach a document</p>
+                      <p className="text-xs text-th-text-50 mt-1 leading-5">You can attach your CV, cover letter, or any relevant document you'd like the expert to review. Max 5MB.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setAttachInfoOpen(false); fileInputRef.current?.click(); }}
+                    className="w-full h-9 rounded-full bg-[#0f0f11] text-white text-xs font-semibold hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90 transition-colors"
+                    data-testid="button-attach-choose"
+                  >
+                    Choose file
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button
               ref={triggerRef}
