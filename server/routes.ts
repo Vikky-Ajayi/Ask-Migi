@@ -11,7 +11,7 @@ import {
 } from "./storage";
 import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
-import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail } from "./email";
+import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail, sendCoinPurchaseEmail } from "./email";
 
 // reference → checkoutId  (populated when checkout is created, survives until server restarts)
 const checkoutCache = new Map<string, string>();
@@ -556,7 +556,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const existing = await storage.getPurchaseBySumupRef(order_id);
       if (!existing) {
         await storage.createCoinPurchase({ userId: targetUser.id, coinsAmount, price: String(req.body.price_amount ?? 0), sumupRef: order_id });
-        await storage.updateUserCoins(targetUser.id, coinsAmount);
+        const updatedUser = await storage.updateUserCoins(targetUser.id, coinsAmount);
+
+        // Send purchase receipt email (non-blocking)
+        if (targetUser.email) {
+          const price = req.body.price_amount ? `£${parseFloat(req.body.price_amount).toFixed(2)}` : "crypto payment";
+          sendCoinPurchaseEmail(targetUser.email, targetUser.firstName, coinsAmount, updatedUser?.coins ?? 0, price)
+            .catch((err) => console.error("[EMAIL] Failed to send crypto coin purchase receipt:", err.message));
+        }
       }
 
       return res.status(200).json({ received: true });
@@ -619,6 +626,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const updatedUser = await storage.updateUserCoins(userId, coinsAmount);
       // Clean up cache after successful verification
       checkoutCache.delete(reference);
+
+      // Send purchase receipt email (non-blocking)
+      const buyer = await storage.getUser(userId);
+      if (buyer?.email) {
+        const amountFormatted = `£${checkout.amount.toFixed(2)}`;
+        sendCoinPurchaseEmail(buyer.email, buyer.firstName, coinsAmount, updatedUser?.coins ?? 0, amountFormatted)
+          .catch((err) => console.error("[EMAIL] Failed to send coin purchase receipt:", err.message));
+      }
+
       return res.json({ success: true, coins: updatedUser?.coins, purchase });
     } catch (err: any) {
       console.error("[SUMUP] verify-payment error:", err.message);

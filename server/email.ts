@@ -73,6 +73,92 @@ function emailWrapper(rows: string): string {
 </html>`;
 }
 
+// ─── Coin Purchase Receipt ────────────────────────────────────────────────────
+
+export async function sendCoinPurchaseEmail(
+  email: string,
+  firstName: string,
+  coinsAdded: number,
+  newBalance: number,
+  amountPaid: string,
+): Promise<void> {
+  const client = getResend();
+
+  const html = emailWrapper(`
+    ${emailHeader()}
+    <tr>
+      <td style="padding:32px 28px 0;">
+        <span style="display:inline-block;background:#d1fae5;color:#065f46;font-size:12px;font-weight:700;padding:5px 13px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.2px;">&#10003; Payment Confirmed</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px 0;">
+        <h1 style="margin:0;font-size:24px;font-weight:800;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.3;">Your coins are ready, ${firstName}!</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:12px 28px 0;">
+        <p style="margin:0;font-size:15px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">Your purchase was successful and your coins have been added to your account. Here's your receipt.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 28px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;">
+          <tr>
+            <td style="padding:24px 24px 20px;">
+              <p style="margin:0 0 18px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;">Purchase Receipt</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;">
+                    <p style="margin:0;font-size:14px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">Coins added</p>
+                  </td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;text-align:right;">
+                    <p style="margin:0;font-size:14px;font-weight:700;color:#111827;font-family:Arial,Helvetica,sans-serif;">+${coinsAdded} coins</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;">
+                    <p style="margin:0;font-size:14px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">Amount charged</p>
+                  </td>
+                  <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;text-align:right;">
+                    <p style="margin:0;font-size:14px;font-weight:700;color:#111827;font-family:Arial,Helvetica,sans-serif;">${amountPaid}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 0 0;">
+                    <p style="margin:0;font-size:14px;color:#6b7280;font-family:Arial,Helvetica,sans-serif;">New coin balance</p>
+                  </td>
+                  <td style="padding:14px 0 0;text-align:right;">
+                    <p style="margin:0;font-size:18px;font-weight:800;color:#059669;font-family:Arial,Helvetica,sans-serif;">${newBalance} coins</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 28px 0;text-align:center;">
+        <a href="${SITE_URL}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 32px;border-radius:100px;font-family:Arial,Helvetica,sans-serif;">Ask an Expert Now</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px 28px;">
+        <p style="margin:0;font-size:13px;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;line-height:1.6;text-align:center;">All coin purchases are final and non-refundable. If you have any questions, contact us at <a href="mailto:support@askmigi.com" style="color:#6b7280;">support@askmigi.com</a></p>
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  await client.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: `Receipt: ${coinsAdded} coins added to your Ask Migi account`,
+    html,
+  });
+}
+
 // ─── New Question Notification (to Expert) ────────────────────────────────────
 
 export async function sendNewQuestionEmail(
