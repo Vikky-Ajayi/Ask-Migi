@@ -459,7 +459,7 @@ export const ChatInput = ({ onSubmit, showAudienceTabs = true, isSubmitting = fa
                 type="text"
                 value={countrySearch}
                 onChange={(e) => setCountrySearch(e.target.value)}
-                placeholder="Search country…"
+                placeholder="Choose country of residence…"
                 className="w-full bg-th-hover border border-th-border-md rounded-lg px-3 py-1.5 text-xs text-th-text placeholder:text-th-text-30 focus:outline-none"
                 autoFocus
                 data-testid="input-country-search"
