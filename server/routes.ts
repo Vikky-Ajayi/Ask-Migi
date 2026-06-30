@@ -29,6 +29,126 @@ export function registerHealthCheck(app: Express) {
   });
 }
 
+// ── SEO: robots.txt + sitemap.xml ─────────────────────────────────────────────
+// Served directly from Express before any SPA catch-all, so Google always gets
+// the correct Content-Type (text/plain / application/xml) not the React index.html.
+export function registerSeoRoutes(app: Express) {
+  app.get("/robots.txt", (_req, res) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.send(`User-agent: *
+Allow: /
+
+# Public pages
+Allow: /$
+Allow: /about
+Allow: /experts
+Allow: /faq
+Allow: /contact
+Allow: /buy-coins
+Allow: /disclaimer
+Allow: /privacy-policy
+Allow: /refund-policy
+Allow: /terms
+
+# Block private/authenticated routes
+Disallow: /chat
+Disallow: /enquiries
+Disallow: /settings
+Disallow: /expert-dashboard
+Disallow: /expert-questions
+Disallow: /expert-call-schedule
+Disallow: /expert-verification
+Disallow: /expert-welcome
+
+# Block API
+Disallow: /api/
+
+Sitemap: https://askmigi.com/sitemap.xml
+`);
+  });
+
+  app.get("/sitemap.xml", (_req, res) => {
+    res.setHeader("Content-Type", "application/xml");
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <url>
+    <loc>https://askmigi.com/</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/about</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/experts</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/faq</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/contact</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/buy-coins</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/terms</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/privacy-policy</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/refund-policy</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://askmigi.com/disclaimer</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>`);
+  });
+}
+
 // ── Auth middleware ────────────────────────────────────────────────────────────
 function getTokenFromRequest(req: Request): string | null {
   const auth = req.headers.authorization;
