@@ -32,7 +32,8 @@ export interface CreateCheckoutParams {
   amount: number;         // in major currency units (e.g. 9.99)
   currency: string;       // e.g. "GBP"
   description: string;    // shown to payer
-  returnUrl: string;      // where SumUp redirects after payment
+  redirectUrl: string;    // shown as a "return to site" button on SumUp's hosted success page
+  webhookUrl?: string;    // optional server-to-server callback SumUp POSTs status updates to
 }
 
 export interface CheckoutResult {
@@ -43,6 +44,11 @@ export interface CheckoutResult {
 export async function createCheckout(params: CreateCheckoutParams): Promise<CheckoutResult> {
   const merchantCode = await getMerchantCode();
 
+  // IMPORTANT: SumUp's Hosted Checkout does NOT auto-redirect the browser after payment.
+  // `redirect_url` controls the "return to site" BUTTON shown on SumUp's success page —
+  // it is a distinct field from `return_url`, which is a server-to-server webhook callback
+  // (not a browser redirect at all). Confusing these two was the original bug: sending our
+  // URL as `return_url` meant SumUp never showed a button and never notified our backend.
   const res = await fetch(`${SUMUP_API}/v0.1/checkouts`, {
     method: "POST",
     headers: {
@@ -55,7 +61,8 @@ export async function createCheckout(params: CreateCheckoutParams): Promise<Chec
       currency: params.currency,
       merchant_code: merchantCode,
       description: params.description,
-      return_url: params.returnUrl,
+      redirect_url: params.redirectUrl,
+      ...(params.webhookUrl ? { return_url: params.webhookUrl } : {}),
       hosted_checkout: { enabled: true },
     }),
   });

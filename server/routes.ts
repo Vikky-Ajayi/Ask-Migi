@@ -459,13 +459,15 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
     try {
       const { createCheckout } = await import("./sumup.js");
-      const returnUrl = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}`;
+      const redirectUrl = `${host}/buy-coins?ref=${encodeURIComponent(reference)}&coins=${coinsAmount}`;
+      const webhookUrl = `${host}/api/coins/sumup-webhook`;
       const checkout = await createCheckout({
         reference,
         amount: price,
         currency,
         description: `${coinsAmount} Coins – Ask Migi`,
-        returnUrl,
+        redirectUrl,
+        webhookUrl,
       });
       // Cache server-side (best-effort — may be lost on restart; client-side localStorage is primary)
       checkoutCache.set(reference, checkout.checkoutId);
@@ -478,11 +480,61 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         sumupRef: reference,
         checkoutId: checkout.checkoutId,
       });
-      console.log(`[SUMUP] checkout created: ${checkout.checkoutId} ref=${reference} returnUrl=${returnUrl}`);
+      console.log(`[SUMUP] checkout created: ${checkout.checkoutId} ref=${reference} redirectUrl=${redirectUrl}`);
       return res.json({ checkoutId: checkout.checkoutId, payUrl: checkout.payUrl, reference });
     } catch (err: any) {
       console.error("[SUMUP] create-checkout error:", err.message);
       return res.status(502).json({ message: "Payment provider unavailable. Please try again later." });
+    }
+  });
+
+  // POST /api/coins/sumup-webhook — server-to-server callback SumUp POSTs when a checkout's
+  // status changes. This is the real-time complement to the reconciliation poller: it lets us
+  // credit coins immediately on payment success, independent of whether the buyer's browser
+  // ever returns to the app at all (SumUp's hosted checkout does not auto-redirect the browser —
+  // it only shows a "return to site" button, which some users never click).
+  app.post("/api/coins/sumup-webhook", async (req, res) => {
+    try {
+      const checkoutId: string | undefined = req.body?.id || req.body?.checkout_id;
+      if (!checkoutId) {
+        console.warn("[SUMUP][webhook] payload missing checkout id:", JSON.stringify(req.body));
+        return res.status(200).json({ received: true });
+      }
+
+      const { getCheckoutStatus } = await import("./sumup.js");
+      const checkout = await getCheckoutStatus(checkoutId);
+
+      const purchase = await storage.getPurchaseBySumupRef(checkout.reference);
+      if (!purchase) {
+        console.warn(`[SUMUP][webhook] no purchase found for reference=${checkout.reference}`);
+        return res.status(200).json({ received: true });
+      }
+
+      if (purchase.status === "completed") {
+        return res.status(200).json({ received: true, alreadyProcessed: true });
+      }
+
+      if (checkout.status === "PAID") {
+        await storage.markCoinPurchaseStatus(purchase.id, "completed");
+        const updatedUser = await storage.updateUserCoins(purchase.userId, purchase.coinsAmount);
+        console.log(`[SUMUP][webhook] credited ${purchase.coinsAmount} coins to user ${purchase.userId} (ref=${checkout.reference})`);
+
+        const buyer = await storage.getUser(purchase.userId);
+        if (buyer?.email) {
+          const amountFormatted = `£${checkout.amount.toFixed(2)}`;
+          sendCoinPurchaseEmail(buyer.email, buyer.firstName, purchase.coinsAmount, updatedUser?.coins ?? 0, amountFormatted)
+            .catch((err) => console.error("[EMAIL] Failed to send webhook coin purchase receipt:", err.message));
+        }
+      } else if (checkout.status === "FAILED" || checkout.status === "CANCELLED") {
+        await storage.markCoinPurchaseStatus(purchase.id, "failed");
+      }
+
+      return res.status(200).json({ received: true });
+    } catch (err: any) {
+      console.error("[SUMUP][webhook] error:", err.message);
+      // Always 200 so SumUp doesn't endlessly retry a permanently-failing payload;
+      // the reconciliation poller acts as a safety net for anything missed here.
+      return res.status(200).json({ received: true, error: true });
     }
   });
 
