@@ -452,10 +452,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { coinsAmount, price, currency } = parsed.data;
     const reference = `askmigi-${userId.slice(0, 8)}-${coinsAmount}c-${Date.now()}`;
 
-    // Determine return URL — production domain or Replit dev domain
-    const host = process.env.REPLIT_DOMAINS
-      ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-      : (process.env.SITE_URL ?? `https://${req.hostname}`);
+    // Determine return URL — an explicitly configured SITE_URL (production domain) always wins,
+    // since REPLIT_DOMAINS can point at an internal preview domain that differs from the live site.
+    const host = process.env.SITE_URL
+      || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}` : `https://${req.hostname}`);
 
     try {
       const { createCheckout } = await import("./sumup.js");
@@ -469,7 +469,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       });
       // Cache server-side (best-effort — may be lost on restart; client-side localStorage is primary)
       checkoutCache.set(reference, checkout.checkoutId);
-      console.log(`[SUMUP] checkout created: ${checkout.checkoutId} ref=${reference}`);
+      // Persist a pending purchase row immediately — this lets a background job credit the
+      // user's coins even if the browser never makes it back from SumUp's hosted page.
+      await storage.createPendingCoinPurchase({
+        userId,
+        coinsAmount,
+        price: String(price),
+        sumupRef: reference,
+        checkoutId: checkout.checkoutId,
+      });
+      console.log(`[SUMUP] checkout created: ${checkout.checkoutId} ref=${reference} returnUrl=${returnUrl}`);
       return res.json({ checkoutId: checkout.checkoutId, payUrl: checkout.payUrl, reference });
     } catch (err: any) {
       console.error("[SUMUP] create-checkout error:", err.message);
@@ -494,9 +503,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const { coinsAmount, price } = parsed.data;
     const orderId = `migi-${userId.slice(0, 8)}-${coinsAmount}c-${Date.now()}`;
 
-    const host = process.env.REPLIT_DOMAINS
-      ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-      : (process.env.SITE_URL ?? `https://${req.hostname}`);
+    const host = process.env.SITE_URL
+      || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}` : `https://${req.hostname}`);
 
     try {
       const response = await fetch("https://api.nowpayments.io/v1/invoice", {
@@ -592,9 +600,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       return res.status(400).json({ message: "Cannot resolve checkout ID. Please contact support if you were charged." });
     }
 
-    // Idempotency: if already processed, return success without double-crediting
+    // Idempotency: if already processed (completed), return success without double-crediting.
+    // A "pending" row is expected here — it was created when the checkout was first initiated,
+    // and a background reconciliation job may have already completed it independently.
     const existing = await storage.getPurchaseBySumupRef(reference);
-    if (existing) {
+    if (existing && existing.status === "completed") {
       const user = await storage.getUser(userId);
       return res.json({ success: true, coins: user?.coins, alreadyProcessed: true });
     }
@@ -617,12 +627,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(402).json({ message: `Payment not completed (status: ${checkout.status}). If you were charged, please contact support.` });
       }
 
-      const purchase = await storage.createCoinPurchase({
-        userId,
-        coinsAmount,
-        price: String(checkout.amount),
-        sumupRef: reference,
-      });
+      // Re-check right before crediting in case the background reconciler completed it in the meantime
+      const recheck = await storage.getPurchaseBySumupRef(reference);
+      if (recheck && recheck.status === "completed") {
+        const user = await storage.getUser(userId);
+        return res.json({ success: true, coins: user?.coins, alreadyProcessed: true });
+      }
+
+      const purchase = existing
+        ? await (async () => { await storage.markCoinPurchaseStatus(existing.id, "completed"); return existing; })()
+        : await storage.createCoinPurchase({
+            userId,
+            coinsAmount,
+            price: String(checkout.amount),
+            sumupRef: reference,
+            checkoutId,
+          });
       const updatedUser = await storage.updateUserCoins(userId, coinsAmount);
       // Clean up cache after successful verification
       checkoutCache.delete(reference);
@@ -792,6 +812,58 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const updated = await storage.updateUserCoins(userId, -result.data.coins);
     return res.json({ coins: updated?.coins });
   });
+
+  // ── SumUp reconciliation job ────────────────────────────────────────────────
+  // Credits coins for any checkout that reached PAID status even if the customer's
+  // browser never redirected back from SumUp's hosted checkout page. This makes
+  // coin crediting fully independent of the client-side redirect/verify flow.
+  async function reconcilePendingCoinPurchases() {
+    if (!process.env.SUMUP_API_KEY) return;
+    try {
+      const pending = await storage.getPendingCoinPurchases();
+      if (pending.length === 0) return;
+      const { getCheckoutStatus } = await import("./sumup.js");
+
+      for (const purchase of pending) {
+        if (!purchase.checkoutId) continue;
+        // Give the checkout at least 20s before polling, avoids racing the live verify-payment call
+        const ageMs = Date.now() - new Date(purchase.createdAt).getTime();
+        if (ageMs < 20_000) continue;
+
+        try {
+          const checkout = await getCheckoutStatus(purchase.checkoutId);
+          if (checkout.status === "PAID") {
+            const recheck = await storage.getPurchaseBySumupRef(purchase.sumupRef ?? "");
+            if (recheck?.status === "completed") continue; // already credited by verify-payment
+            await storage.markCoinPurchaseStatus(purchase.id, "completed");
+            const updatedUser = await storage.updateUserCoins(purchase.userId, purchase.coinsAmount);
+            console.log(`[SUMUP][reconcile] credited ${purchase.coinsAmount} coins to user ${purchase.userId} (ref=${purchase.sumupRef})`);
+
+            const buyer = await storage.getUser(purchase.userId);
+            if (buyer?.email) {
+              const amountFormatted = `£${checkout.amount.toFixed(2)}`;
+              sendCoinPurchaseEmail(buyer.email, buyer.firstName, purchase.coinsAmount, updatedUser?.coins ?? 0, amountFormatted)
+                .catch((err) => console.error("[EMAIL] Failed to send reconciled coin purchase receipt:", err.message));
+            }
+          } else if (checkout.status === "FAILED" || checkout.status === "CANCELLED") {
+            await storage.markCoinPurchaseStatus(purchase.id, "failed");
+          } else if (ageMs > 60 * 60 * 1000) {
+            // Give up after 1 hour of remaining PENDING — avoid polling forever
+            await storage.markCoinPurchaseStatus(purchase.id, "failed");
+          }
+        } catch (err: any) {
+          console.error(`[SUMUP][reconcile] error checking ${purchase.checkoutId}:`, err.message);
+        }
+      }
+    } catch (err: any) {
+      console.error("[SUMUP][reconcile] job error:", err.message);
+    }
+  }
+
+  // Run every 30 seconds
+  setInterval(() => { reconcilePendingCoinPurchases(); }, 30_000);
+  // Also run shortly after startup to catch anything missed during a restart
+  setTimeout(() => { reconcilePendingCoinPurchases(); }, 5_000);
 
   return httpServer;
 }

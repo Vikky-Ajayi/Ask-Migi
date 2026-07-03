@@ -87,8 +87,9 @@ export const coinPurchases = pgTable("coin_purchases", {
   userId: varchar("user_id").notNull().references(() => users.id),
   coinsAmount: integer("coins_amount").notNull(),
   price: text("price").notNull(),
-  status: text("status").notNull().default("completed"), // pending | completed
+  status: text("status").notNull().default("completed"), // pending | completed | failed
   sumupRef: text("sumup_ref").unique(), // unique SumUp checkout reference — prevents double-grants
+  checkoutId: text("checkout_id"), // SumUp checkout ID — enables server-side reconciliation independent of browser redirect
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [
   index("coin_purchases_user_id_idx").on(t.userId),
@@ -98,6 +99,8 @@ export const insertCoinPurchaseSchema = createInsertSchema(coinPurchases).omit({
   id: true,
   status: true,
   createdAt: true,
+}).extend({
+  checkoutId: z.string().optional().nullable(),
 });
 
 export type InsertCoinPurchase = z.infer<typeof insertCoinPurchaseSchema>;
