@@ -480,7 +480,7 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
     </tr>
     <tr>
       <td style="padding:16px 28px 0;">
-        <p style="margin:0;font-size:15px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">Use your coins to ask questions from our verified immigration, travel, and tour experts. Each question costs 3 coins and you'll get a detailed expert response.</p>
+        <p style="margin:0;font-size:15px;color:#374151;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">Turn your coins into expert career advice. Ask our job coaching experts any question and receive a detailed, personalized response for just 3 coins each.</p>
       </td>
     </tr>
     <tr>
