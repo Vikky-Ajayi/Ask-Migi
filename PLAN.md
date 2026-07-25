@@ -189,11 +189,11 @@ Railway's paid Postgres plan handles this comfortably. You'll want:
 ### Reference: AIApply.co Architecture
 
 From research, AIApply's model is:
-- **Profile-first**: user uploads CV → Groq (Llama 3.3 70B) parses it into structured profile
+- **Profile-first**: user uploads CV → GPT-4o parses it into structured profile
 - **Aggregated job board**: they scrape LinkedIn, Indeed, Glassdoor, Reed etc. into their own DB
 - **AI matching**: vector similarity between user profile and job descriptions
 - **Auto-apply**: server-side Playwright/Puppeteer automation that fills application forms on job boards on behalf of users
-- **Document generation**: per-application tailored CV + cover letter via Groq (Llama 3.3 70B)
+- **Document generation**: per-application tailored CV + cover letter via GPT-4o
 - **Tracking**: full application status pipeline
 
 Our version follows this exact architecture with global scope.
@@ -296,7 +296,7 @@ applications
 ### User-Facing Flow (`/dashboard/jobs`)
 
 **Step 1: Profile Setup** (`/dashboard/profile`)
-- Upload CV (PDF/DOCX) → Groq parses it → auto-fills: job title, skills, years experience, industries
+- Upload CV (PDF/DOCX) → GPT-4o parses it → auto-fills: job title, skills, years experience, industries
 - User reviews and confirms, adds: target roles, salary range, work type preferences, locations willing to work in, deal-breakers
 - Optional: link LinkedIn for richer profile
 
@@ -310,8 +310,8 @@ applications
 - User selects 1–N jobs they want to apply for
 - Confirms the auto-apply action (shows coin cost: **5 coins per application**, bundle discounts shown)
 - System queues them → background Playwright workers run:
-  1. Groq (Llama 3.3 70B) generates a tailored version of their CV for this specific job description (highlights relevant skills/experience)
-  2. Groq generates a tailored cover letter
+  1. GPT-4o generates a tailored version of their CV for this specific job description (highlights relevant skills/experience)
+  2. GPT-4o generates a tailored cover letter
   3. Playwright navigates to the apply URL, detects form type, fills all fields, uploads documents, submits
   4. Status updated in real time
 
@@ -372,7 +372,7 @@ Phase 4 — Auto-Apply Engine
   ├── Playwright worker setup (headless Chromium on Railway)
   ├── ATS adapters: Greenhouse, Lever, Workable (API-based, no Playwright)
   ├── ATS adapters: LinkedIn Easy Apply, Indeed Easy Apply (Playwright)
-  ├── Groq (Llama 3.3 70B) CV tailoring + cover letter generation
+  ├── GPT-4o CV tailoring + cover letter generation
   └── /dashboard/applications tracker UI
 
 Phase 5 — Coins Integration + Polish
@@ -409,6 +409,6 @@ Phase 5 — Coins Integration + Polish
 
 3. **Auto-apply job board detection**: ATS form structures change. Greenhouse/Lever/Workable API integrations are reliable; Playwright-based adapters for LinkedIn/Indeed will need periodic maintenance.
 
-4. **OpenAI costs for tailoring**: Groq is near-zero cost for text generation; main cost is embeddings (~$2-5 total one-time via OpenAI text-embedding-3-small). At 5 coins/application (assuming coins have a value of pennies), this needs margin analysis. Alternative: Groq handles all generation; OpenAI embeddings-only for semantic matching (negligible cost).
+4. **OpenAI costs**: GPT-4o handles all generation (~$0.05–0.15 per auto-application for tailored CV + cover letter); text-embedding-3-small handles all embeddings (~$3–8 one-time to index all events and jobs). One provider, clean setup. At 5 coins per application the margin is healthy.
 
 5. **UK event corpus size**: Actual UK Eventbrite corpus will become clear after first full sweep. Target remains ≥90% of whatever exists.
