@@ -21,6 +21,11 @@ import { ContactPage } from "@/pages/ContactPage";
 import { PolicyPage } from "@/pages/PolicyPage";
 import { ExpertDashboardPage } from "@/pages/ExpertDashboardPage";
 import { ExpertCallSchedulePage } from "@/pages/ExpertCallSchedulePage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { DashboardProfilePage } from "@/pages/DashboardProfilePage";
+import { DashboardEventsPage } from "@/pages/DashboardEventsPage";
+import { DashboardJobsPage } from "@/pages/DashboardJobsPage";
+import { DashboardApplicationsPage } from "@/pages/DashboardApplicationsPage";
 
 const RedirectHome = () => {
   const [, navigate] = useLocation();
@@ -40,6 +45,11 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/settings" component={RedirectHome} />
+      <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/dashboard/profile" component={DashboardProfilePage} />
+      <Route path="/dashboard/events" component={DashboardEventsPage} />
+      <Route path="/dashboard/jobs" component={DashboardJobsPage} />
+      <Route path="/dashboard/applications" component={DashboardApplicationsPage} />
       <Route path="/expert-dashboard" component={ExpertDashboardPage} />
       <Route path="/expert-questions" component={ExpertDashboardPage} />
       <Route path="/expert-call-schedule" component={ExpertCallSchedulePage} />

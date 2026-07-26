@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, boolean, index, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -171,3 +171,120 @@ export const expertServices = pgTable("expert_services", {
 ]);
 
 export type ExpertService = typeof expertServices.$inferSelect;
+
+// ─── User Profiles (career dashboard) ────────────────────────────────────────
+export const userProfiles = pgTable("user_profiles", {
+  userId: varchar("user_id").primaryKey().references(() => users.id),
+  industry: text("industry"),
+  jobTitle: text("job_title"),
+  yearsExperience: integer("years_experience"),
+  skills: text("skills").array().notNull().default(sql`ARRAY[]::text[]`),
+  cvText: text("cv_text"),
+  cvFilename: text("cv_filename"),
+  locationCity: text("location_city"),
+  locationPostcode: text("location_postcode"),
+  linkedinUrl: text("linkedin_url"),
+  salaryMin: integer("salary_min"),
+  salaryMax: integer("salary_max"),
+  workTypes: text("work_types").array().notNull().default(sql`ARRAY[]::text[]`),
+  targetRoles: text("target_roles").array().notNull().default(sql`ARRAY[]::text[]`),
+  dealBreakers: text("deal_breakers"),
+  profileComplete: boolean("profile_complete").notNull().default(false),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [
+  index("user_profiles_user_id_idx").on(t.userId),
+]);
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({ updatedAt: true });
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+
+// ─── Events (scraped from Eventbrite) ────────────────────────────────────────
+export const events = pgTable("events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventbriteId: text("eventbrite_id").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category"),
+  tags: text("tags").array().notNull().default(sql`ARRAY[]::text[]`),
+  locationCity: text("location_city"),
+  locationPostcode: text("location_postcode"),
+  locationVenue: text("location_venue"),
+  locationAddress: text("location_address"),
+  lat: decimal("lat", { precision: 10, scale: 6 }),
+  lng: decimal("lng", { precision: 10, scale: 6 }),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  url: text("url"),
+  organizerName: text("organizer_name"),
+  isFree: boolean("is_free").notNull().default(false),
+  isOnline: boolean("is_online").notNull().default(false),
+  thumbnailUrl: text("thumbnail_url"),
+  status: text("status").notNull().default("active"), // active | expired | cancelled
+  scrapedAt: timestamp("scraped_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => [
+  index("events_status_idx").on(t.status),
+  index("events_start_date_idx").on(t.startDate),
+  index("events_city_idx").on(t.locationCity),
+  index("events_category_idx").on(t.category),
+]);
+
+export type Event = typeof events.$inferSelect;
+
+// ─── Jobs (scraped from job boards) ──────────────────────────────────────────
+export const jobs = pgTable("jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  source: text("source").notNull(), // linkedin | reed | remotive | weworkremotely | greenhouse | himalayas
+  sourceId: text("source_id"),
+  sourceUrl: text("source_url").notNull().unique(),
+  applyUrl: text("apply_url"),
+  atsType: text("ats_type"), // greenhouse | lever | workable | linkedin_easy | indeed_easy | direct
+  title: text("title").notNull(),
+  company: text("company").notNull(),
+  location: text("location"),
+  isRemote: boolean("is_remote").notNull().default(false),
+  workType: text("work_type"), // remote | hybrid | onsite
+  description: text("description"),
+  requirements: text("requirements"),
+  salaryMin: integer("salary_min"),
+  salaryMax: integer("salary_max"),
+  currency: text("currency").default("GBP"),
+  contractType: text("contract_type"), // full_time | part_time | contract | freelance
+  status: text("status").notNull().default("active"), // active | expired
+  postedAt: timestamp("posted_at"),
+  scrapedAt: timestamp("scraped_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+}, (t) => [
+  index("jobs_status_idx").on(t.status),
+  index("jobs_source_idx").on(t.source),
+  index("jobs_posted_at_idx").on(t.postedAt),
+  index("jobs_remote_idx").on(t.isRemote),
+]);
+
+export type Job = typeof jobs.$inferSelect;
+
+// ─── Job Applications ─────────────────────────────────────────────────────────
+export const jobApplications = pgTable("job_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  jobId: varchar("job_id").notNull().references(() => jobs.id),
+  status: text("status").notNull().default("queued"), // queued | generating_docs | applying | submitted | failed | viewed | interview | rejected | offer
+  tailoredCvText: text("tailored_cv_text"),
+  coverLetter: text("cover_letter"),
+  failureReason: text("failure_reason"),
+  coinsSpent: integer("coins_spent").notNull().default(5),
+  notes: text("notes"),
+  appliedAt: timestamp("applied_at"),
+  statusUpdatedAt: timestamp("status_updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("job_apps_user_id_idx").on(t.userId),
+  index("job_apps_status_idx").on(t.status),
+]);
+
+export const insertJobApplicationSchema = createInsertSchema(jobApplications).omit({
+  id: true, statusUpdatedAt: true, createdAt: true,
+});
+export type InsertJobApplication = z.infer<typeof insertJobApplicationSchema>;
+export type JobApplication = typeof jobApplications.$inferSelect;

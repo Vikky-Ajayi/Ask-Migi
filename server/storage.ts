@@ -5,11 +5,14 @@ import {
   type CoinPurchase, type InsertCoinPurchase,
   type CallBooking, type InsertCallBooking,
   type PasswordReset,
+  type UserProfile, type InsertUserProfile,
+  type Event, type Job, type JobApplication, type InsertJobApplication,
   users, enquiries, experts, coinPurchases, passwordResets,
   expertVerifications, expertServices, callBookings,
+  userProfiles, events, jobs, jobApplications,
 } from "@shared/schema";
 import { randomUUID, pbkdf2Sync, randomBytes, createHmac } from "crypto";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, ilike, or, lt, gte } from "drizzle-orm";
 import { db } from "./db";
 
 export function hashPassword(password: string): string {
@@ -396,6 +399,193 @@ class DatabaseStorage implements IStorage {
     return db.select().from(callBookings)
       .where(eq(callBookings.userId, userId))
       .orderBy(desc(callBookings.createdAt));
+  }
+
+  // ── User Profiles ──────────────────────────────────────────────────────────
+
+  async getUserProfile(userId: string): Promise<UserProfile | undefined> {
+    const [row] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+    return row;
+  }
+
+  async upsertUserProfile(data: Partial<UserProfile> & { userId: string }): Promise<UserProfile> {
+    const [row] = await db
+      .insert(userProfiles)
+      .values({ ...data, updatedAt: new Date() } as any)
+      .onConflictDoUpdate({
+        target: userProfiles.userId,
+        set: { ...data, updatedAt: new Date() },
+      })
+      .returning();
+    return row;
+  }
+
+  // ── Events ─────────────────────────────────────────────────────────────────
+
+  async getEvents(opts: {
+    q?: string; category?: string; online?: boolean; free?: boolean;
+    city?: string; page?: number; limit?: number; matchedIds?: string[];
+  }): Promise<{ events: Event[]; total: number }> {
+    const { q, category, online, free, city, page = 1, limit = 24, matchedIds } = opts;
+    const offset = (page - 1) * limit;
+
+    let query = db.select().from(events)
+      .$dynamic();
+    let countQuery = db.select({ count: sql<number>`count(*)` }).from(events).$dynamic();
+
+    const conditions: any[] = [sql`status = 'active'`, sql`start_date > NOW()`];
+
+    if (q) {
+      const searchCond = sql`(title ILIKE ${'%' + q + '%'} OR description ILIKE ${'%' + q + '%'})`;
+      conditions.push(searchCond);
+    }
+    if (category && category !== "All") conditions.push(eq(events.category, category));
+    if (online) conditions.push(eq(events.isOnline, true));
+    if (free) conditions.push(eq(events.isFree, true));
+    if (city) conditions.push(eq(events.locationCity, city));
+    if (matchedIds && matchedIds.length > 0) conditions.push(inArray(events.id, matchedIds));
+
+    const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+    const [{ count }] = await countQuery.where(whereClause);
+    const rows = await query
+      .where(whereClause)
+      .orderBy(events.startDate)
+      .limit(limit)
+      .offset(offset);
+
+    return { events: rows, total: Number(count) };
+  }
+
+  async getEventsByIds(ids: string[]): Promise<Event[]> {
+    if (ids.length === 0) return [];
+    return db.select().from(events).where(inArray(events.id, ids));
+  }
+
+  async getEventsForMatching(limit = 5000): Promise<Event[]> {
+    return db.select().from(events)
+      .where(and(sql`status = 'active'`, sql`start_date > NOW()`))
+      .orderBy(events.startDate)
+      .limit(limit);
+  }
+
+  async getTotalEvents(): Promise<number> {
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(events);
+    return Number(count);
+  }
+
+  // ── Jobs ───────────────────────────────────────────────────────────────────
+
+  async getJobs(opts: {
+    q?: string; source?: string; workType?: string; remote?: boolean;
+    page?: number; limit?: number; matchedIds?: string[];
+  }): Promise<{ jobs: Job[]; total: number }> {
+    const { q, source, workType, remote, page = 1, limit = 20, matchedIds } = opts;
+    const offset = (page - 1) * limit;
+
+    const conditions: any[] = [eq(jobs.status, "active")];
+
+    if (q) {
+      conditions.push(sql`(title ILIKE ${'%' + q + '%'} OR company ILIKE ${'%' + q + '%'} OR description ILIKE ${'%' + q + '%'})`);
+    }
+    if (source && source !== "All") conditions.push(eq(jobs.source, source));
+    if (workType && workType !== "All") conditions.push(eq(jobs.workType, workType));
+    if (remote) conditions.push(eq(jobs.isRemote, true));
+    if (matchedIds && matchedIds.length > 0) conditions.push(inArray(jobs.id, matchedIds));
+
+    const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
+
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(jobs).where(whereClause);
+    const rows = await db.select().from(jobs)
+      .where(whereClause)
+      .orderBy(desc(jobs.postedAt))
+      .limit(limit)
+      .offset(offset);
+
+    return { jobs: rows, total: Number(count) };
+  }
+
+  async getJobById(id: string): Promise<Job | undefined> {
+    const [row] = await db.select().from(jobs).where(eq(jobs.id, id));
+    return row;
+  }
+
+  async getJobsByIds(ids: string[]): Promise<Job[]> {
+    if (ids.length === 0) return [];
+    return db.select().from(jobs).where(inArray(jobs.id, ids));
+  }
+
+  async getJobsForMatching(limit = 10000): Promise<Job[]> {
+    return db.select().from(jobs)
+      .where(eq(jobs.status, "active"))
+      .orderBy(desc(jobs.postedAt))
+      .limit(limit);
+  }
+
+  async getTotalJobs(): Promise<number> {
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(jobs);
+    return Number(count);
+  }
+
+  // ── Job Applications ───────────────────────────────────────────────────────
+
+  async createJobApplication(data: {
+    userId: string; jobId: string; coinsSpent?: number;
+  }): Promise<JobApplication> {
+    const [row] = await db.insert(jobApplications)
+      .values({ ...data, status: "queued", coinsSpent: data.coinsSpent ?? 5 })
+      .returning();
+    return row;
+  }
+
+  async getUserApplications(userId: string, statusFilter?: string): Promise<(JobApplication & { job?: Job })[]> {
+    const conditions: any[] = [eq(jobApplications.userId, userId)];
+    if (statusFilter && statusFilter !== "all") {
+      if (statusFilter === "active") {
+        conditions.push(inArray(jobApplications.status, ["queued", "generating_docs", "applying", "submitted"]));
+      } else {
+        conditions.push(eq(jobApplications.status, statusFilter));
+      }
+    }
+
+    const apps = await db.select().from(jobApplications)
+      .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+      .orderBy(desc(jobApplications.createdAt));
+
+    // Enrich with job data
+    const jobIds = Array.from(new Set(apps.map((a) => a.jobId)));
+    const jobRows = await this.getJobsByIds(jobIds);
+    const jobMap = new Map(jobRows.map((j) => [j.id, j]));
+
+    return apps.map((a) => ({ ...a, job: jobMap.get(a.jobId) }));
+  }
+
+  async updateApplicationStatus(
+    id: string,
+    userId: string,
+    status: string
+  ): Promise<JobApplication | undefined> {
+    const [row] = await db.update(jobApplications)
+      .set({ status, statusUpdatedAt: new Date(), ...(status === "submitted" ? { appliedAt: new Date() } : {}) })
+      .where(and(eq(jobApplications.id, id), eq(jobApplications.userId, userId)))
+      .returning();
+    return row;
+  }
+
+  async getApplicationByUserAndJob(userId: string, jobId: string): Promise<JobApplication | undefined> {
+    const [row] = await db.select().from(jobApplications)
+      .where(and(eq(jobApplications.userId, userId), eq(jobApplications.jobId, jobId)));
+    return row;
+  }
+
+  async getUserApplicationStats(userId: string): Promise<{
+    total: number; pending: number;
+  }> {
+    const apps = await db.select({ status: jobApplications.status })
+      .from(jobApplications)
+      .where(eq(jobApplications.userId, userId));
+    const pending = apps.filter((a) => ["queued", "generating_docs", "applying"].includes(a.status)).length;
+    return { total: apps.length, pending };
   }
 }
 

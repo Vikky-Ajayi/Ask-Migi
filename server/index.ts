@@ -4,6 +4,7 @@ import { rateLimit } from "express-rate-limit";
 import { registerRoutes, registerHealthCheck } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { startScraperScheduler } from "./scraper/scheduler";
 
 const app = express();
 const httpServer = createServer(app);
@@ -112,6 +113,7 @@ app.use((req, res, next) => {
 (async () => {
   registerHealthCheck(app);
   await registerRoutes(httpServer, app);
+  startScraperScheduler();
 
   // ── Global error handler ───────────────────────────────────────────────────
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
+import multer from "multer";
 import {
   storage,
   hashPassword,
@@ -12,6 +13,14 @@ import {
 import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail, sendCoinPurchaseEmail } from "./email";
+import { keywordScore, buildProfileText } from "./embeddings";
+import { parseCvWithAI, processQueuedApplications } from "./autoApply";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
 // reference → checkoutId  (populated when checkout is created, survives until server restarts)
 const checkoutCache = new Map<string, string>();
@@ -916,6 +925,301 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   setInterval(() => { reconcilePendingCoinPurchases(); }, 30_000);
   // Also run shortly after startup to catch anything missed during a restart
   setTimeout(() => { reconcilePendingCoinPurchases(); }, 5_000);
+
+  // ── Auto-apply queue processor (every 2 minutes) ──────────────────────────
+  setInterval(() => { processQueuedApplications().catch(console.error); }, 2 * 60 * 1000);
+  setTimeout(() => { processQueuedApplications().catch(console.error); }, 15_000);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ── DASHBOARD ROUTES ──────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /** GET /api/dashboard/stats — aggregated stats for the overview page */
+  app.get("/api/dashboard/stats", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const [user, profile, appStats] = await Promise.all([
+        storage.getUser(userId),
+        storage.getUserProfile(userId),
+        storage.getUserApplicationStats(userId),
+      ]);
+      const [totalEvents, totalJobs] = await Promise.all([
+        storage.getTotalEvents(),
+        storage.getTotalJobs(),
+      ]);
+      res.json({
+        coins: user?.coins ?? 0,
+        profileComplete: !!profile && !!profile.industry && !!profile.jobTitle,
+        totalApplications: appStats.total,
+        pendingApplications: appStats.pending,
+        totalEvents,
+        totalJobs,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** GET /api/dashboard/profile — fetch user career profile */
+  app.get("/api/dashboard/profile", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const profile = await storage.getUserProfile(req.userId!);
+      res.json(profile ?? {});
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** POST /api/dashboard/profile — create/update user career profile */
+  app.post("/api/dashboard/profile", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const allowed = [
+        "industry", "jobTitle", "targetRoles", "skills",
+        "locationCity", "locationPostcode", "salaryMin", "salaryMax",
+        "workTypes", "linkedinUrl", "cvText", "yearsExperience",
+      ];
+      const data: Record<string, any> = {};
+      for (const key of allowed) {
+        if (req.body[key] !== undefined) data[key] = req.body[key];
+      }
+      const profile = await storage.upsertUserProfile({ userId: req.userId!, ...data });
+      res.json(profile);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** POST /api/dashboard/profile/cv — upload + parse CV file */
+  app.post("/api/dashboard/profile/cv", requireAuth, upload.single("cv"), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file uploaded." });
+
+      let text = "";
+      const mime = req.file.mimetype;
+
+      if (mime === "application/pdf" || req.file.originalname.endsWith(".pdf")) {
+        // Dynamically require pdf-parse to avoid startup issues with the module
+        const pdfModule = await import("pdf-parse");
+        const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfModule as any).default ?? pdfModule;
+        const result = await pdfParse(req.file.buffer);
+        text = result.text;
+      } else if (
+        mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        req.file.originalname.endsWith(".docx")
+      ) {
+        const mammoth = await import("mammoth");
+        const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+        text = result.value;
+      } else if (mime === "text/plain" || req.file.originalname.endsWith(".txt")) {
+        text = req.file.buffer.toString("utf-8");
+      } else {
+        return res.status(400).json({ error: "Unsupported file type. Please upload PDF, DOCX, or TXT." });
+      }
+
+      text = text.slice(0, 20_000); // cap at 20k chars
+
+      // Try AI parse for structured skills/title extraction
+      let parsedSkills: string[] = [];
+      let parsedTitle = "";
+      try {
+        const parsed = await parseCvWithAI(text);
+        parsedSkills = parsed.skills ?? [];
+        parsedTitle = (parsed as any).jobTitle ?? "";
+      } catch (_) { /* non-fatal */ }
+
+      // Save cvText (and any extracted fields) to the profile
+      const updateData: Record<string, any> = { userId: req.userId!, cvText: text };
+      if (parsedTitle) updateData.jobTitle = parsedTitle;
+      if (parsedSkills.length > 0) updateData.skills = parsedSkills;
+      await storage.upsertUserProfile(updateData as Parameters<typeof storage.upsertUserProfile>[0]);
+
+      res.json({ ok: true, charCount: text.length, parsedSkills, parsedTitle });
+    } catch (err: any) {
+      console.error("[CV upload]", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** GET /api/dashboard/events — paginated events with optional filters */
+  app.get("/api/dashboard/events", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const q = typeof req.query.q === "string" ? req.query.q : undefined;
+      const category = typeof req.query.category === "string" ? req.query.category : undefined;
+      const city = typeof req.query.city === "string" ? req.query.city : undefined;
+      const online = req.query.online === "true";
+      const free = req.query.free === "true";
+      const page = parseInt(String(req.query.page ?? "1"), 10);
+      const limit = Math.min(parseInt(String(req.query.limit ?? "12"), 10), 50);
+
+      const result = await storage.getEvents({ q, category, city, online, free, page, limit });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** POST /api/dashboard/events/match — rank events by user profile (2 coins) */
+  app.post("/api/dashboard/events/match", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const COST = 2;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(401).json({ error: "User not found." });
+      if (!user.unlimitedCoins && (user.coins ?? 0) < COST) {
+        return res.status(402).json({ error: `Not enough coins. This action costs ${COST} coins.` });
+      }
+
+      const profile = await storage.getUserProfile(userId);
+      if (!profile || (!profile.industry && !profile.skills?.length)) {
+        return res.status(400).json({ error: "Please complete your profile first so we can match events to you." });
+      }
+
+      const profileText = buildProfileText(profile);
+      const allEvents = await storage.getEventsForMatching(3000);
+
+      // Score events by keyword overlap with profile
+      const scored = allEvents.map((ev) => {
+        const evText = [ev.title, ev.description ?? "", ev.category ?? "", ev.tags?.join(" ") ?? ""].join(" ");
+        return { id: ev.id, score: keywordScore(profileText, evText) };
+      }).filter((e) => e.score > 0).sort((a, b) => b.score - a.score).slice(0, 200);
+
+      // Deduct coins
+      if (!user.unlimitedCoins) await storage.updateUserCoins(userId, -COST);
+
+      res.json({ ok: true, matched: scored.length, topIds: scored.map((e) => e.id) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** GET /api/dashboard/jobs — paginated jobs with optional filters */
+  app.get("/api/dashboard/jobs", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const q = typeof req.query.q === "string" ? req.query.q : undefined;
+      const source = typeof req.query.source === "string" ? req.query.source : undefined;
+      const workType = typeof req.query.workType === "string" ? req.query.workType : undefined;
+      const remote = req.query.remote === "true";
+      const page = parseInt(String(req.query.page ?? "1"), 10);
+      const limit = Math.min(parseInt(String(req.query.limit ?? "20"), 10), 50);
+      const ids = req.query.ids ? String(req.query.ids).split(",").filter(Boolean) : undefined;
+
+      const result = await storage.getJobs({ q, source, workType, remote, page, limit, matchedIds: ids });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** POST /api/dashboard/jobs/match — rank jobs by user profile (1 coin) */
+  app.post("/api/dashboard/jobs/match", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const COST = 1;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(401).json({ error: "User not found." });
+      if (!user.unlimitedCoins && (user.coins ?? 0) < COST) {
+        return res.status(402).json({ error: `Not enough coins. This action costs ${COST} coins.` });
+      }
+
+      const profile = await storage.getUserProfile(userId);
+      if (!profile || (!profile.industry && !profile.skills?.length)) {
+        return res.status(400).json({ error: "Please complete your profile first." });
+      }
+
+      const profileText = buildProfileText(profile);
+      const allJobs = await storage.getJobsForMatching(5000);
+
+      const scored = allJobs.map((j) => {
+        const jText = [j.title, j.company, j.description ?? ""].join(" ");
+        return { id: j.id, score: keywordScore(profileText, jText) };
+      }).filter((e) => e.score > 0).sort((a, b) => b.score - a.score).slice(0, 300);
+
+      if (!user.unlimitedCoins) await storage.updateUserCoins(userId, -COST);
+
+      res.json({ ok: true, matched: scored.length, topIds: scored.map((j) => j.id) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** POST /api/dashboard/jobs/apply — queue auto-apply for one or more jobs (5 coins each) */
+  app.post("/api/dashboard/jobs/apply", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.userId!;
+      const { jobIds } = req.body as { jobIds: string[] };
+      if (!Array.isArray(jobIds) || jobIds.length === 0) {
+        return res.status(400).json({ error: "Provide at least one jobId." });
+      }
+      if (jobIds.length > 20) return res.status(400).json({ error: "Max 20 jobs per batch." });
+
+      const COST_PER_JOB = 5;
+      const totalCost = COST_PER_JOB * jobIds.length;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(401).json({ error: "User not found." });
+      if (!user.unlimitedCoins && (user.coins ?? 0) < totalCost) {
+        return res.status(402).json({
+          error: `Not enough coins. ${jobIds.length} application(s) cost ${totalCost} coins; you have ${user.coins ?? 0}.`,
+        });
+      }
+
+      const profile = await storage.getUserProfile(userId);
+      if (!profile?.cvText) {
+        return res.status(400).json({ error: "Please upload your CV first so we can tailor your applications." });
+      }
+
+      // Deduplicate — skip jobs already applied to
+      const queued: string[] = [];
+      for (const jobId of jobIds) {
+        const existing = await storage.getApplicationByUserAndJob(userId, jobId);
+        if (!existing) {
+          await storage.createJobApplication({ userId, jobId, coinsSpent: COST_PER_JOB });
+          queued.push(jobId);
+        }
+      }
+
+      if (!user.unlimitedCoins && queued.length > 0) {
+        await storage.updateUserCoins(userId, -(COST_PER_JOB * queued.length));
+      }
+
+      // Fire the queue processor async (non-blocking)
+      processQueuedApplications().catch(console.error);
+
+      res.json({ ok: true, queued: queued.length, skippedDuplicates: jobIds.length - queued.length });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** GET /api/dashboard/applications — user's job applications */
+  app.get("/api/dashboard/applications", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const status = typeof req.query.status === "string" ? req.query.status : undefined;
+      const apps = await storage.getUserApplications(req.userId!, status);
+      res.json(apps);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** PATCH /api/dashboard/applications/:id/status — manually update application status */
+  app.patch("/api/dashboard/applications/:id/status", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body as { status: string };
+      const validStatuses = ["queued", "generating_docs", "submitted", "interviewing", "rejected", "offer"];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+      }
+      const updated = await storage.updateApplicationStatus(id, req.userId!, status);
+      if (!updated) return res.status(404).json({ error: "Application not found." });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   return httpServer;
 }
