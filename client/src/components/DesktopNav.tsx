@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronDown, CircleUser, User, Settings, LogOut, Phone, Sun, Moon } from "lucide-react";
+import { ChevronDown, CircleUser, User, Settings, LogOut, Phone, Sun, Moon, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import coinImg from "@assets/coins_1781943901685.png";
@@ -99,7 +99,12 @@ export const DesktopNav = ({ onLoginClick, onSignUpClick, onSettingsClick }: Des
                 <User size={16} className="text-th-text-70" />
               </button>
               {profileOpen && (
-                <div className="absolute top-full right-0 mt-2 w-40 bg-th-card rounded-xl border border-th-border-md shadow-xl z-50 py-1 overflow-hidden">
+                <div className="absolute top-full right-0 mt-2 w-44 bg-th-card rounded-xl border border-th-border-md shadow-xl z-50 py-1 overflow-hidden">
+                  <button onClick={() => { navigate("/dashboard"); setProfileOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-th-text-80 hover:text-th-text hover:bg-th-hover flex items-center gap-2.5 transition-colors"
+                    data-testid="nav-dashboard">
+                    <LayoutDashboard size={14} className="text-th-text-50" /> My Dashboard
+                  </button>
                   <button onClick={() => { onSettingsClick?.(); setProfileOpen(false); }}
                     className="w-full text-left px-4 py-2.5 text-sm text-th-text-80 hover:text-th-text hover:bg-th-hover flex items-center gap-2.5 transition-colors"
                     data-testid="nav-settings">

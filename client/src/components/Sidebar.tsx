@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { X, ChevronDown, LogOut, Phone } from "lucide-react";
+import { X, ChevronDown, LogOut, Phone, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { CallExpertModal } from "./CallExpertModal";
@@ -50,6 +50,14 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
         )}
 
         <NavItem label="Home" onClick={() => go("/")} />
+        {isLoggedIn && (
+          <button onClick={() => go("/dashboard")}
+            className="w-full text-left py-3 px-2 text-th-text-80 hover:text-th-text font-medium rounded-lg hover:bg-th-hover transition-colors text-sm flex items-center gap-2"
+            data-testid="sidebar-dashboard">
+            <LayoutDashboard size={15} className="text-th-text-50" />
+            My Dashboard
+          </button>
+        )}
         <NavItem label="Previous Enquiries" onClick={() => go("/enquiries")} />
         <NavItem label="Buy Coins" onClick={() => go("/buy-coins")} />
         <NavItem label="About" onClick={() => go("/about")} />
