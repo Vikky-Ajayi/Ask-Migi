@@ -46,7 +46,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--th-page)] flex">
       {/* ── Desktop Sidebar ──────────────────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-60 shrink-0 bg-[var(--th-sidebar)] border-r border-[var(--th-border)] h-screen sticky top-0">
+      <aside className="hidden md:flex flex-col w-60 shrink-0 bg-[var(--th-sidebar)] border-r border-[var(--th-border)] h-screen fixed top-0 left-0 z-10">
         {/* Logo */}
         <div className="px-4 py-5 border-b border-[var(--th-border)]">
           <Link href="/" className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ── Main Content ─────────────────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 pt-14 md:pt-0 overflow-y-auto">
+      <main className="flex-1 min-w-0 pt-14 md:pt-0 md:ml-60 overflow-y-auto">
         {children}
       </main>
     </div>
