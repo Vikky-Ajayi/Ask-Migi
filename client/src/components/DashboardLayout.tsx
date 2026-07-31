@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard, User, Calendar, Briefcase, FileText,
-  Settings, Coins, ChevronRight, Menu, X, LogOut,
+  Settings, Coins, ChevronRight, Menu, X, LogOut, MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { path: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { path: "/dashboard/profile", label: "My Profile", icon: User },
+  { path: "/chat", label: "Ask Migi", icon: MessageSquare },
   { path: "/dashboard/events", label: "Networking Events", icon: Calendar },
   { path: "/dashboard/jobs", label: "Job Matches", icon: Briefcase },
   { path: "/dashboard/applications", label: "Applications", icon: FileText },

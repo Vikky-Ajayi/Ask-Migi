@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { X, Mail, Eye, EyeOff, CircleCheck, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -228,6 +229,7 @@ const LoginDialog = ({
   const [error, setError] = useState("");
   const { login } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const handleLogin = async () => {
     setError("");
@@ -241,6 +243,7 @@ const LoginDialog = ({
         onSuccess();
       } else {
         onClose();
+        navigate("/dashboard");
       }
     } catch (e: any) {
       setError(e.message || "Login failed. Please try again.");
@@ -488,6 +491,7 @@ const RegisterDialog = ({
   const [error, setError] = useState("");
   const { register } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const handleRegister = async () => {
     setError("");
@@ -502,6 +506,7 @@ const RegisterDialog = ({
         onSuccess();
       } else {
         onClose();
+        navigate("/dashboard");
       }
     } catch (e: any) {
       setError(e.message || "Registration failed. Please try again.");

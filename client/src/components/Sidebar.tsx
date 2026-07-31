@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { X, ChevronDown, LogOut, Phone, LayoutDashboard } from "lucide-react";
+import { X, ChevronDown, LogOut, Phone, LayoutDashboard, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { CallExpertModal } from "./CallExpertModal";
@@ -56,6 +56,14 @@ export const Sidebar = ({ open, onClose, isLoggedIn = false, onAuthAction }: Sid
             data-testid="sidebar-dashboard">
             <LayoutDashboard size={15} className="text-th-text-50" />
             My Dashboard
+          </button>
+        )}
+        {isLoggedIn && (
+          <button onClick={() => go("/chat")}
+            className="w-full text-left py-3 px-2 text-th-text-80 hover:text-th-text font-medium rounded-lg hover:bg-th-hover transition-colors text-sm flex items-center gap-2"
+            data-testid="sidebar-chat">
+            <MessageSquare size={15} className="text-th-text-50" />
+            Ask Migi
           </button>
         )}
         <NavItem label="Previous Enquiries" onClick={() => go("/enquiries")} />
