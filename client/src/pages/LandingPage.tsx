@@ -150,6 +150,11 @@ export const LandingPage = (): JSX.Element => {
     );
   }
 
+  if (isLoggedIn) {
+    navigate("/dashboard");
+    return null;
+  }
+
   return (
     <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
       <NavBar
