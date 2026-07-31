@@ -1,5 +1,5 @@
-import { Switch, Route, useLocation } from "wouter";
-import { useEffect, useState, useCallback } from "react";
+import { Switch, Route } from "wouter";
+import { useState, useCallback } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,12 +26,7 @@ import { DashboardProfilePage } from "@/pages/DashboardProfilePage";
 import { DashboardEventsPage } from "@/pages/DashboardEventsPage";
 import { DashboardJobsPage } from "@/pages/DashboardJobsPage";
 import { DashboardApplicationsPage } from "@/pages/DashboardApplicationsPage";
-
-const RedirectHome = () => {
-  const [, navigate] = useLocation();
-  useEffect(() => { navigate("/"); }, [navigate]);
-  return null;
-};
+import { SettingsPage } from "@/pages/SettingsPage";
 
 function Router() {
   return (
@@ -44,7 +39,7 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <Route path="/faq" component={FAQPage} />
       <Route path="/contact" component={ContactPage} />
-      <Route path="/settings" component={RedirectHome} />
+      <Route path="/settings" component={SettingsPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/dashboard/profile" component={DashboardProfilePage} />
       <Route path="/dashboard/events" component={DashboardEventsPage} />

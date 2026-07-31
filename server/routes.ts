@@ -417,6 +417,16 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // POST /api/auth/profile-pic — upload any user's profile picture
+  app.post("/api/auth/profile-pic", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    const schema = z.object({ imageData: z.string().min(1) });
+    const result = schema.safeParse(req.body);
+    if (!result.success) return res.status(400).json({ message: "imageData is required" });
+    const updated = await storage.updateUserProfilePic(user.id, result.data.imageData);
+    return res.json({ profilePic: updated?.profilePic });
+  });
+
   // POST /api/expert/profile-pic — upload expert's profile picture
   app.post("/api/expert/profile-pic", requireAuth, async (req, res) => {
     const user = (req as any).user;

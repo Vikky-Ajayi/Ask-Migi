@@ -39,7 +39,7 @@ function NavItem({ item, mobile, onClose }: { item: typeof navItems[0]; mobile?:
   );
 }
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function DashboardLayout({ children, mainClassName }: { children: React.ReactNode; mainClassName?: string }) {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -139,7 +139,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* ── Main Content ─────────────────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 pt-14 md:pt-0 md:ml-60 overflow-y-auto">
+      <main className={`flex-1 min-w-0 pt-14 md:pt-0 md:ml-60 ${mainClassName ?? "overflow-y-auto"}`}>
         {children}
       </main>
     </div>

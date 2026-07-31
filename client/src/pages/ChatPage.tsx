@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
-import { NavBar } from "@/components/NavBar";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { ChatSidebar, type SidebarEnquiry } from "@/components/ChatSidebar";
 import { MobileEnquirySidebar } from "@/components/MobileEnquirySidebar";
 import { ChatInput } from "@/components/ChatInput";
-import { AuthSheets, type AuthView } from "@/components/AuthSheets";
 import { useAuth } from "@/context/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -12,10 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import coinImg from "@assets/coins_1781943901685.png";
 
 // ── Typing animation ──────────────────────────────────────────────────────────
-// Only enquiry IDs created in this browser session get the typing effect.
-// Messages loaded from the DB on page open are shown instantly.
-const _sessionNewIds = new Set<string>(); // enquiry IDs just created this session
-const _animDone = new Set<string>();       // animKeys whose animation has finished
+const _sessionNewIds = new Set<string>();
+const _animDone = new Set<string>();
 
 function TypingText({
   text,
@@ -62,7 +59,7 @@ function TypingText({
   );
 }
 
-// ── Casual message classifier (client-side, no network) ───────────────────────
+// ── Casual message classifier ─────────────────────────────────────────────────
 function isCasualMessage(msg: string): boolean {
   const t = msg.toLowerCase().trim();
   const patterns = [
@@ -90,7 +87,6 @@ export const ChatPage = (): JSX.Element => {
   const params = new URLSearchParams(search);
   const initialId = params.get("id") || "";
 
-  const [authView, setAuthView] = useState<AuthView>(null);
   const [activeId, setActiveId] = useState<string>(initialId);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [casualMsgs, setCasualMsgs] = useState<CasualMsg[]>([]);
@@ -100,6 +96,11 @@ export const ChatPage = (): JSX.Element => {
   const { toast } = useToast();
   const qc = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Redirect to dashboard if not logged in
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) navigate("/");
+  }, [authLoading, isLoggedIn, navigate]);
 
   const { data: enquiries = [], isLoading: enqLoading } = useQuery<any[]>({
     queryKey: ["/api/enquiries"],
@@ -124,7 +125,7 @@ export const ChatPage = (): JSX.Element => {
 
   const activeEnquiry = enquiries.find((e: any) => e.id === activeId);
 
-  // ── Casual chat mutation (free, no coins) ────────────────────────────────
+  // ── Casual chat mutation ──────────────────────────────────────────────────
   const casualMutation = useMutation({
     mutationFn: async (message: string) => {
       const res = await apiRequest("POST", "/api/casual-chat", { message });
@@ -138,7 +139,7 @@ export const ChatPage = (): JSX.Element => {
     },
   });
 
-  // ── Enquiry mutation (costs coins) ───────────────────────────────────────
+  // ── Enquiry mutation ──────────────────────────────────────────────────────
   const submitMutation = useMutation({
     mutationFn: async ({ question, country }: { question: string; country: string }) => {
       const res = await apiRequest("POST", "/api/enquiries", {
@@ -149,7 +150,7 @@ export const ChatPage = (): JSX.Element => {
       return res.json();
     },
     onSuccess: (data) => {
-      _sessionNewIds.add(data.id); // mark so TypingText animates for this enquiry only
+      _sessionNewIds.add(data.id);
       qc.invalidateQueries({ queryKey: ["/api/enquiries"] });
       refreshUser();
       setActiveId(data.id);
@@ -159,8 +160,6 @@ export const ChatPage = (): JSX.Element => {
       if (e.message?.includes("402")) {
         toast({ title: "Not enough coins", description: "Please purchase more coins to continue.", variant: "destructive" });
         navigate("/buy-coins");
-      } else if (e.message?.includes("401")) {
-        setAuthView("login");
       } else {
         toast({ title: "Error", description: e.message || "Failed to submit question.", variant: "destructive" });
       }
@@ -168,7 +167,6 @@ export const ChatPage = (): JSX.Element => {
   });
 
   const handleSubmit = (question: string, _expertType: string, country: string) => {
-    if (!isLoggedIn) { setAuthView("login"); return; }
     const trimmed = question.trim();
     if (!trimmed) return;
     if (isCasualMessage(trimmed)) {
@@ -180,15 +178,6 @@ export const ChatPage = (): JSX.Element => {
 
   const isSubmitting = casualMutation.isPending || submitMutation.isPending;
 
-  if (authLoading) {
-    return (
-      <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
-        <NavBar onLoginClick={() => setAuthView("login")} onSignUpClick={() => setAuthView("register")} />
-        <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
-      </main>
-    );
-  }
-
   const sidebarItems: SidebarEnquiry[] = enquiries.map((e: any) => ({
     id: e.id,
     question: e.question,
@@ -197,22 +186,18 @@ export const ChatPage = (): JSX.Element => {
 
   const isAnswered = activeEnquiry?.status === "answered";
 
-  return (
-    <main className="h-screen w-full bg-th-page text-th-text flex flex-col overflow-hidden">
-      <NavBar
-        onLoginClick={() => setAuthView("login")}
-        onSignUpClick={() => setAuthView("register")}
-        onMenuClick={() => setMobileSidebarOpen(true)}
-      />
+  if (authLoading || (!authLoading && !isLoggedIn)) return <></>;
 
+  return (
+    <DashboardLayout mainClassName="overflow-hidden flex flex-col">
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar — desktop only */}
+        {/* Left enquiry sidebar — desktop only */}
         <div className="w-52 shrink-0 border-r border-th-border overflow-y-auto px-3 py-3 hidden md:block">
           <ChatSidebar
             enquiries={sidebarItems}
             activeId={activeId}
             onSelect={(id) => { setActiveId(id); setCasualMsgs([]); }}
-            onNewQuestion={() => navigate("/")}
+            onNewQuestion={() => { setActiveId(""); setCasualMsgs([]); }}
             isLoading={enqLoading}
           />
         </div>
@@ -299,16 +284,14 @@ export const ChatPage = (): JSX.Element => {
                 </>
               )}
 
-              {/* Casual exchange messages — always rendered below the enquiry thread */}
+              {/* Casual exchange messages */}
               {casualMsgs.map((cm, i) => (
                 <div key={i} className="flex flex-col gap-4">
-                  {/* User bubble */}
                   <div className="flex justify-end">
                     <div className="max-w-[85%] md:max-w-[72%] rounded-2xl rounded-tr-sm bg-th-card-hover border border-th-border-md px-4 py-3">
                       <p className="text-sm text-th-text-90 leading-6">{cm.userMsg}</p>
                     </div>
                   </div>
-                  {/* AI reply bubble */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-th-card border border-th-border-md flex items-center justify-center text-xs font-bold text-th-text shrink-0">
@@ -363,16 +346,15 @@ export const ChatPage = (): JSX.Element => {
         </div>
       </div>
 
+      {/* Mobile enquiry history drawer */}
       <MobileEnquirySidebar
         open={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}
         enquiries={sidebarItems}
         activeId={activeId}
         onSelect={setActiveId}
-        onNewQuestion={() => navigate("/")}
+        onNewQuestion={() => { setActiveId(""); setCasualMsgs([]); setMobileSidebarOpen(false); }}
       />
-
-      <AuthSheets view={authView} onViewChange={setAuthView} onClose={() => setAuthView(null)} />
-    </main>
+    </DashboardLayout>
   );
 };
