@@ -4,7 +4,7 @@ import {
   LayoutDashboard, User, Calendar, Briefcase, FileText,
   Settings, Coins, ChevronRight, Menu, X, LogOut, MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -41,7 +41,13 @@ function NavItem({ item, mobile, onClose }: { item: typeof navItems[0]; mobile?:
 
 export function DashboardLayout({ children, mainClassName }: { children: React.ReactNode; mainClassName?: string }) {
   const { user, logout } = useAuth();
+  const [, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate("/");
+  }, [logout, navigate]);
 
   return (
     <div className="min-h-screen bg-[var(--th-page)] flex">
@@ -78,7 +84,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
             <span>Settings</span>
           </Link>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--th-text-70)] hover:bg-[var(--th-hover)] hover:text-[var(--th-text)] transition-all"
           >
             <LogOut size={17} />
@@ -130,7 +136,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
               <Link href="/buy-coins" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--th-text-70)] hover:bg-[var(--th-hover)]">
                 <Coins size={17} /><span>{user?.coins ?? 0} coins</span>
               </Link>
-              <button onClick={() => { setMobileOpen(false); logout(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--th-text-70)] hover:bg-[var(--th-hover)]">
+              <button onClick={() => { setMobileOpen(false); handleLogout(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--th-text-70)] hover:bg-[var(--th-hover)]">
                 <LogOut size={17} /><span>Sign out</span>
               </button>
             </div>

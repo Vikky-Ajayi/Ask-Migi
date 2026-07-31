@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { NavBar } from "@/components/NavBar";
 import { ChatInput, type AttachmentData } from "@/components/ChatInput";
@@ -150,10 +150,11 @@ export const LandingPage = (): JSX.Element => {
     );
   }
 
-  if (isLoggedIn) {
-    navigate("/dashboard");
-    return null;
-  }
+  useEffect(() => {
+    if (isLoggedIn) navigate("/dashboard");
+  }, [isLoggedIn, navigate]);
+
+  if (isLoggedIn) return null;
 
   return (
     <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
