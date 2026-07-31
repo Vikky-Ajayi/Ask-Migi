@@ -190,6 +190,8 @@ export const userProfiles = pgTable("user_profiles", {
   targetRoles: text("target_roles").array().notNull().default(sql`ARRAY[]::text[]`),
   dealBreakers: text("deal_breakers"),
   profileComplete: boolean("profile_complete").notNull().default(false),
+  matchedJobIds: text("matched_job_ids").array().notNull().default(sql`ARRAY[]::text[]`),
+  matchedEventIds: text("matched_event_ids").array().notNull().default(sql`ARRAY[]::text[]`),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [
   index("user_profiles_user_id_idx").on(t.userId),

@@ -65,6 +65,10 @@ export interface IStorage {
   setUserUnlimitedCoins(userId: string, unlimited: boolean): Promise<User | undefined>;
   setUserCoinsByEmail(email: string, coins: number): Promise<User | undefined>;
 
+  // Matched IDs persistence
+  saveMatchedJobIds(userId: string, ids: string[]): Promise<void>;
+  saveMatchedEventIds(userId: string, ids: string[]): Promise<void>;
+
   // Enquiries
   getEnquiries(userId: string): Promise<Enquiry[]>;
   getAllPendingEnquiries(): Promise<Enquiry[]>;
@@ -406,6 +410,18 @@ class DatabaseStorage implements IStorage {
   async getUserProfile(userId: string): Promise<UserProfile | undefined> {
     const [row] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
     return row;
+  }
+
+  async saveMatchedJobIds(userId: string, ids: string[]): Promise<void> {
+    await db.insert(userProfiles)
+      .values({ userId, matchedJobIds: ids, updatedAt: new Date() } as any)
+      .onConflictDoUpdate({ target: userProfiles.userId, set: { matchedJobIds: ids, updatedAt: new Date() } });
+  }
+
+  async saveMatchedEventIds(userId: string, ids: string[]): Promise<void> {
+    await db.insert(userProfiles)
+      .values({ userId, matchedEventIds: ids, updatedAt: new Date() } as any)
+      .onConflictDoUpdate({ target: userProfiles.userId, set: { matchedEventIds: ids, updatedAt: new Date() } });
   }
 
   async upsertUserProfile(data: Partial<UserProfile> & { userId: string }): Promise<UserProfile> {

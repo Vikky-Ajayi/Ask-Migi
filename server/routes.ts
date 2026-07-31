@@ -13,7 +13,7 @@ import {
 import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail, sendCoinPurchaseEmail } from "./email";
-import { keywordScore, buildProfileText } from "./embeddings";
+import { keywordScore, buildProfileText, buildProfileSummary, rankCandidatesWithAI } from "./embeddings";
 import { parseCvWithAI, processQueuedApplications } from "./autoApply";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -953,17 +953,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         storage.getUserProfile(userId),
         storage.getUserApplicationStats(userId),
       ]);
-      const [totalEvents, totalJobs] = await Promise.all([
-        storage.getTotalEvents(),
-        storage.getTotalJobs(),
+
+      const matchedJobIds: string[] = profile?.matchedJobIds ?? [];
+      const matchedEventIds: string[] = profile?.matchedEventIds ?? [];
+
+      const [recentJobs, recentEvents] = await Promise.all([
+        matchedJobIds.length > 0 ? storage.getJobsByIds(matchedJobIds.slice(0, 3)) : Promise.resolve([]),
+        matchedEventIds.length > 0 ? storage.getEventsByIds(matchedEventIds.slice(0, 3)) : Promise.resolve([]),
       ]);
+
       res.json({
         coins: user?.coins ?? 0,
         profileComplete: !!profile && !!profile.industry && !!profile.jobTitle,
         totalApplications: appStats.total,
         pendingApplications: appStats.pending,
-        totalEvents,
-        totalJobs,
+        matchedJobs: matchedJobIds.length,
+        matchedEvents: matchedEventIds.length,
+        recentJobs,
+        recentEvents,
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -1061,14 +1068,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const page = parseInt(String(req.query.page ?? "1"), 10);
       const limit = Math.min(parseInt(String(req.query.limit ?? "12"), 10), 50);
 
-      const result = await storage.getEvents({ q, category, city, online, free, page, limit });
+      // When matched=true, load the user's saved matched event IDs
+      let matchedIds: string[] | undefined;
+      if (req.query.matched === "true") {
+        const profile = await storage.getUserProfile(req.userId!);
+        matchedIds = profile?.matchedEventIds ?? [];
+        if (matchedIds.length === 0) return res.json({ events: [], total: 0 });
+      }
+
+      const result = await storage.getEvents({ q, category, city, online, free, page, limit, matchedIds });
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  /** POST /api/dashboard/events/match — rank events by user profile (2 coins) */
+  /** POST /api/dashboard/events/match — AI-rank events by user profile (2 coins) */
   app.post("/api/dashboard/events/match", requireAuth, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
@@ -1085,19 +1100,41 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Please complete your profile first so we can match events to you." });
       }
 
+      // Step 1: keyword pre-screen → top 80 candidates
       const profileText = buildProfileText(profile);
-      const allEvents = await storage.getEventsForMatching(3000);
+      const allEvents = await storage.getEventsForMatching(5000);
+      const top80 = allEvents
+        .map((ev) => {
+          const evText = [ev.title, ev.description ?? "", ev.category ?? "", (ev.tags ?? []).join(" ")].join(" ");
+          return { ev, kwScore: keywordScore(profileText, evText) };
+        })
+        .filter((x) => x.kwScore > 0)
+        .sort((a, b) => b.kwScore - a.kwScore)
+        .slice(0, 80)
+        .map((x) => x.ev);
 
-      // Score events by keyword overlap with profile
-      const scored = allEvents.map((ev) => {
-        const evText = [ev.title, ev.description ?? "", ev.category ?? "", ev.tags?.join(" ") ?? ""].join(" ");
-        return { id: ev.id, score: keywordScore(profileText, evText) };
-      }).filter((e) => e.score > 0).sort((a, b) => b.score - a.score).slice(0, 200);
+      // Step 2: AI re-rank with GPT-4o-mini
+      const profileSummary = buildProfileSummary(profile);
+      const candidates = top80.map((ev) => ({
+        id: ev.id,
+        text: [
+          ev.title,
+          ev.category ?? "",
+          (ev.tags ?? []).join(", "),
+          ev.isOnline ? "Online" : (ev.locationCity ?? ""),
+          ev.isFree ? "Free" : "Paid",
+          (ev.description ?? "").slice(0, 150),
+        ].filter(Boolean).join(" | "),
+      }));
 
-      // Deduct coins
+      const scored = await rankCandidatesWithAI(profileSummary, candidates, "event");
+      const topIds = scored.slice(0, 25).map((s) => s.id);
+
+      // Step 3: save matched IDs to profile + deduct coins
+      await storage.saveMatchedEventIds(userId, topIds);
       if (!user.unlimitedCoins) await storage.updateUserCoins(userId, -COST);
 
-      res.json({ ok: true, matched: scored.length, topIds: scored.map((e) => e.id) });
+      res.json({ ok: true, matched: topIds.length });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -1112,16 +1149,25 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const remote = req.query.remote === "true";
       const page = parseInt(String(req.query.page ?? "1"), 10);
       const limit = Math.min(parseInt(String(req.query.limit ?? "20"), 10), 50);
-      const ids = req.query.ids ? String(req.query.ids).split(",").filter(Boolean) : undefined;
 
-      const result = await storage.getJobs({ q, source, workType, remote, page, limit, matchedIds: ids });
+      // When matched=true, load the user's saved matched job IDs
+      let matchedIds: string[] | undefined;
+      if (req.query.matched === "true") {
+        const profile = await storage.getUserProfile(req.userId!);
+        matchedIds = profile?.matchedJobIds ?? [];
+        if (matchedIds.length === 0) return res.json({ jobs: [], total: 0 });
+      } else {
+        matchedIds = req.query.ids ? String(req.query.ids).split(",").filter(Boolean) : undefined;
+      }
+
+      const result = await storage.getJobs({ q, source, workType, remote, page, limit, matchedIds });
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  /** POST /api/dashboard/jobs/match — rank jobs by user profile (1 coin) */
+  /** POST /api/dashboard/jobs/match — AI-rank jobs by user profile (1 coin) */
   app.post("/api/dashboard/jobs/match", requireAuth, async (req: AuthRequest, res) => {
     try {
       const userId = req.userId!;
@@ -1138,17 +1184,42 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Please complete your profile first." });
       }
 
+      // Step 1: keyword pre-screen → top 80 candidates
       const profileText = buildProfileText(profile);
       const allJobs = await storage.getJobsForMatching(5000);
+      const top80 = allJobs
+        .map((j) => {
+          const jText = [j.title, j.company, j.description ?? ""].join(" ");
+          return { j, kwScore: keywordScore(profileText, jText) };
+        })
+        .filter((x) => x.kwScore > 0)
+        .sort((a, b) => b.kwScore - a.kwScore)
+        .slice(0, 80)
+        .map((x) => x.j);
 
-      const scored = allJobs.map((j) => {
-        const jText = [j.title, j.company, j.description ?? ""].join(" ");
-        return { id: j.id, score: keywordScore(profileText, jText) };
-      }).filter((e) => e.score > 0).sort((a, b) => b.score - a.score).slice(0, 300);
+      // Step 2: AI re-rank with GPT-4o-mini
+      const profileSummary = buildProfileSummary(profile);
+      const candidates = top80.map((j) => ({
+        id: j.id,
+        text: [
+          j.title,
+          `at ${j.company}`,
+          j.location ?? "",
+          j.isRemote ? "Remote" : "",
+          j.workType ?? "",
+          j.salaryMin ? `£${Math.round(j.salaryMin / 1000)}k` : "",
+          (j.description ?? "").slice(0, 200),
+        ].filter(Boolean).join(" | "),
+      }));
 
+      const scored = await rankCandidatesWithAI(profileSummary, candidates, "job");
+      const topIds = scored.slice(0, 30).map((s) => s.id);
+
+      // Step 3: save matched IDs to profile + deduct coins
+      await storage.saveMatchedJobIds(userId, topIds);
       if (!user.unlimitedCoins) await storage.updateUserCoins(userId, -COST);
 
-      res.json({ ok: true, matched: scored.length, topIds: scored.map((j) => j.id) });
+      res.json({ ok: true, matched: topIds.length });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
