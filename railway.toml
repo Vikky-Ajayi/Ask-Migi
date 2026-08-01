@@ -1,6 +1,5 @@
 [build]
-installCommand = "npm ci --no-audit --no-fund --prefer-offline"
-buildCommand = "npm run build"
+buildCommand = "npm ci --no-audit --no-fund && npm run build"
 
 [deploy]
 startCommand = "npm run db:push && npm run start"
