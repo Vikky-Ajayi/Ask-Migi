@@ -1,21 +1,20 @@
 /**
- * Scraper scheduler — orchestrates Eventbrite and job scrapers.
+ * Scraper scheduler — orchestrates events and job scrapers.
  *
- * Full Eventbrite sweep: 450+ locations × 20 categories × 4 date windows
- * = ~36,000 parallel work units processed 15 at a time. Runs every 6h in
- * background (never awaited — Express keeps serving while it runs).
+ * Events: Meetup + Luma via BullMQ queue (falls back to inline p-limit if Redis down).
+ *   Full sweep: every 6 hours
+ *   Incremental: every 30 minutes
  *
- * Incremental sweep: keyword-only, 8 concurrent workers, every 30 min.
- * Job scrape: every 2 hours.
+ * Jobs: every 2 hours.
  * Cleanup: daily at 2am.
  */
 
 import cron from "node-cron";
 import {
-  runFullEventbriteSweep,
-  runIncrementalEventbriteSweep,
+  runFullEventSweep,
+  runIncrementalEventSweep,
   expireOldEvents,
-} from "./eventbrite";
+} from "./events";
 import { runJobScrape, expireOldJobs } from "./jobs";
 
 let schedulerStarted = false;
@@ -26,18 +25,25 @@ export function startScraperScheduler(): void {
 
   console.log("[scheduler] Starting scraper scheduler...");
 
-  // ── Eventbrite incremental — every 30 minutes ─────────────────────────────
+  // ── Try starting BullMQ worker (if Redis is available) ───────────────────
+  import("../queue/eventQueue.js")
+    .then(({ startEventWorker }) => startEventWorker())
+    .catch((err) =>
+      console.warn("[scheduler] BullMQ worker not started:", err.message)
+    );
+
+  // ── Events incremental — every 30 minutes ─────────────────────────────────
   cron.schedule("*/30 * * * *", () => {
-    console.log("[scheduler] Triggering Eventbrite incremental sweep");
-    runIncrementalEventbriteSweep().catch((e) =>
+    console.log("[scheduler] Triggering event incremental sweep");
+    runIncrementalEventSweep().catch((e) =>
       console.error("[scheduler] Incremental sweep error:", e)
     );
   });
 
-  // ── Eventbrite full sweep — every 6 hours (background, never awaited) ─────
+  // ── Events full sweep — every 6 hours ─────────────────────────────────────
   cron.schedule("0 */6 * * *", () => {
-    console.log("[scheduler] Triggering Eventbrite full sweep");
-    runFullEventbriteSweep().catch((e) =>
+    console.log("[scheduler] Triggering event full sweep");
+    runFullEventSweep().catch((e) =>
       console.error("[scheduler] Full sweep error:", e)
     );
   });
@@ -59,21 +65,21 @@ export function startScraperScheduler(): void {
   });
 
   // ── Startup sequence (staggered so the server comes up first) ────────────
-  // 1. Incremental sweep 8s after boot — fast, picks up recent events
+  // 1. Incremental event sweep 10s after boot
   setTimeout(() => {
-    console.log("[scheduler] Running startup incremental sweep...");
-    runIncrementalEventbriteSweep().catch(() => {});
-  }, 8_000);
+    console.log("[scheduler] Running startup incremental event sweep...");
+    runIncrementalEventSweep().catch(() => {});
+  }, 10_000);
 
-  // 2. Job scrape 20s after boot
+  // 2. Job scrape 25s after boot
   setTimeout(() => {
     console.log("[scheduler] Running startup job scrape...");
     runJobScrape().catch(() => {});
-  }, 20_000);
+  }, 25_000);
 
-  // 3. Full Eventbrite sweep 60s after boot — long-running, runs in background
+  // 3. Full event sweep 90s after boot (long-running, runs in background)
   setTimeout(() => {
-    console.log("[scheduler] Launching full Eventbrite sweep in background...");
-    runFullEventbriteSweep().catch(() => {}); // intentionally NOT awaited
-  }, 60_000);
+    console.log("[scheduler] Launching full event sweep in background...");
+    runFullEventSweep().catch(() => {});
+  }, 90_000);
 }

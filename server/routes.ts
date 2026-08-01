@@ -1057,7 +1057,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  /** GET /api/dashboard/events — paginated events with optional filters */
+  /** GET /api/dashboard/events — paginated events with optional filters + radius */
   app.get("/api/dashboard/events", requireAuth, async (req: AuthRequest, res) => {
     try {
       const q = typeof req.query.q === "string" ? req.query.q : undefined;
@@ -1066,7 +1066,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const online = req.query.online === "true";
       const free = req.query.free === "true";
       const page = parseInt(String(req.query.page ?? "1"), 10);
-      const limit = Math.min(parseInt(String(req.query.limit ?? "12"), 10), 50);
+      const limit = Math.min(parseInt(String(req.query.limit ?? "24"), 10), 50);
+
+      // Location radius filter (from postcodes.io geocoded postcode on client)
+      const lat = req.query.lat ? parseFloat(String(req.query.lat)) : undefined;
+      const lng = req.query.lng ? parseFloat(String(req.query.lng)) : undefined;
+      const radiusMiles = req.query.radius ? parseFloat(String(req.query.radius)) : undefined;
 
       // When matched=true, load the user's saved matched event IDs
       let matchedIds: string[] | undefined;
@@ -1076,7 +1081,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         if (matchedIds.length === 0) return res.json({ events: [], total: 0 });
       }
 
-      const result = await storage.getEvents({ q, category, city, online, free, page, limit, matchedIds });
+      const result = await storage.getEvents({
+        q, category, city, online, free, page, limit, matchedIds,
+        lat, lng, radiusMiles,
+      });
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -1297,6 +1305,69 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const updated = await storage.updateApplicationStatus(id, req.userId!, status);
       if (!updated) return res.status(404).json({ error: "Application not found." });
       res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /**
+   * GET /api/dashboard/applications/:id/download
+   * Downloads the tailored CV + cover letter as a formatted text file.
+   * Users can print-to-PDF from their browser.
+   */
+  app.get("/api/dashboard/applications/:id/download", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const apps = await storage.getUserApplications(req.userId!);
+      const appData = (apps as any).applications?.find((a: any) => a.id === id)
+        ?? (Array.isArray(apps) ? apps.find((a: any) => a.id === id) : null);
+
+      if (!appData) return res.status(404).json({ error: "Application not found." });
+
+      const jobTitle = appData.job?.title ?? "Role";
+      const company = appData.job?.company ?? "Company";
+
+      const lines: string[] = [];
+
+      lines.push(`TAILORED CV SUMMARY`);
+      lines.push(`Position: ${jobTitle} at ${company}`);
+      lines.push(`${"─".repeat(60)}`);
+      lines.push("");
+      if (appData.tailoredCvText) {
+        lines.push(appData.tailoredCvText);
+      } else {
+        lines.push("(AI summary not yet generated — check back after processing)");
+      }
+      lines.push("");
+      lines.push("");
+      lines.push(`COVER LETTER`);
+      lines.push(`${"─".repeat(60)}`);
+      lines.push("");
+      if (appData.coverLetter) {
+        lines.push(appData.coverLetter);
+      } else {
+        lines.push("(Cover letter not yet generated)");
+      }
+
+      const content = lines.join("\n");
+      const filename = `application-${company.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.txt`;
+
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(content);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** GET /api/dashboard/events/stats — quick stats for admin */
+  app.get("/api/dashboard/stats", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const [totalEvents, totalJobs] = await Promise.all([
+        storage.getTotalEvents(),
+        storage.getTotalJobs?.() ?? 0,
+      ]);
+      res.json({ totalEvents, totalJobs });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

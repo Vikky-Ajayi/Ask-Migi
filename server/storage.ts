@@ -441,25 +441,36 @@ class DatabaseStorage implements IStorage {
   async getEvents(opts: {
     q?: string; category?: string; online?: boolean; free?: boolean;
     city?: string; page?: number; limit?: number; matchedIds?: string[];
+    lat?: number; lng?: number; radiusMiles?: number;
   }): Promise<{ events: Event[]; total: number }> {
-    const { q, category, online, free, city, page = 1, limit = 24, matchedIds } = opts;
+    const { q, category, online, free, city, page = 1, limit = 24, matchedIds, lat, lng, radiusMiles } = opts;
     const offset = (page - 1) * limit;
 
-    let query = db.select().from(events)
-      .$dynamic();
+    let query = db.select().from(events).$dynamic();
     let countQuery = db.select({ count: sql<number>`count(*)` }).from(events).$dynamic();
 
     const conditions: any[] = [sql`status = 'active'`, sql`start_date > NOW()`];
 
     if (q) {
-      const searchCond = sql`(title ILIKE ${'%' + q + '%'} OR description ILIKE ${'%' + q + '%'})`;
-      conditions.push(searchCond);
+      conditions.push(sql`(title ILIKE ${'%' + q + '%'} OR description ILIKE ${'%' + q + '%'})`);
     }
     if (category && category !== "All") conditions.push(eq(events.category, category));
     if (online) conditions.push(eq(events.isOnline, true));
     if (free) conditions.push(eq(events.isFree, true));
     if (city) conditions.push(eq(events.locationCity, city));
     if (matchedIds && matchedIds.length > 0) conditions.push(inArray(events.id, matchedIds));
+
+    // Radius filter using Haversine formula (events with lat/lng)
+    if (lat != null && lng != null && radiusMiles != null) {
+      conditions.push(sql`(
+        lat IS NULL OR lng IS NULL OR
+        (3959 * acos(LEAST(1.0,
+          cos(radians(${lat})) * cos(radians(lat::float)) *
+          cos(radians(lng::float) - radians(${lng})) +
+          sin(radians(${lat})) * sin(radians(lat::float))
+        ))) <= ${radiusMiles}
+      )`);
+    }
 
     const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
 

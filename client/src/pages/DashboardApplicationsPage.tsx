@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Loader2, ChevronDown, ChevronUp, ExternalLink, Briefcase, Clock } from "lucide-react";
+import { FileText, Loader2, ChevronDown, ChevronUp, ExternalLink, Briefcase, Clock, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 

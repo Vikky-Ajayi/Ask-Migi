@@ -1,23 +1,26 @@
 /**
  * Auto-apply engine — processes queued job applications.
- * Uses Groq to generate tailored CV text and cover letters.
- * Playwright browser automation handles form submission (Phase 2).
+ * Uses OpenAI GPT-4o to generate tailored CV summaries and cover letters.
+ * Writes results to the database; Playwright automation is Phase 2.
  */
 
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 import { db } from "./db";
 import { jobApplications, jobs, userProfiles, users } from "../shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-let groq: Groq | null = null;
-function getGroq(): Groq {
-  if (!groq) groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
-  return groq;
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiClient;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Generate a tailored CV summary and cover letter for a specific job */
+/** Generate a tailored CV summary and cover letter for a specific job using GPT-4o */
 export async function generateApplicationDocs(
   userCvText: string,
   jobTitle: string,
@@ -26,34 +29,34 @@ export async function generateApplicationDocs(
   userSkills: string[],
   userName: string
 ): Promise<{ tailoredCv: string; coverLetter: string }> {
-  const client = getGroq();
+  const client = getOpenAI();
 
   const [cvResp, clResp] = await Promise.all([
     client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert CV writer. Given a user's CV and a job description, rewrite the professional summary and highlight the most relevant experience and skills. Output only the tailored professional summary (3-5 sentences), nothing else.`,
+          content: `You are an expert CV writer. Given a candidate's CV and a job description, rewrite their professional summary to be perfectly tailored to the role. Output ONLY the tailored professional summary (3-5 sentences). No headings, no markdown, no explanation.`,
         },
         {
           role: "user",
-          content: `Job: ${jobTitle} at ${company}\n\nJob Description:\n${jobDescription.slice(0, 3000)}\n\nUser's CV:\n${userCvText.slice(0, 3000)}\n\nUser Skills: ${userSkills.join(", ")}`,
+          content: `Job: ${jobTitle} at ${company}\n\nJob Description:\n${jobDescription.slice(0, 3000)}\n\nCandidate CV:\n${userCvText.slice(0, 3000)}\n\nSkills: ${userSkills.join(", ")}`,
         },
       ],
       max_tokens: 400,
-      temperature: 0.6,
+      temperature: 0.5,
     }),
     client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert cover letter writer. Write a professional, personalised cover letter for a job application. Keep it concise (3 paragraphs), confident, and specific to the role. Output only the cover letter body, no subject line.`,
+          content: `You are an expert cover letter writer. Write a professional, personalised cover letter for a job application. 3 paragraphs: (1) why this role, (2) key relevant experience, (3) closing. Keep it concise, confident, and specific. No "Dear Hiring Manager" or subject line — start from the first paragraph.`,
         },
         {
           role: "user",
-          content: `Applicant name: ${userName}\nJob: ${jobTitle} at ${company}\n\nJob Description:\n${jobDescription.slice(0, 2000)}\n\nApplicant CV:\n${userCvText.slice(0, 2000)}\n\nApplicant Skills: ${userSkills.join(", ")}`,
+          content: `Applicant: ${userName}\nRole: ${jobTitle} at ${company}\n\nJob Description:\n${jobDescription.slice(0, 2000)}\n\nCV:\n${userCvText.slice(0, 2000)}\n\nSkills: ${userSkills.join(", ")}`,
         },
       ],
       max_tokens: 600,
@@ -62,12 +65,12 @@ export async function generateApplicationDocs(
   ]);
 
   return {
-    tailoredCv: cvResp.choices[0]?.message?.content ?? "",
-    coverLetter: clResp.choices[0]?.message?.content ?? "",
+    tailoredCv: cvResp.choices[0]?.message?.content?.trim() ?? "",
+    coverLetter: clResp.choices[0]?.message?.content?.trim() ?? "",
   };
 }
 
-/** Parse a CV text using Groq to extract structured profile data */
+/** Parse a CV text using GPT-4o to extract structured profile data */
 export async function parseCvWithAI(cvText: string): Promise<{
   jobTitle?: string;
   industry?: string;
@@ -75,37 +78,34 @@ export async function parseCvWithAI(cvText: string): Promise<{
   yearsExperience?: number;
   summary?: string;
 }> {
-  const client = getGroq();
+  const client = getOpenAI();
   try {
     const resp = await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a CV parser. Extract structured information from the CV text and return ONLY valid JSON with these fields:
+          content: `You are a CV parser. Extract structured information and return ONLY valid JSON:
 {
   "jobTitle": "most recent job title",
   "industry": "industry sector (e.g. Technology, Finance, Healthcare, Marketing, Education, Legal, Engineering)",
-  "skills": ["skill1", "skill2", ...] (top 10 skills),
-  "yearsExperience": number (total years of work experience),
+  "skills": ["skill1", "skill2"] (top 15 skills, mix technical and soft),
+  "yearsExperience": number (total years),
   "summary": "2-sentence professional summary"
-}
-Return only JSON, no markdown, no explanation.`,
+}`,
         },
         {
           role: "user",
-          content: cvText.slice(0, 4000),
+          content: cvText.slice(0, 6000),
         },
       ],
-      max_tokens: 600,
-      temperature: 0.2,
+      max_tokens: 700,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
     });
 
     const content = resp.choices[0]?.message?.content ?? "{}";
-    // Extract JSON even if there's surrounding text
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return { skills: [] };
-    return JSON.parse(jsonMatch[0]);
+    return JSON.parse(content);
   } catch {
     return { skills: [] };
   }
@@ -113,7 +113,6 @@ Return only JSON, no markdown, no explanation.`,
 
 /** Process a single queued application */
 async function processApplication(applicationId: string): Promise<void> {
-  // Load application + job + user profile
   const [appRow] = await db
     .select()
     .from(jobApplications)
@@ -135,7 +134,6 @@ async function processApplication(applicationId: string): Promise<void> {
     .select()
     .from(users)
     .where(eq(users.id, appRow.userId));
-
   if (!user) return;
 
   // Update status to generating_docs
@@ -145,7 +143,6 @@ async function processApplication(applicationId: string): Promise<void> {
     .where(eq(jobApplications.id, applicationId));
 
   try {
-    // Generate tailored documents
     const docs = await generateApplicationDocs(
       profile?.cvText ?? "",
       jobRow.title,
@@ -155,7 +152,6 @@ async function processApplication(applicationId: string): Promise<void> {
       `${user.firstName} ${user.lastName}`
     );
 
-    // Update with generated docs and mark as applying
     await db
       .update(jobApplications)
       .set({
@@ -167,8 +163,8 @@ async function processApplication(applicationId: string): Promise<void> {
       .where(eq(jobApplications.id, applicationId));
 
     // TODO Phase 2: Playwright automation submits the form here
-    // For now, mark as submitted (documents are ready, user can apply manually)
-    await sleep(2000);
+    // For now, mark as submitted — documents are ready, user downloads and applies
+    await sleep(1500);
 
     await db
       .update(jobApplications)
@@ -179,9 +175,11 @@ async function processApplication(applicationId: string): Promise<void> {
       })
       .where(eq(jobApplications.id, applicationId));
 
-    console.log(`[autoApply] Application ${applicationId} processed for ${jobRow.title} at ${jobRow.company}`);
+    console.log(
+      `[autoApply] ✓ ${applicationId} — ${jobRow.title} at ${jobRow.company}`
+    );
   } catch (err) {
-    console.error(`[autoApply] Error processing ${applicationId}:`, err);
+    console.error(`[autoApply] ✗ ${applicationId}:`, err);
     await db
       .update(jobApplications)
       .set({
@@ -195,7 +193,7 @@ async function processApplication(applicationId: string): Promise<void> {
 
 let processorRunning = false;
 
-/** Process all queued applications — called on a timer */
+/** Process all queued applications (called on a timer and after new applications are queued) */
 export async function processQueuedApplications(): Promise<void> {
   if (processorRunning) return;
   processorRunning = true;
@@ -204,11 +202,11 @@ export async function processQueuedApplications(): Promise<void> {
       .select()
       .from(jobApplications)
       .where(eq(jobApplications.status, "queued"))
-      .limit(5); // Process max 5 at a time
+      .limit(5);
 
     for (const app of queued) {
       await processApplication(app.id);
-      await sleep(3000); // Pause between applications
+      await sleep(3000);
     }
   } catch (err) {
     console.error("[autoApply] Queue processor error:", err);
