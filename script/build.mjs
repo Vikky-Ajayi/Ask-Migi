@@ -1,41 +1,16 @@
 // Plain ES module — no tsx/TypeScript tooling required at build time.
 // This is intentional: Railway's production npm install omits devDependencies,
 // so the build runner must be a plain .mjs file executable by node directly.
+//
+// All npm packages are marked external (packages: "external") so esbuild only
+// transpiles TypeScript and does NOT attempt to bundle node_modules. This means
+// the build succeeds even when npm's install step ends with a partial install
+// (the known "Exit handler never called!" crash in Railway's build environment).
+// All packages are available at runtime from node_modules anyway.
 
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
-
-// Server deps to bundle to reduce openat(2) syscalls (helps cold-start times).
-// Everything NOT in this list is treated as external and must be present in
-// node_modules at runtime.
-const allowlist = [
-  "@google/generative-ai",
-  "axios",
-  "connect-pg-simple",
-  "cors",
-  "date-fns",
-  "drizzle-orm",
-  "drizzle-zod",
-  "express",
-  "express-rate-limit",
-  "express-session",
-  "jsonwebtoken",
-  "memorystore",
-  "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
-  "passport",
-  "passport-local",
-  "pg",
-  "stripe",
-  "uuid",
-  "ws",
-  "xlsx",
-  "zod",
-  "zod-validation-error",
-];
+import { rm } from "fs/promises";
 
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
@@ -44,24 +19,17 @@ async function buildAll() {
   await viteBuild();
 
   console.log("building server...");
-  const pkg = JSON.parse(await readFile("package.json", "utf-8"));
-  const allDeps = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.devDependencies || {}),
-  ];
-  const externals = allDeps.filter((dep) => !allowlist.includes(dep));
-
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",
+    packages: "external",   // all node_modules left as require() at runtime
     bundle: true,
     format: "cjs",
     outfile: "dist/index.cjs",
     define: {
       "process.env.NODE_ENV": '"production"',
     },
-    minify: true,
-    external: externals,
+    minify: false,          // keep readable for easier runtime debugging
     logLevel: "info",
   });
 
