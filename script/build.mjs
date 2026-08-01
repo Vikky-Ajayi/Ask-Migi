@@ -1,9 +1,14 @@
+// Plain ES module — no tsx/TypeScript tooling required at build time.
+// This is intentional: Railway's production npm install omits devDependencies,
+// so the build runner must be a plain .mjs file executable by node directly.
+
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
 
-// server deps to bundle to reduce openat(2) syscalls
-// which helps cold start times
+// Server deps to bundle to reduce openat(2) syscalls (helps cold-start times).
+// Everything NOT in this list is treated as external and must be present in
+// node_modules at runtime.
 const allowlist = [
   "@google/generative-ai",
   "axios",
@@ -59,6 +64,8 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
+
+  console.log("build complete.");
 }
 
 buildAll().catch((err) => {
