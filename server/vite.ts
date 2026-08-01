@@ -1,7 +1,6 @@
 import { type Express } from "express";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
@@ -9,6 +8,11 @@ import { nanoid } from "nanoid";
 const viteLogger = createLogger();
 
 export async function setupVite(server: Server, app: Express) {
+  // Lazy import so vite.config.ts is never bundled into the production CJS build.
+  // Top-level import caused import.meta.dirname to be undefined in CJS, crashing
+  // the server at startup before it could bind to a port.
+  const { default: viteConfig } = await import("../vite.config");
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server, path: "/vite-hmr" },
