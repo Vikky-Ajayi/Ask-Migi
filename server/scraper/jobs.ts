@@ -1,79 +1,107 @@
 /**
  * Global job board scrapers — no API keys required for most sources.
- * Sources: LinkedIn Guest API, Remotive, WeWorkRemotely, Reed, Greenhouse, Lever.
+ * Sources: LinkedIn Guest API, Remotive, WeWorkRemotely, Reed, Greenhouse, Himalayas, Adzuna.
  */
 
 import { db } from "../db";
 import { jobs } from "../../shared/schema";
 import { sql } from "drizzle-orm";
+import pLimit from "p-limit";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 let jobScraperRunning = false;
 let totalJobsScraped = 0;
 
+// ── Core upsert ───────────────────────────────────────────────────────────────
+async function upsertJob(jobData: Record<string, unknown>): Promise<void> {
+  if (!jobData.title || !jobData.sourceUrl) return;
+  try {
+    await db
+      .insert(jobs)
+      .values(jobData as any)
+      .onConflictDoUpdate({
+        target: jobs.sourceUrl,
+        set: {
+          title: jobData.title as string,
+          description: (jobData.description as string) ?? "",
+          status: "active",
+          scrapedAt: new Date(),
+        },
+      });
+  } catch {
+    // Skip duplicate / constraint errors silently
+  }
+}
+
 // ── LinkedIn Guest API ─────────────────────────────────────────────────────────
 async function scrapeLinkedIn(keywords: string[], locations: string[]): Promise<number> {
   let count = 0;
   const headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-GB,en;q=0.9",
   };
 
-  for (const keyword of keywords) {
-    for (const location of locations) {
-      try {
-        const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}&start=0&count=25`;
-        const resp = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
-        if (!resp.ok) continue;
+  const limit = pLimit(3); // gentle on LinkedIn
+  const tasks = keywords.flatMap((keyword) =>
+    locations.map((location) =>
+      limit(async () => {
+        try {
+          const url = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}&start=0&count=25`;
+          const resp = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
+          if (!resp.ok) return 0;
+          const html = await resp.text();
 
-        const html = await resp.text();
-        // Parse job cards from LinkedIn HTML
-        const jobMatches = Array.from(html.matchAll(/<li[^>]*class="[^"]*result-card[^"]*"[^>]*>([\s\S]*?)<\/li>/g));
+          const jobMatches = Array.from(
+            html.matchAll(/<li[^>]*class="[^"]*result-card[^"]*"[^>]*>([\s\S]*?)<\/li>/g)
+          );
+          let localCount = 0;
 
-        for (const match of jobMatches) {
-          const card = match[1];
-          const titleMatch = card.match(/class="[^"]*job-result-card__title[^"]*"[^>]*>([^<]+)</);
-          const companyMatch = card.match(/class="[^"]*job-result-card__subtitle[^"]*"[^>]*>([^<]+)</);
-          const locationMatch = card.match(/class="[^"]*job-result-card__location[^"]*"[^>]*>([^<]+)</);
-          const urlMatch = card.match(/href="(https:\/\/www\.linkedin\.com\/jobs\/view\/[^"]+)"/);
+          for (const match of jobMatches) {
+            const card = match[1];
+            const titleMatch = card.match(/class="[^"]*job-result-card__title[^"]*"[^>]*>([^<]+)</);
+            const companyMatch = card.match(/class="[^"]*job-result-card__subtitle[^"]*"[^>]*>([^<]+)</);
+            const locationMatch = card.match(/class="[^"]*job-result-card__location[^"]*"[^>]*>([^<]+)</);
+            const urlMatch = card.match(/href="(https:\/\/www\.linkedin\.com\/jobs\/view\/[^"]+)"/);
+            if (!titleMatch || !urlMatch) continue;
 
-          if (!titleMatch || !urlMatch) continue;
+            await upsertJob({
+              source: "linkedin",
+              sourceId: urlMatch[1].match(/\/(\d+)\/?/)?.[1] ?? urlMatch[1],
+              sourceUrl: urlMatch[1].split("?")[0],
+              applyUrl: urlMatch[1],
+              atsType: "linkedin_easy",
+              title: titleMatch[1].trim().slice(0, 500),
+              company: companyMatch?.[1].trim() ?? "",
+              location: locationMatch?.[1].trim() ?? location,
+              isRemote: location.toLowerCase().includes("remote") || card.toLowerCase().includes("remote"),
+              workType: "onsite",
+              description: "",
+              requirements: "",
+              contractType: "full_time",
+              status: "active",
+              postedAt: new Date(),
+              scrapedAt: new Date(),
+            });
+            localCount++;
+          }
 
-          const jobData = {
-            source: "linkedin",
-            sourceId: urlMatch[1].match(/\/(\d+)\/?/)?.[1] ?? urlMatch[1],
-            sourceUrl: urlMatch[1].split("?")[0],
-            applyUrl: urlMatch[1],
-            atsType: "linkedin_easy",
-            title: titleMatch[1].trim().slice(0, 500),
-            company: companyMatch?.[1].trim() ?? "",
-            location: locationMatch?.[1].trim() ?? location,
-            isRemote: location.toLowerCase().includes("remote") || card.toLowerCase().includes("remote"),
-            workType: "onsite" as string,
-            description: "",
-            requirements: "",
-            contractType: "full_time",
-            status: "active",
-            postedAt: new Date(),
-            scrapedAt: new Date(),
-          };
-
-          await upsertJob(jobData);
-          count++;
+          await sleep(2000);
+          return localCount;
+        } catch {
+          return 0;
         }
+      })
+    )
+  );
 
-        await sleep(2000); // Respect rate limits
-      } catch (err) {
-        console.error(`[jobs/linkedin] Error for ${keyword}/${location}:`, err);
-      }
-    }
-  }
+  const results = await Promise.all(tasks);
+  count = results.reduce((a, b) => a + b, 0);
   return count;
 }
 
-// ── Remotive API (free, no key required) ──────────────────────────────────────
+// ── Remotive API (free, no key) ───────────────────────────────────────────────
 async function scrapeRemotive(): Promise<number> {
   let count = 0;
   try {
@@ -82,10 +110,9 @@ async function scrapeRemotive(): Promise<number> {
     });
     if (!resp.ok) return 0;
     const data = await resp.json();
-    const jobList = data?.jobs ?? [];
 
-    for (const job of jobList) {
-      const jobData = {
+    for (const job of data?.jobs ?? []) {
+      await upsertJob({
         source: "remotive",
         sourceId: String(job.id),
         sourceUrl: job.url ?? "",
@@ -98,15 +125,11 @@ async function scrapeRemotive(): Promise<number> {
         workType: "remote",
         description: (job.description ?? "").replace(/<[^>]*>/g, "").slice(0, 5000),
         requirements: "",
-        salaryMin: null as number | null,
-        salaryMax: null as number | null,
         contractType: job.job_type ?? "full_time",
         status: "active",
         postedAt: job.publication_date ? new Date(job.publication_date) : new Date(),
         scrapedAt: new Date(),
-      };
-
-      await upsertJob(jobData);
+      });
       count++;
     }
   } catch (err) {
@@ -115,7 +138,7 @@ async function scrapeRemotive(): Promise<number> {
   return count;
 }
 
-// ── WeWorkRemotely (RSS feed) ─────────────────────────────────────────────────
+// ── WeWorkRemotely (RSS) ──────────────────────────────────────────────────────
 async function scrapeWeWorkRemotely(): Promise<number> {
   let count = 0;
   const feeds = [
@@ -136,19 +159,18 @@ async function scrapeWeWorkRemotely(): Promise<number> {
       const resp = await fetch(feedUrl, { signal: AbortSignal.timeout(15000) });
       if (!resp.ok) continue;
       const xml = await resp.text();
-
       const items = Array.from(xml.matchAll(/<item>([\s\S]*?)<\/item>/g));
-      for (const item of items) {
-        const content = item[1];
-        const titleMatch = content.match(/<title><!\[CDATA\[([^\]]+)\]\]><\/title>/);
-        const linkMatch = content.match(/<link>([^<]+)<\/link>/);
-        const companyMatch = content.match(/<company><!\[CDATA\[([^\]]+)\]\]><\/company>/);
-        const descMatch = content.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/);
-        const pubDateMatch = content.match(/<pubDate>([^<]+)<\/pubDate>/);
 
+      for (const item of items) {
+        const c = item[1];
+        const titleMatch = c.match(/<title><!\[CDATA\[([^\]]+)\]\]><\/title>/);
+        const linkMatch = c.match(/<link>([^<]+)<\/link>/);
+        const companyMatch = c.match(/<company><!\[CDATA\[([^\]]+)\]\]><\/company>/);
+        const descMatch = c.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/);
+        const pubDateMatch = c.match(/<pubDate>([^<]+)<\/pubDate>/);
         if (!titleMatch || !linkMatch) continue;
 
-        const jobData = {
+        await upsertJob({
           source: "weworkremotely",
           sourceId: linkMatch[1].split("/").pop() ?? linkMatch[1],
           sourceUrl: linkMatch[1],
@@ -165,20 +187,18 @@ async function scrapeWeWorkRemotely(): Promise<number> {
           status: "active",
           postedAt: pubDateMatch ? new Date(pubDateMatch[1]) : new Date(),
           scrapedAt: new Date(),
-        };
-
-        await upsertJob(jobData);
+        });
         count++;
       }
       await sleep(1000);
-    } catch (err) {
-      console.error(`[jobs/weworkremotely] Feed error ${feedUrl}:`, err);
+    } catch {
+      // skip failing feeds
     }
   }
   return count;
 }
 
-// ── Reed.co.uk (free API — needs REED_API_KEY env, very easy to get free) ─────
+// ── Reed.co.uk API ─────────────────────────────────────────────────────────────
 async function scrapeReed(): Promise<number> {
   const apiKey = process.env.REED_API_KEY;
   if (!apiKey) {
@@ -186,93 +206,153 @@ async function scrapeReed(): Promise<number> {
     return 0;
   }
 
-  let count = 0;
-  const keywords = ["software engineer", "product manager", "data analyst", "marketing", "finance", "sales", "nursing", "teacher", "accountant", "developer"];
-  const locations = ["london", "manchester", "birmingham", "edinburgh", "bristol"];
+  const keywords = [
+    "software engineer", "developer", "product manager", "data scientist",
+    "data analyst", "business analyst", "project manager", "devops engineer",
+    "marketing manager", "digital marketing", "content marketing",
+    "finance analyst", "financial analyst", "accountant", "chartered accountant",
+    "sales manager", "account manager", "sales executive",
+    "graphic designer", "ux designer", "ui designer",
+    "hr manager", "human resources", "recruiter", "talent acquisition",
+    "nurse", "registered nurse", "healthcare assistant",
+    "teacher", "teaching assistant", "lecturer",
+    "lawyer", "solicitor", "paralegal",
+    "operations manager", "supply chain", "logistics",
+    "customer success", "customer service",
+    "cybersecurity", "information security", "cloud engineer",
+    "machine learning", "ai engineer",
+  ];
 
-  for (const keyword of keywords) {
-    for (const location of locations) {
-      try {
-        const url = `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(keyword)}&locationName=${encodeURIComponent(location)}&resultsToSkip=0&resultsToTake=100`;
-        const resp = await fetch(url, {
-          headers: { "Authorization": "Basic " + Buffer.from(apiKey + ":").toString("base64") },
-          signal: AbortSignal.timeout(15000),
-        });
-        if (!resp.ok) continue;
-        const data = await resp.json();
+  const locations = [
+    "London", "Manchester", "Birmingham", "Edinburgh", "Glasgow",
+    "Bristol", "Leeds", "Sheffield", "Liverpool", "Nottingham",
+    "Leicester", "Cardiff", "Newcastle", "Reading", "Oxford",
+    "Cambridge", "Southampton", "Portsmouth", "Brighton", "Coventry",
+  ];
 
-        for (const job of data?.results ?? []) {
-          const jobData = {
-            source: "reed",
-            sourceId: String(job.jobId),
-            sourceUrl: `https://www.reed.co.uk/jobs/${job.jobId}`,
-            applyUrl: job.jobUrl ?? `https://www.reed.co.uk/jobs/${job.jobId}`,
-            atsType: "direct",
-            title: (job.jobTitle ?? "").slice(0, 500),
-            company: job.employerName ?? "",
-            location: job.locationName ?? location,
-            isRemote: job.locationName?.toLowerCase().includes("remote") ?? false,
-            workType: "onsite",
-            description: (job.jobDescription ?? "").slice(0, 5000),
-            requirements: "",
-            salaryMin: job.minimumSalary ? Math.round(job.minimumSalary) : null,
-            salaryMax: job.maximumSalary ? Math.round(job.maximumSalary) : null,
-            currency: "GBP",
-            contractType: job.contractType === "Permanent" ? "full_time" : "contract",
-            status: "active",
-            postedAt: job.date ? new Date(job.date) : new Date(),
-            scrapedAt: new Date(),
-          };
-          await upsertJob(jobData);
-          count++;
+  const limit = pLimit(5);
+  const tasks = keywords.flatMap((keyword) =>
+    locations.map((location) =>
+      limit(async () => {
+        let count = 0;
+        try {
+          // Page through results (100 per page, skip 0 and 100)
+          for (const skip of [0, 100, 200]) {
+            const url = `https://www.reed.co.uk/api/1.0/search?keywords=${encodeURIComponent(keyword)}&locationName=${encodeURIComponent(location)}&resultsToSkip=${skip}&resultsToTake=100`;
+            const resp = await fetch(url, {
+              headers: { Authorization: "Basic " + Buffer.from(apiKey + ":").toString("base64") },
+              signal: AbortSignal.timeout(15000),
+            });
+            if (!resp.ok) break;
+            const data = await resp.json();
+            const results = data?.results ?? [];
+            if (results.length === 0) break;
+
+            for (const job of results) {
+              await upsertJob({
+                source: "reed",
+                sourceId: String(job.jobId),
+                sourceUrl: `https://www.reed.co.uk/jobs/${job.jobId}`,
+                applyUrl: job.jobUrl ?? `https://www.reed.co.uk/jobs/${job.jobId}`,
+                atsType: "direct",
+                title: (job.jobTitle ?? "").slice(0, 500),
+                company: job.employerName ?? "",
+                location: job.locationName ?? location,
+                isRemote: job.locationName?.toLowerCase().includes("remote") ?? false,
+                workType: "onsite",
+                description: (job.jobDescription ?? "").slice(0, 5000),
+                requirements: "",
+                salaryMin: job.minimumSalary ? Math.round(job.minimumSalary) : null,
+                salaryMax: job.maximumSalary ? Math.round(job.maximumSalary) : null,
+                currency: "GBP",
+                contractType: job.contractType === "Permanent" ? "full_time" : "contract",
+                status: "active",
+                postedAt: job.date ? new Date(job.date) : new Date(),
+                scrapedAt: new Date(),
+              });
+              count++;
+            }
+
+            if (results.length < 100) break;
+            await sleep(300);
+          }
+        } catch {
+          // skip
         }
-        await sleep(500);
-      } catch (err) {
-        console.error(`[jobs/reed] Error for ${keyword}/${location}:`, err);
-      }
-    }
-  }
-  return count;
+        return count;
+      })
+    )
+  );
+
+  const results = await Promise.all(tasks);
+  const total = results.reduce((a, b) => a + b, 0);
+  console.log(`[jobs/reed] Scraped ${total} jobs`);
+  return total;
 }
 
 // ── Greenhouse public job boards ──────────────────────────────────────────────
-async function scrapeGreenhouse(companyBoardTokens: string[]): Promise<number> {
-  let count = 0;
-  for (const token of companyBoardTokens) {
-    try {
-      const resp = await fetch(`https://boards-api.greenhouse.io/v1/boards/${token}/jobs?content=true`, {
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!resp.ok) continue;
-      const data = await resp.json();
+const GREENHOUSE_BOARDS = [
+  "stripe", "airbnb", "shopify", "github", "figma", "notion", "linear",
+  "airtable", "databricks", "snowflake", "confluent", "hashicorp",
+  "mongodb", "elastic", "cloudflare", "fastly", "datadog", "newrelic",
+  "twilio", "sendgrid", "segment", "brex", "rippling", "gusto",
+  "intercom", "hubspot", "zendesk", "asana", "monday", "clickup",
+  "atlassian", "canva", "loom", "miro", "zapier", "webflow",
+  "vercel", "netlify", "supabase", "render", "railway",
+  "anthropic", "openai", "cohere", "mistral", "huggingface",
+  "deepmind", "waymo", "cruise", "nuro", "zoox",
+  "revolut", "monzo", "starling", "wise", "plaid", "checkout",
+  "deliveroo", "gopuff", "getir", "zapp", "gorillas",
+  "babylon", "healx", "benevolentai", "exscientia",
+  "improbable", "raspberry-pi", "arm", "ocado",
+];
 
-      for (const job of data?.jobs ?? []) {
-        const jobData = {
-          source: "greenhouse",
-          sourceId: String(job.id),
-          sourceUrl: job.absolute_url ?? "",
-          applyUrl: job.absolute_url ?? "",
-          atsType: "greenhouse",
-          title: (job.title ?? "").slice(0, 500),
-          company: token,
-          location: job.location?.name ?? "",
-          isRemote: (job.location?.name ?? "").toLowerCase().includes("remote"),
-          workType: "onsite",
-          description: (job.content ?? "").replace(/<[^>]*>/g, "").slice(0, 5000),
-          requirements: "",
-          contractType: "full_time",
-          status: "active",
-          postedAt: job.updated_at ? new Date(job.updated_at) : new Date(),
-          scrapedAt: new Date(),
-        };
-        await upsertJob(jobData);
-        count++;
+async function scrapeGreenhouse(): Promise<number> {
+  const limit = pLimit(10);
+  let count = 0;
+
+  const tasks = GREENHOUSE_BOARDS.map((token) =>
+    limit(async () => {
+      let localCount = 0;
+      try {
+        const resp = await fetch(
+          `https://boards-api.greenhouse.io/v1/boards/${token}/jobs?content=true`,
+          { signal: AbortSignal.timeout(10000) }
+        );
+        if (!resp.ok) return 0;
+        const data = await resp.json();
+
+        for (const job of data?.jobs ?? []) {
+          await upsertJob({
+            source: "greenhouse",
+            sourceId: String(job.id),
+            sourceUrl: job.absolute_url ?? "",
+            applyUrl: job.absolute_url ?? "",
+            atsType: "greenhouse",
+            title: (job.title ?? "").slice(0, 500),
+            company: token,
+            location: job.location?.name ?? "",
+            isRemote: (job.location?.name ?? "").toLowerCase().includes("remote"),
+            workType: "onsite",
+            description: (job.content ?? "").replace(/<[^>]*>/g, "").slice(0, 5000),
+            requirements: "",
+            contractType: "full_time",
+            status: "active",
+            postedAt: job.updated_at ? new Date(job.updated_at) : new Date(),
+            scrapedAt: new Date(),
+          });
+          localCount++;
+        }
+      } catch {
+        // skip failing boards
       }
-      await sleep(500);
-    } catch {
-      // skip failing boards
-    }
-  }
+      return localCount;
+    })
+  );
+
+  const results = await Promise.all(tasks);
+  count = results.reduce((a, b) => a + b, 0);
+  console.log(`[jobs/greenhouse] Scraped ${count} jobs from ${GREENHOUSE_BOARDS.length} boards`);
   return count;
 }
 
@@ -287,7 +367,7 @@ async function scrapeHimalayas(): Promise<number> {
     const data = await resp.json();
 
     for (const job of data?.jobs ?? []) {
-      const jobData = {
+      await upsertJob({
         source: "himalayas",
         sourceId: String(job.id ?? job.slug),
         sourceUrl: job.applicationLink ?? `https://himalayas.app/jobs/${job.slug}`,
@@ -307,8 +387,7 @@ async function scrapeHimalayas(): Promise<number> {
         status: "active",
         postedAt: job.createdAt ? new Date(job.createdAt) : new Date(),
         scrapedAt: new Date(),
-      };
-      await upsertJob(jobData);
+      });
       count++;
     }
   } catch (err) {
@@ -317,28 +396,74 @@ async function scrapeHimalayas(): Promise<number> {
   return count;
 }
 
-// ── Core upsert ───────────────────────────────────────────────────────────────
-async function upsertJob(jobData: any): Promise<void> {
-  if (!jobData.title || !jobData.sourceUrl) return;
-  try {
-    await db
-      .insert(jobs)
-      .values(jobData)
-      .onConflictDoUpdate({
-        target: jobs.sourceUrl,
-        set: {
-          title: jobData.title,
-          description: jobData.description ?? "",
-          status: "active",
-          scrapedAt: new Date(),
-        },
-      });
-  } catch {
-    // Skip duplicate / constraint errors silently
+// ── Adzuna API (free tier, UK-heavy) ──────────────────────────────────────────
+async function scrapeAdzuna(): Promise<number> {
+  // Adzuna requires free registration — skip if keys not set
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+  if (!appId || !appKey) {
+    return 0; // silently skip — keys optional
   }
+
+  const categories = [
+    "it-jobs", "engineering-jobs", "accounting-finance-jobs", "sales-jobs",
+    "marketing-jobs", "hr-jobs", "healthcare-nursing-jobs", "teaching-jobs",
+  ];
+
+  let count = 0;
+  const limit = pLimit(4);
+  const tasks = categories.map((cat) =>
+    limit(async () => {
+      let localCount = 0;
+      try {
+        for (let page = 1; page <= 5; page++) {
+          const url = `https://api.adzuna.com/v1/api/jobs/gb/search/${page}?app_id=${appId}&app_key=${appKey}&results_per_page=50&category=${cat}&content-type=application/json`;
+          const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+          if (!resp.ok) break;
+          const data = await resp.json();
+          const results: any[] = data?.results ?? [];
+          if (results.length === 0) break;
+
+          for (const job of results) {
+            await upsertJob({
+              source: "adzuna",
+              sourceId: String(job.id),
+              sourceUrl: job.redirect_url ?? "",
+              applyUrl: job.redirect_url ?? "",
+              atsType: "direct",
+              title: (job.title ?? "").slice(0, 500),
+              company: job.company?.display_name ?? "",
+              location: job.location?.display_name ?? "UK",
+              isRemote: false,
+              workType: "onsite",
+              description: (job.description ?? "").slice(0, 5000),
+              requirements: "",
+              salaryMin: job.salary_min ? Math.round(job.salary_min) : null,
+              salaryMax: job.salary_max ? Math.round(job.salary_max) : null,
+              currency: "GBP",
+              contractType: job.contract_time === "part_time" ? "part_time" : "full_time",
+              status: "active",
+              postedAt: job.created ? new Date(job.created) : new Date(),
+              scrapedAt: new Date(),
+            });
+            localCount++;
+          }
+          await sleep(500);
+        }
+      } catch {
+        // skip
+      }
+      return localCount;
+    })
+  );
+
+  const results = await Promise.all(tasks);
+  count = results.reduce((a, b) => a + b, 0);
+  if (count > 0) console.log(`[jobs/adzuna] Scraped ${count} jobs`);
+  return count;
 }
 
-/** Mark jobs older than 60 days as expired */
+// ── Expire old jobs ───────────────────────────────────────────────────────────
 export async function expireOldJobs(): Promise<void> {
   try {
     await db
@@ -350,15 +475,7 @@ export async function expireOldJobs(): Promise<void> {
   }
 }
 
-/** Popular Greenhouse company boards to scrape */
-const GREENHOUSE_BOARDS = [
-  "stripe", "airbnb", "shopify", "github", "figma", "notion", "linear",
-  "airtable", "databricks", "snowflake", "confluent", "hashicorp",
-  "mongodb", "elastic", "cloudflare", "fastly", "datadog", "newrelic",
-  "twilio", "sendgrid", "segment", "brex", "rippling", "gusto",
-];
-
-/** Run all job scrapers */
+// ── Run all scrapers ───────────────────────────────────────────────────────────
 export async function runJobScrape(): Promise<void> {
   if (jobScraperRunning) {
     console.log("[jobs] Scraper already running, skipping.");
@@ -373,25 +490,29 @@ export async function runJobScrape(): Promise<void> {
     "devops engineer", "project manager", "business analyst", "developer",
     "nurse", "teacher", "accountant", "lawyer", "doctor", "recruiter",
   ];
-
   const locations = [
     "London", "Manchester", "Birmingham", "Edinburgh", "Bristol",
     "Remote UK", "United Kingdom",
   ];
 
   try {
-    const [linkedInCount, remotiveCount, wwrCount, reedCount, greenhouseCount, himalayasCount] = await Promise.all([
-      scrapeLinkedIn(keywords.slice(0, 6), locations.slice(0, 4)),
-      scrapeRemotive(),
-      scrapeWeWorkRemotely(),
-      scrapeReed(),
-      scrapeGreenhouse(GREENHOUSE_BOARDS),
-      scrapeHimalayas(),
-    ]);
+    const [linkedInCount, remotiveCount, wwrCount, reedCount, greenhouseCount, himalayasCount, adzunaCount] =
+      await Promise.all([
+        scrapeLinkedIn(keywords.slice(0, 6), locations.slice(0, 4)),
+        scrapeRemotive(),
+        scrapeWeWorkRemotely(),
+        scrapeReed(),
+        scrapeGreenhouse(),
+        scrapeHimalayas(),
+        scrapeAdzuna(),
+      ]);
 
-    const total = linkedInCount + remotiveCount + wwrCount + reedCount + greenhouseCount + himalayasCount;
+    const total = linkedInCount + remotiveCount + wwrCount + reedCount + greenhouseCount + himalayasCount + adzunaCount;
     totalJobsScraped += total;
-    console.log(`[jobs] Scrape complete. LinkedIn:${linkedInCount} Remotive:${remotiveCount} WWR:${wwrCount} Reed:${reedCount} Greenhouse:${greenhouseCount} Himalayas:${himalayasCount} Total:${total}`);
+    console.log(
+      `[jobs] Scrape complete. LinkedIn:${linkedInCount} Remotive:${remotiveCount} WWR:${wwrCount} ` +
+      `Reed:${reedCount} Greenhouse:${greenhouseCount} Himalayas:${himalayasCount} Adzuna:${adzunaCount} Total:${total}`
+    );
   } catch (err) {
     console.error("[jobs] Scrape error:", err);
   } finally {

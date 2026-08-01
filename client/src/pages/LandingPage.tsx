@@ -142,6 +142,11 @@ export const LandingPage = (): JSX.Element => {
     status: e.status,
   }));
 
+  // Redirect logged-in users to dashboard — must be before any early returns
+  useEffect(() => {
+    if (!isLoading && isLoggedIn) navigate("/dashboard");
+  }, [isLoading, isLoggedIn, navigate]);
+
   if (isLoading) {
     return (
       <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">
@@ -149,10 +154,6 @@ export const LandingPage = (): JSX.Element => {
       </main>
     );
   }
-
-  useEffect(() => {
-    if (isLoggedIn) navigate("/dashboard");
-  }, [isLoggedIn, navigate]);
 
   if (isLoggedIn) return null;
 
