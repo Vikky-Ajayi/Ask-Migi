@@ -1,5 +1,6 @@
 [deploy]
-startCommand = "npm run db:push && npm run start"
+preDeployCommand = "npx --yes drizzle-kit push"
+startCommand = "npm run start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 restartPolicyType = "on_failure"
