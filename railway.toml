@@ -1,5 +1,4 @@
 [deploy]
-preDeployCommand = "npx --yes drizzle-kit push"
 startCommand = "npm run start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
