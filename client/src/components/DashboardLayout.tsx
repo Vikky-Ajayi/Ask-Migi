@@ -56,7 +56,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
         {/* Logo */}
         <div className="px-4 py-5 border-b border-[var(--th-border)]">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Ask MiGi" className="h-7 logo-adaptive" />
+            <img src="/figmaAssets/vector.svg" alt="Ask MiGi" className="h-7 logo-adaptive" />
           </Link>
         </div>
 
@@ -109,7 +109,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
       {/* ── Mobile Header ────────────────────────────────────────────────────── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[var(--th-nav)] border-b border-[var(--th-border)] px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Ask MiGi" className="h-6 logo-adaptive" />
+          <img src="/figmaAssets/vector.svg" alt="Ask MiGi" className="h-6 logo-adaptive" />
         </Link>
         <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-[var(--th-hover)]">
           <Menu size={20} className="text-[var(--th-text)]" />
@@ -122,7 +122,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
           <div className="relative w-64 bg-[var(--th-sidebar)] h-full flex flex-col shadow-xl">
             <div className="px-4 py-4 border-b border-[var(--th-border)] flex items-center justify-between">
-              <img src="/logo.svg" alt="Ask MiGi" className="h-6 logo-adaptive" />
+              <img src="/figmaAssets/vector.svg" alt="Ask MiGi" className="h-6 logo-adaptive" />
               <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg hover:bg-[var(--th-hover)]">
                 <X size={18} className="text-[var(--th-text-70)]" />
               </button>
