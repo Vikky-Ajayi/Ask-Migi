@@ -10,6 +10,10 @@ const SOURCES = ["All", "linkedin", "reed", "remotive", "weworkremotely", "green
 const WORK_TYPES = ["All", "remote", "hybrid", "onsite"];
 const CONTRACT_TYPES = ["All", "full_time", "part_time", "contract", "freelance"];
 
+function isJobsQuery(query: any) {
+  return String(query.queryKey[0] ?? "").startsWith("/api/dashboard/jobs");
+}
+
 function SourceBadge({ source }: { source: string }) {
   const colors: Record<string, string> = {
     linkedin: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400",
@@ -101,7 +105,7 @@ export function DashboardJobsPage() {
     mutationFn: () => apiRequest("POST", "/api/dashboard/jobs/match").then(r => r.json()),
     onSuccess: () => {
       setUseMatching(true);
-      qc.invalidateQueries({ queryKey: ["/api/dashboard/jobs"] });
+      qc.invalidateQueries({ predicate: isJobsQuery });
       toast({ title: "Matched!", description: "Jobs ranked by relevance to your profile. (1 coin deducted)" });
     },
     onError: (err: any) => toast({ title: "Error", description: err.message ?? "Could not run matching.", variant: "destructive" }),
@@ -121,7 +125,7 @@ export function DashboardJobsPage() {
   const refreshMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/dashboard/jobs/refresh").then(r => r.json()),
     onSuccess: (data: any) => {
-      qc.invalidateQueries({ queryKey: ["/api/dashboard/jobs"] });
+      qc.invalidateQueries({ predicate: isJobsQuery });
       toast({
         title: "Jobs refreshed",
         description: data.total > 0 ? `${data.total.toLocaleString()} job(s) are now available.` : "No jobs were found from the sources yet.",
@@ -143,9 +147,10 @@ export function DashboardJobsPage() {
     ...(remoteOnly && { remote: "true" }),
     ...(useMatching && { matched: "true" }),
   });
+  const jobsUrl = `/api/dashboard/jobs?${params.toString()}`;
 
   const { data, isLoading, isError } = useQuery<any>({
-    queryKey: ["/api/dashboard/jobs", params.toString()],
+    queryKey: [jobsUrl],
     retry: false,
   });
 
@@ -250,7 +255,7 @@ export function DashboardJobsPage() {
             <Briefcase size={36} className="mx-auto text-[var(--th-text-30)] mb-3" />
             <p className="text-[var(--th-text-60)] text-sm">Could not load jobs.</p>
             <button
-              onClick={() => qc.invalidateQueries({ queryKey: ["/api/dashboard/jobs"] })}
+              onClick={() => qc.invalidateQueries({ predicate: isJobsQuery })}
               className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2 text-sm text-[var(--th-text)] hover:bg-[var(--th-hover)]"
             >
               <RefreshCw size={14} />

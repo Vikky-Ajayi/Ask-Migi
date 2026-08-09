@@ -11,6 +11,7 @@
 import { db } from "../db";
 import { events } from "../../shared/schema";
 import { sql } from "drizzle-orm";
+import { createLimit } from "./limit";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -587,8 +588,7 @@ export async function runFullEventSweep(): Promise<void> {
 }
 
 async function runInlineSweep(): Promise<void> {
-  const pLimit = (await import("p-limit")).default;
-  const limit = pLimit(8);
+  const limit = createLimit(8);
 
   const tasks: Array<() => Promise<number>> = [];
 
@@ -618,8 +618,7 @@ async function runInlineSweep(): Promise<void> {
 export async function runIncrementalEventSweep(): Promise<void> {
   // Quick sweep — top cities with primary keyword only
   const topCities = UK_CITIES.slice(0, 5);
-  const pLimit = (await import("p-limit")).default;
-  const limit = pLimit(5);
+  const limit = createLimit(5);
 
   const tasks = topCities.flatMap((city) =>
     ["networking", "tech", "startup"].map((kw) =>

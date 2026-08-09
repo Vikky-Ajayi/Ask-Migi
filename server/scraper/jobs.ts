@@ -6,7 +6,7 @@
 import { db } from "../db";
 import { jobs } from "../../shared/schema";
 import { sql } from "drizzle-orm";
-import pLimit from "p-limit";
+import { createLimit } from "./limit";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -43,7 +43,7 @@ async function scrapeLinkedIn(keywords: string[], locations: string[]): Promise<
     "Accept-Language": "en-GB,en;q=0.9",
   };
 
-  const limit = pLimit(3); // gentle on LinkedIn
+  const limit = createLimit(3); // gentle on LinkedIn
   const tasks = keywords.flatMap((keyword) =>
     locations.map((location) =>
       limit(async () => {
@@ -230,7 +230,7 @@ async function scrapeReed(): Promise<number> {
     "Cambridge", "Southampton", "Portsmouth", "Brighton", "Coventry",
   ];
 
-  const limit = pLimit(5);
+  const limit = createLimit(5);
   const tasks = keywords.flatMap((keyword) =>
     locations.map((location) =>
       limit(async () => {
@@ -308,7 +308,7 @@ const GREENHOUSE_BOARDS = [
 ];
 
 async function scrapeGreenhouse(): Promise<number> {
-  const limit = pLimit(10);
+  const limit = createLimit(10);
   let count = 0;
 
   const tasks = GREENHOUSE_BOARDS.map((token) =>
@@ -411,7 +411,7 @@ async function scrapeAdzuna(): Promise<number> {
   ];
 
   let count = 0;
-  const limit = pLimit(4);
+  const limit = createLimit(4);
   const tasks = categories.map((cat) =>
     limit(async () => {
       let localCount = 0;

@@ -7,6 +7,12 @@ import { Redis } from "ioredis";
 
 let _conn: Redis | null = null;
 
+function normalizeRedisUrl(rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+  if (/^rediss?:\/\//i.test(trimmed)) return trimmed;
+  return `redis://${trimmed}`;
+}
+
 export function getRedisConnection(): Redis {
   if (_conn) return _conn;
 
@@ -15,7 +21,7 @@ export function getRedisConnection(): Redis {
     throw new Error("[redis] REDIS_URL is not set. Add it to Replit Secrets.");
   }
 
-  _conn = new Redis(url, {
+  _conn = new Redis(normalizeRedisUrl(url), {
     maxRetriesPerRequest: null, // required by BullMQ
     enableReadyCheck: false,
     lazyConnect: false,

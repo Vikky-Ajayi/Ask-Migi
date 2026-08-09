@@ -33,6 +33,10 @@ function getEventSource(id: string): string {
   return "eventbrite";
 }
 
+function isEventsQuery(query: any) {
+  return String(query.queryKey[0] ?? "").startsWith("/api/dashboard/events");
+}
+
 function EventCard({ event }: { event: any }) {
   const source = getEventSource(event.eventbriteId ?? "");
   const sourceLabel = SOURCE_LABELS[source] ?? "Event";
@@ -133,7 +137,7 @@ export function DashboardEventsPage() {
       apiRequest("POST", "/api/dashboard/events/match").then((r) => r.json()),
     onSuccess: () => {
       setUseMatching(true);
-      qc.invalidateQueries({ queryKey: ["/api/dashboard/events"] });
+      qc.invalidateQueries({ predicate: isEventsQuery });
       toast({ title: "Matched!", description: "Events ranked by relevance to your profile." });
     },
     onError: (err: any) => {
@@ -149,7 +153,7 @@ export function DashboardEventsPage() {
     mutationFn: () =>
       apiRequest("POST", "/api/dashboard/events/refresh").then((r) => r.json()),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["/api/dashboard/events"] });
+      qc.invalidateQueries({ predicate: isEventsQuery });
       toast({
         title: "Events refreshed",
         description: data.total > 0 ? `${data.total.toLocaleString()} event(s) are now available.` : "No events were found from the sources yet.",
@@ -238,9 +242,10 @@ export function DashboardEventsPage() {
         }
       : {}),
   });
+  const eventsUrl = `/api/dashboard/events?${params.toString()}`;
 
   const { data, isLoading, isError } = useQuery<any>({
-    queryKey: ["/api/dashboard/events", params.toString()],
+    queryKey: [eventsUrl],
     retry: false,
   });
 
@@ -405,7 +410,7 @@ export function DashboardEventsPage() {
             <Calendar size={36} className="mx-auto text-[var(--th-text-30)] mb-3" />
             <p className="text-[var(--th-text-60)] text-sm">Could not load events.</p>
             <button
-              onClick={() => qc.invalidateQueries({ queryKey: ["/api/dashboard/events"] })}
+              onClick={() => qc.invalidateQueries({ predicate: isEventsQuery })}
               className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2 text-sm text-[var(--th-text)] hover:bg-[var(--th-hover)]"
             >
               <RefreshCw size={14} />
