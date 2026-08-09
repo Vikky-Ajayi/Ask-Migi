@@ -2,11 +2,11 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare, RefreshCw } from "lucide-react";
+import { Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare, RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
-const SOURCES = ["All", "linkedin", "reed", "remotive", "weworkremotely", "greenhouse", "himalayas"];
+const SOURCES = ["All", "linkedin", "reed", "remotive", "weworkremotely", "greenhouse", "himalayas", "adzuna"];
 const WORK_TYPES = ["All", "remote", "hybrid", "onsite"];
 const CONTRACT_TYPES = ["All", "full_time", "part_time", "contract", "freelance"];
 
@@ -22,6 +22,7 @@ function SourceBadge({ source }: { source: string }) {
     weworkremotely: "bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400",
     greenhouse: "bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400",
     himalayas: "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400",
+    adzuna: "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400",
   };
   return (
     <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full", colors[source] ?? "bg-[var(--th-input)] text-[var(--th-text-60)]")}>
@@ -30,7 +31,7 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
-function JobCard({ job, selected, onToggle, onApply }: { job: any; selected: boolean; onToggle: () => void; onApply: () => void }) {
+function JobCard({ job, selected, onToggle, onApply, onView }: { job: any; selected: boolean; onToggle: () => void; onApply: () => void; onView: () => void }) {
   const salary = job.salaryMin || job.salaryMax
     ? `${job.currency ?? "£"}${job.salaryMin ? Math.round(job.salaryMin / 1000) + "k" : ""}${job.salaryMax ? `–${Math.round(job.salaryMax / 1000)}k` : "+"}`
     : null;
@@ -70,10 +71,9 @@ function JobCard({ job, selected, onToggle, onApply }: { job: any; selected: boo
             <p className="text-xs text-[var(--th-text-60)] line-clamp-2 mb-3">{job.description}</p>
           )}
           <div className="flex items-center gap-3">
-            <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium text-[var(--th-text-60)] hover:text-[var(--th-text)] transition-colors">
-              View job <ExternalLink size={10} />
-            </a>
+            <button onClick={onView} className="inline-flex items-center gap-1 text-xs font-medium text-[var(--th-text-60)] hover:text-[var(--th-text)] transition-colors">
+              View details <ExternalLink size={10} />
+            </button>
             <button
               onClick={onApply}
               className="text-xs font-medium text-[#0f0f11] dark:text-white hover:underline transition-colors flex items-center gap-1"
@@ -97,6 +97,7 @@ export function DashboardJobsPage() {
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [useMatching, setUseMatching] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [viewingJob, setViewingJob] = useState<any | null>(null);
   const [page, setPage] = useState(1);
 
   const { data: profile } = useQuery<any>({ queryKey: ["/api/dashboard/profile"], retry: false });
@@ -114,7 +115,11 @@ export function DashboardJobsPage() {
   const applyMutation = useMutation({
     mutationFn: (jobIds: string[]) => apiRequest("POST", "/api/dashboard/jobs/apply", { jobIds }).then(r => r.json()),
     onSuccess: (data: any) => {
-      toast({ title: "Applications queued!", description: `${data.queued} application(s) queued. Generating tailored documents...` });
+      if (data.queued > 0) {
+        toast({ title: "Applications queued!", description: `${data.queued} application(s) queued. Generating tailored documents...` });
+      } else {
+        toast({ title: "Already queued", description: data.message ?? "This job is already in your applications tracker." });
+      }
       setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["/api/dashboard/applications"] });
       qc.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
@@ -286,6 +291,7 @@ export function DashboardJobsPage() {
                   selected={selected.has(job.id)}
                   onToggle={() => toggleSelect(job.id)}
                   onApply={() => handleApply(job.id)}
+                  onView={() => setViewingJob(job)}
                 />
               ))}
             </div>
@@ -300,9 +306,86 @@ export function DashboardJobsPage() {
             )}
           </>
         )}
+        {viewingJob && (
+          <JobDetailsModal
+            job={viewingJob}
+            onClose={() => setViewingJob(null)}
+            onApply={() => handleApply(viewingJob.id)}
+            applying={applyMutation.isPending}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
+}
+
+function JobDetailsModal({ job, onClose, onApply, applying }: { job: any; onClose: () => void; onApply: () => void; applying: boolean }) {
+  const salary = job.salaryMin || job.salaryMax
+    ? `${job.currency ?? "GBP"} ${job.salaryMin ? job.salaryMin.toLocaleString() : ""}${job.salaryMax ? ` - ${job.salaryMax.toLocaleString()}` : "+"}`
+    : "Not listed";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-[var(--th-border)] bg-[var(--th-card)] shadow-2xl">
+        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-[var(--th-border)] bg-[var(--th-card)] p-5">
+          <div>
+            <h2 className="text-xl font-semibold text-[var(--th-text)]">{job.title}</h2>
+            <p className="mt-1 text-sm text-[var(--th-text-60)]">{job.company}</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-2 text-[var(--th-text-50)] hover:bg-[var(--th-hover)] hover:text-[var(--th-text)]">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="space-y-5 p-5">
+          <div className="flex flex-wrap gap-2 text-xs text-[var(--th-text-60)]">
+            <SourceBadge source={job.source} />
+            {job.location && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{job.location}</span>}
+            {job.workType && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{job.workType}</span>}
+            {job.contractType && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{job.contractType.replace("_", " ")}</span>}
+            <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{salary}</span>
+            {job.postedAt && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{formatRelativeDate(job.postedAt)}</span>}
+          </div>
+
+          <section>
+            <h3 className="mb-2 text-sm font-semibold text-[var(--th-text)]">Description</h3>
+            <p className="whitespace-pre-line text-sm leading-6 text-[var(--th-text-70)]">
+              {stripHtml(job.description) || "No description provided."}
+            </p>
+          </section>
+
+          {job.requirements && (
+            <section>
+              <h3 className="mb-2 text-sm font-semibold text-[var(--th-text)]">Requirements</h3>
+              <p className="whitespace-pre-line text-sm leading-6 text-[var(--th-text-70)]">{stripHtml(job.requirements)}</p>
+            </section>
+          )}
+
+          <div className="flex flex-wrap gap-3 border-t border-[var(--th-border)] pt-5">
+            <button
+              onClick={onApply}
+              disabled={applying}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0f0f11] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-black"
+            >
+              {applying ? <Loader2 size={14} className="animate-spin" /> : <Coins size={14} />}
+              Auto-apply (5 coins)
+            </button>
+            <a
+              href={job.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2.5 text-sm font-medium text-[var(--th-text)] hover:bg-[var(--th-hover)]"
+            >
+              Open original job <ExternalLink size={14} />
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function stripHtml(value: string | null | undefined): string {
+  return String(value ?? "").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim();
 }
 
 function formatRelativeDate(dateStr: string): string {

@@ -13,9 +13,16 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let jobScraperRunning = false;
 let totalJobsScraped = 0;
 
+function isRecentPosting(date: Date | null | undefined): boolean {
+  if (!date || Number.isNaN(date.getTime())) return true;
+  return date.getTime() >= Date.now() - 60 * 24 * 60 * 60 * 1000;
+}
+
 // ── Core upsert ───────────────────────────────────────────────────────────────
 async function upsertJob(jobData: Record<string, unknown>): Promise<void> {
   if (!jobData.title || !jobData.sourceUrl) return;
+  const postedAt = jobData.postedAt instanceof Date ? jobData.postedAt : jobData.postedAt ? new Date(String(jobData.postedAt)) : null;
+  if (!isRecentPosting(postedAt)) return;
   try {
     await db
       .insert(jobs)

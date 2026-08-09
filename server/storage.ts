@@ -510,7 +510,7 @@ class DatabaseStorage implements IStorage {
     const { q, source, workType, remote, page = 1, limit = 20, matchedIds } = opts;
     const offset = (page - 1) * limit;
 
-    const conditions: any[] = [eq(jobs.status, "active")];
+    const conditions: any[] = [eq(jobs.status, "active"), sql`posted_at IS NULL OR posted_at >= NOW() - INTERVAL '60 days'`];
 
     if (q) {
       conditions.push(sql`(title ILIKE ${'%' + q + '%'} OR company ILIKE ${'%' + q + '%'} OR description ILIKE ${'%' + q + '%'})`);
@@ -544,13 +544,14 @@ class DatabaseStorage implements IStorage {
 
   async getJobsForMatching(limit = 10000): Promise<Job[]> {
     return db.select().from(jobs)
-      .where(eq(jobs.status, "active"))
+      .where(and(eq(jobs.status, "active"), sql`posted_at IS NULL OR posted_at >= NOW() - INTERVAL '60 days'`))
       .orderBy(desc(jobs.postedAt))
       .limit(limit);
   }
 
   async getTotalJobs(): Promise<number> {
-    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(jobs);
+    const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(jobs)
+      .where(and(eq(jobs.status, "active"), sql`posted_at IS NULL OR posted_at >= NOW() - INTERVAL '60 days'`));
     return Number(count);
   }
 

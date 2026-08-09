@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import mammoth from "mammoth";
+import OpenAI from "openai";
 import { spawn } from "child_process";
 import { tmpdir } from "os";
 import path from "path";
@@ -21,6 +22,14 @@ import { keywordScore, buildProfileText, buildProfileSummary, rankCandidatesWith
 import { processQueuedApplications } from "./autoApply";
 import { runIncrementalEventSweep } from "./scraper/events";
 import { runJobScrape } from "./scraper/jobs";
+
+let cvOpenAIClient: OpenAI | null = null;
+
+function getCvOpenAI(): OpenAI | null {
+  if (!process.env.OPENAI_API_KEY) return null;
+  if (!cvOpenAIClient) cvOpenAIClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return cvOpenAIClient;
+}
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -246,6 +255,90 @@ function parseCvLocally(text: string): {
   const education = parseCvEducation(text);
 
   return { jobTitle, industry, skills, yearsExperience, linkedinUrl, targetRoles, experiences, education };
+}
+
+const aiCvExtractionSchema = z.object({
+  jobTitle: z.string().optional().default(""),
+  industry: z.string().optional().default(""),
+  yearsExperience: z.number().int().min(0).max(60).nullable().optional(),
+  skills: z.array(z.string()).optional().default([]),
+  linkedinUrl: z.string().optional().default(""),
+  targetRoles: z.array(z.string()).optional().default([]),
+  experiences: z.array(z.object({
+    title: z.string().optional().default(""),
+    company: z.string().optional().default(""),
+    location: z.string().optional().default(""),
+    startDate: z.string().optional().default(""),
+    endDate: z.string().optional().default(""),
+    current: z.boolean().optional().default(false),
+    description: z.string().optional().default(""),
+    evidence: z.string().optional().default(""),
+  })).optional().default([]),
+  education: z.array(z.object({
+    school: z.string().optional().default(""),
+    qualification: z.string().optional().default(""),
+    field: z.string().optional().default(""),
+    startDate: z.string().optional().default(""),
+    endDate: z.string().optional().default(""),
+    evidence: z.string().optional().default(""),
+  })).optional().default([]),
+});
+
+function evidenceExists(cvText: string, evidence: string): boolean {
+  const cleanedEvidence = evidence.replace(/\s+/g, " ").trim().toLowerCase();
+  if (cleanedEvidence.length < 12) return false;
+  const cleanedCv = cvText.replace(/\s+/g, " ").trim().toLowerCase();
+  return cleanedCv.includes(cleanedEvidence) || cleanedEvidence.split(" ").filter((word) => word.length > 3).slice(0, 8)
+    .filter((word) => cleanedCv.includes(word)).length >= 5;
+}
+
+async function parseCvWithAI(text: string) {
+  const client = getCvOpenAI();
+  if (!client) return null;
+
+  const prompt = `Extract a career profile from the CV text below.
+
+Rules:
+- Return only facts explicitly present in the CV. Do not infer or invent missing details.
+- For every experience and education item, include an "evidence" string copied from the CV that proves the item.
+- Dates must be YYYY-MM where month is present, YYYY-01 where only year is present, or empty string if missing.
+- Keep descriptions short and factual, using responsibilities/achievements from the same role only.
+- If a field is not clearly available, return an empty string or empty array.
+
+CV TEXT:
+${text.slice(0, 18000)}`;
+
+  try {
+    const resp = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a strict CV data extraction engine. Output valid JSON only. Never guess." },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0,
+      max_tokens: 3500,
+      response_format: { type: "json_object" },
+    });
+
+    const content = resp.choices[0]?.message?.content ?? "{}";
+    const parsed = aiCvExtractionSchema.parse(JSON.parse(content));
+    return {
+      ...parsed,
+      skills: parsed.skills.map((skill) => skill.trim()).filter(Boolean).slice(0, 20),
+      targetRoles: parsed.targetRoles.map((role) => role.trim()).filter(Boolean).slice(0, 10),
+      experiences: parsed.experiences
+        .filter((item) => (item.title || item.company) && evidenceExists(text, item.evidence))
+        .map(({ evidence, ...item }) => ({ id: newParsedId("exp"), ...item }))
+        .slice(0, 8),
+      education: parsed.education
+        .filter((item) => (item.school || item.qualification) && evidenceExists(text, item.evidence))
+        .map(({ evidence, ...item }) => ({ id: newParsedId("edu"), ...item }))
+        .slice(0, 6),
+    };
+  } catch (err: any) {
+    console.warn("[CV upload] AI extraction failed, using local fallback:", err.message);
+    return null;
+  }
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
@@ -1290,7 +1383,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       text = text.slice(0, 20_000); // cap at 20k chars
 
-      const localParsed = parseCvLocally(text);
+      const localParsed = (await parseCvWithAI(text)) ?? parseCvLocally(text);
       let parsedSkills: string[] = localParsed.skills;
       let parsedTitle = localParsed.jobTitle ?? "";
       let parsedIndustry = localParsed.industry ?? "";
@@ -1562,11 +1655,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // Deduplicate — skip jobs already applied to
       const queued: string[] = [];
+      const skippedDuplicates: string[] = [];
       for (const jobId of jobIds) {
         const existing = await storage.getApplicationByUserAndJob(userId, jobId);
         if (!existing) {
           await storage.createJobApplication({ userId, jobId, coinsSpent: COST_PER_JOB });
           queued.push(jobId);
+        } else {
+          skippedDuplicates.push(jobId);
         }
       }
 
@@ -1577,7 +1673,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Fire the queue processor async (non-blocking)
       processQueuedApplications().catch(console.error);
 
-      res.json({ ok: true, queued: queued.length, skippedDuplicates: jobIds.length - queued.length });
+      res.json({
+        ok: true,
+        queued: queued.length,
+        skippedDuplicates: skippedDuplicates.length,
+        message: queued.length === 0 && skippedDuplicates.length > 0
+          ? "Selected job(s) are already in your applications tracker."
+          : undefined,
+      });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
