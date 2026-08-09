@@ -1,8 +1,8 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -68,7 +68,7 @@ function JobCard({ job, selected, onToggle, onApply, onView }: { job: any; selec
             {job.postedAt && <span className="flex items-center gap-1"><Clock size={11} />{formatRelativeDate(job.postedAt)}</span>}
           </div>
           {job.description && (
-            <p className="text-xs text-[var(--th-text-60)] line-clamp-2 mb-3">{job.description}</p>
+            <p className="text-xs text-[var(--th-text-60)] line-clamp-2 mb-3">{cleanJobText(job.description)}</p>
           )}
           <div className="flex items-center gap-3">
             <button onClick={onView} className="inline-flex items-center gap-1 text-xs font-medium text-[var(--th-text-60)] hover:text-[var(--th-text)] transition-colors">
@@ -181,6 +181,19 @@ export function DashboardJobsPage() {
     const coinCost = ids.length * 5;
     applyMutation.mutate(ids);
     toast({ title: `Applying to ${ids.length} job(s)`, description: `${coinCost} coins will be deducted.` });
+  }
+
+  if (viewingJob) {
+    return (
+      <DashboardLayout>
+        <JobDetailsPage
+          job={viewingJob}
+          onBack={() => setViewingJob(null)}
+          onApply={() => handleApply(viewingJob.id)}
+          applying={applyMutation.isPending}
+        />
+      </DashboardLayout>
+    );
   }
 
   return (
@@ -306,77 +319,86 @@ export function DashboardJobsPage() {
             )}
           </>
         )}
-        {viewingJob && (
-          <JobDetailsModal
-            job={viewingJob}
-            onClose={() => setViewingJob(null)}
-            onApply={() => handleApply(viewingJob.id)}
-            applying={applyMutation.isPending}
-          />
-        )}
       </div>
     </DashboardLayout>
   );
 }
 
-function JobDetailsModal({ job, onClose, onApply, applying }: { job: any; onClose: () => void; onApply: () => void; applying: boolean }) {
+function JobDetailsPage({ job, onBack, onApply, applying }: { job: any; onBack: () => void; onApply: () => void; applying: boolean }) {
   const salary = job.salaryMin || job.salaryMax
     ? `${job.currency ?? "GBP"} ${job.salaryMin ? job.salaryMin.toLocaleString() : ""}${job.salaryMax ? ` - ${job.salaryMax.toLocaleString()}` : "+"}`
     : "Not listed";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-[var(--th-border)] bg-[var(--th-card)] shadow-2xl">
-        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-[var(--th-border)] bg-[var(--th-card)] p-5">
-          <div>
-            <h2 className="text-xl font-semibold text-[var(--th-text)]">{job.title}</h2>
-            <p className="mt-1 text-sm text-[var(--th-text-60)]">{job.company}</p>
+    <div className="mx-auto max-w-6xl px-4 py-8 md:px-8">
+      <button
+        onClick={onBack}
+        className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2 text-sm font-medium text-[var(--th-text)] hover:bg-[var(--th-hover)]"
+      >
+        <ArrowLeft size={16} />
+        Back to jobs
+      </button>
+
+      <div className="rounded-xl border border-[var(--th-border)] bg-[var(--th-card)]">
+        <div className="border-b border-[var(--th-border)] p-5 md:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <SourceBadge source={job.source} />
+                {job.postedAt && (
+                  <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1 text-xs text-[var(--th-text-60)]">
+                    {formatRelativeDate(job.postedAt)}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-2xl font-semibold leading-tight text-[var(--th-text)] md:text-3xl">{job.title}</h1>
+              <p className="mt-2 text-base text-[var(--th-text-60)]">{job.company}</p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-3">
+              <button
+                onClick={onApply}
+                disabled={applying}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#0f0f11] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-black"
+              >
+                {applying ? <Loader2 size={14} className="animate-spin" /> : <Coins size={14} />}
+                Auto-apply (5 coins)
+              </button>
+              {job.sourceUrl && (
+                <a
+                  href={job.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2.5 text-sm font-medium text-[var(--th-text)] hover:bg-[var(--th-hover)]"
+                >
+                  Open original <ExternalLink size={14} />
+                </a>
+              )}
+            </div>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-[var(--th-text-50)] hover:bg-[var(--th-hover)] hover:text-[var(--th-text)]">
-            <X size={18} />
-          </button>
         </div>
-        <div className="space-y-5 p-5">
-          <div className="flex flex-wrap gap-2 text-xs text-[var(--th-text-60)]">
-            <SourceBadge source={job.source} />
-            {job.location && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{job.location}</span>}
-            {job.workType && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{job.workType}</span>}
-            {job.contractType && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{job.contractType.replace("_", " ")}</span>}
-            <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{salary}</span>
-            {job.postedAt && <span className="rounded-full bg-[var(--th-input)] px-2.5 py-1">{formatRelativeDate(job.postedAt)}</span>}
-          </div>
 
-          <section>
-            <h3 className="mb-2 text-sm font-semibold text-[var(--th-text)]">Description</h3>
-            <p className="whitespace-pre-line text-sm leading-6 text-[var(--th-text-70)]">
-              {stripHtml(job.description) || "No description provided."}
-            </p>
-          </section>
+        <div className="grid gap-7 p-5 md:p-7 lg:grid-cols-[280px_1fr]">
+          <aside className="space-y-3">
+            <DetailItem icon={<Building2 size={15} />} label="Company" value={job.company || "Not listed"} />
+            <DetailItem icon={<MapPin size={15} />} label="Location" value={job.location || "Not listed"} />
+            <DetailItem icon={<Wifi size={15} />} label="Work type" value={job.workType || (job.isRemote ? "Remote" : "Not listed")} />
+            <DetailItem icon={<Briefcase size={15} />} label="Contract" value={job.contractType ? job.contractType.replace("_", " ") : "Not listed"} />
+            <DetailItem icon={<Coins size={15} />} label="Salary" value={salary} />
+            <DetailItem icon={<Clock size={15} />} label="Posted" value={job.postedAt ? formatRelativeDate(job.postedAt) : "Not listed"} />
+          </aside>
 
-          {job.requirements && (
-            <section>
-              <h3 className="mb-2 text-sm font-semibold text-[var(--th-text)]">Requirements</h3>
-              <p className="whitespace-pre-line text-sm leading-6 text-[var(--th-text-70)]">{stripHtml(job.requirements)}</p>
+          <div>
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-[var(--th-text)]">Job description</h2>
+              <FormattedJobText value={job.description} fallback="No description provided." />
             </section>
-          )}
 
-          <div className="flex flex-wrap gap-3 border-t border-[var(--th-border)] pt-5">
-            <button
-              onClick={onApply}
-              disabled={applying}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0f0f11] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-black"
-            >
-              {applying ? <Loader2 size={14} className="animate-spin" /> : <Coins size={14} />}
-              Auto-apply (5 coins)
-            </button>
-            <a
-              href={job.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2.5 text-sm font-medium text-[var(--th-text)] hover:bg-[var(--th-hover)]"
-            >
-              Open original job <ExternalLink size={14} />
-            </a>
+            {job.requirements && (
+              <section className="mt-8 space-y-4 border-t border-[var(--th-border)] pt-6">
+                <h2 className="text-lg font-semibold text-[var(--th-text)]">Requirements</h2>
+                <FormattedJobText value={job.requirements} />
+              </section>
+            )}
           </div>
         </div>
       </div>
@@ -384,8 +406,100 @@ function JobDetailsModal({ job, onClose, onApply, applying }: { job: any; onClos
   );
 }
 
-function stripHtml(value: string | null | undefined): string {
-  return String(value ?? "").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim();
+function DetailItem({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-[var(--th-border)] bg-[var(--th-input)] p-4">
+      <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase text-[var(--th-text-40)]">
+        {icon}
+        {label}
+      </div>
+      <p className="break-words text-sm font-medium capitalize text-[var(--th-text)]">{value}</p>
+    </div>
+  );
+}
+
+function FormattedJobText({ value, fallback }: { value?: string | null; fallback?: string }) {
+  const blocks = getFormattedBlocks(value);
+  if (blocks.length === 0) {
+    return <p className="text-sm leading-7 text-[var(--th-text-70)]">{fallback}</p>;
+  }
+
+  return (
+    <div className="space-y-4 text-sm leading-7 text-[var(--th-text-70)]">
+      {blocks.map((block, index) => {
+        if (block.type === "heading") {
+          return <h3 key={index} className="pt-2 text-base font-semibold text-[var(--th-text)]">{block.text}</h3>;
+        }
+        if (block.type === "list") {
+          return (
+            <ul key={index} className="list-disc space-y-2 pl-5">
+              {block.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}
+            </ul>
+          );
+        }
+        return <p key={index}>{block.text}</p>;
+      })}
+    </div>
+  );
+}
+
+function getFormattedBlocks(value: string | null | undefined): Array<{ type: "heading"; text: string } | { type: "paragraph"; text: string } | { type: "list"; items: string[] }> {
+  const text = cleanJobText(value);
+  if (!text) return [];
+
+  const blocks: Array<{ type: "heading"; text: string } | { type: "paragraph"; text: string } | { type: "list"; items: string[] }> = [];
+  let listItems: string[] = [];
+
+  function flushList() {
+    if (listItems.length > 0) {
+      blocks.push({ type: "list", items: listItems });
+      listItems = [];
+    }
+  }
+
+  text.split(/\n+/).map((line) => line.trim()).filter(Boolean).forEach((line) => {
+    const bullet = line.match(/^[-*•]\s+(.+)/);
+    if (bullet) {
+      listItems.push(bullet[1].trim());
+      return;
+    }
+
+    flushList();
+    if (isSectionHeading(line)) {
+      blocks.push({ type: "heading", text: line.replace(/:$/, "") });
+    } else {
+      blocks.push({ type: "paragraph", text: line });
+    }
+  });
+  flushList();
+
+  return blocks;
+}
+
+function cleanJobText(value: string | null | undefined): string {
+  const headingPattern = "(About us|About the role|Job summary|Summary|Responsibilities|Requirements|Qualifications|Benefits|What you'll do|What you’ll do|Who you are|Nice to have|Skills|Experience|Our stack|The role|Your profile)";
+  return String(value ?? "")
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n- ")
+    .replace(/<\/(p|div|li|ul|ol|h[1-6]|section|article)>/gi, "\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&pound;/g, "GBP ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/([a-z0-9.)])(?=\s*[A-Z][A-Za-z ]{2,24}:)/g, "$1\n")
+    .replace(new RegExp(`([a-z0-9.)])(?=${headingPattern})`, "g"), "$1\n\n")
+    .replace(new RegExp(`${headingPattern}(?=[A-Z])`, "g"), "$&\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function isSectionHeading(line: string): boolean {
+  return /^(About us|About the role|Job summary|Summary|Responsibilities|Requirements|Qualifications|Benefits|What you'll do|What you’ll do|Who you are|Nice to have|Skills|Experience|Our stack|The role|Your profile):?$/i.test(line);
 }
 
 function formatRelativeDate(dateStr: string): string {
