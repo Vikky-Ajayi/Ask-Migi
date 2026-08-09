@@ -37,23 +37,67 @@ function isEventsQuery(query: any) {
   return String(query.queryKey[0] ?? "").startsWith("/api/dashboard/events");
 }
 
+function getEventAccent(event: any) {
+  const seed = String(event.category || event.title || "event").length % 5;
+  return [
+    "from-emerald-500/20 via-cyan-500/10 to-transparent border-emerald-500/20",
+    "from-amber-500/20 via-rose-500/10 to-transparent border-amber-500/20",
+    "from-sky-500/20 via-violet-500/10 to-transparent border-sky-500/20",
+    "from-lime-500/20 via-teal-500/10 to-transparent border-lime-500/20",
+    "from-fuchsia-500/20 via-orange-500/10 to-transparent border-fuchsia-500/20",
+  ][seed];
+}
+
+function getDayParts(dateStr: string) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return { day: "--", month: "TBA" };
+  return {
+    day: date.toLocaleDateString("en-GB", { day: "2-digit" }),
+    month: date.toLocaleDateString("en-GB", { month: "short" }).toUpperCase(),
+  };
+}
+
+function EventFallbackVisual({ event, sourceLabel }: { event: any; sourceLabel: string }) {
+  const date = getDayParts(event.startDate);
+  return (
+    <div className={cn("relative aspect-[16/7] overflow-hidden border-b bg-gradient-to-br", getEventAccent(event))}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_32%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent)]" />
+      <div className="relative flex h-full items-end justify-between gap-3 p-4">
+        <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 backdrop-blur-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">{date.month}</p>
+          <p className="text-2xl font-semibold leading-none text-white">{date.day}</p>
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55">{sourceLabel}</p>
+          <p className="mt-1 truncate text-sm font-medium text-white/90">{event.locationCity || (event.isOnline ? "Online event" : event.category || "Networking")}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EventCard({ event }: { event: any }) {
+  const [imageFailed, setImageFailed] = useState(false);
   const source = getEventSource(event.eventbriteId ?? "");
   const sourceLabel = SOURCE_LABELS[source] ?? "Event";
+  const showImage = Boolean(event.thumbnailUrl) && !imageFailed;
 
   return (
     <div className="bg-[var(--th-card)] border border-[var(--th-border)] rounded-xl overflow-hidden hover:border-[var(--th-border-md)] transition-all group">
-      {event.thumbnailUrl && (
+      {showImage ? (
         <div className="aspect-[16/7] overflow-hidden bg-[var(--th-input)]">
           <img
             src={event.thumbnailUrl}
             alt={event.title}
+            onError={() => setImageFailed(true)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
+      ) : (
+        <EventFallbackVisual event={event} sourceLabel={sourceLabel} />
       )}
       <div className="p-4">
-        <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
           {event.isFree && (
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
               FREE
@@ -75,7 +119,7 @@ function EventCard({ event }: { event: any }) {
             </span>
           )}
         </div>
-        <h3 className="text-sm font-semibold text-[var(--th-text)] line-clamp-2 mb-2">
+        <h3 className="text-sm font-semibold text-[var(--th-text)] line-clamp-2 mb-3 leading-snug">
           {event.title}
         </h3>
         <div className="flex items-center gap-1.5 text-xs text-[var(--th-text-50)] mb-1">
@@ -93,14 +137,16 @@ function EventCard({ event }: { event: any }) {
             {event.description}
           </p>
         )}
-        <a
-          href={event.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--th-text)] hover:underline"
-        >
-          View on {sourceLabel} <ExternalLink size={10} />
-        </a>
+        <div className="mt-4 border-t border-[var(--th-border)] pt-3">
+          <a
+            href={event.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--th-text)] hover:underline"
+          >
+            View on {sourceLabel} <ExternalLink size={10} />
+          </a>
+        </div>
       </div>
     </div>
   );
