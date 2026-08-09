@@ -155,7 +155,7 @@ export const LandingPage = (): JSX.Element => {
     );
   }
 
-  if (isLoggedIn) return null;
+  if (isLoggedIn) return <></>;
 
   return (
     <main className="min-h-screen w-full bg-th-page text-th-text flex flex-col">

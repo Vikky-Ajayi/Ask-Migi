@@ -14,6 +14,33 @@ import { sql } from "drizzle-orm";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+function distanceMiles(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusMiles = 3958.8;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * earthRadiusMiles * Math.asin(Math.sqrt(h));
+}
+
+function isWithinSweepRadius(
+  center: { lat: number; lon: number },
+  point?: { lat?: number | null; lon?: number | null },
+  radiusMiles = 75
+): boolean {
+  if (point?.lat == null || point?.lon == null) return true;
+  return distanceMiles(center, { lat: point.lat, lon: point.lon }) <= radiusMiles;
+}
+
+function cityMatchesSweepCity(value: string | undefined | null, city: string): boolean {
+  if (!value) return false;
+  return value.toLowerCase().includes(city.toLowerCase());
+}
+
 // ── UK city coordinates (for Meetup radius search) ─────────────────────────────
 export const UK_CITIES = [
   { name: "london", lat: 51.509865, lon: -0.118092 },
@@ -224,6 +251,15 @@ export async function drainMeetupCity(params: {
       const edges: Array<{ node: MeetupEvent }> = search?.edges ?? [];
       for (const { node: evt } of edges) {
         if (!evt?.id || !evt?.title || !evt?.dateTime) continue;
+        if (
+          evt.venue?.lat == null &&
+          evt.venue?.lng == null &&
+          !cityMatchesSweepCity(evt.venue?.city, params.city)
+        ) continue;
+        if (!isWithinSweepRadius(
+          { lat: params.lat, lon: params.lon },
+          { lat: evt.venue?.lat, lon: evt.venue?.lng }
+        )) continue;
         const startDate = new Date(evt.dateTime);
         const ok = await upsertEvent({
           sourceId: `meetup:${evt.id}`,
@@ -295,6 +331,15 @@ async function drainMeetupHtml(params: {
         // Resolve venue ref if needed
         let venue: any = evt.venue;
         if (venue?.__ref) venue = apolloState[venue.__ref] ?? {};
+        if (
+          venue?.lat == null &&
+          venue?.lng == null &&
+          !cityMatchesSweepCity(venue?.city, params.city)
+        ) continue;
+        if (!isWithinSweepRadius(
+          { lat: params.lat, lon: params.lon },
+          { lat: venue?.lat, lon: venue?.lng }
+        )) continue;
 
         const ok = await upsertEvent({
           sourceId: `meetup:${evt.id ?? key.replace("Event:", "")}`,

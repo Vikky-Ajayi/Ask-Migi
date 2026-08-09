@@ -29,7 +29,9 @@ const AuthContext = createContext<AuthContextType>({
   token: null,
   isLoggedIn: false,
   isLoading: true,
-  login: async () => {},
+  login: async () => {
+    throw new Error("AuthProvider is not mounted");
+  },
   register: async () => {},
   logout: () => {},
   refreshUser: async () => {},

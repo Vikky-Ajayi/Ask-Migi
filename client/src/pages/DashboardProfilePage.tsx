@@ -87,32 +87,45 @@ export function DashboardProfilePage() {
 
   const cvMutation = useMutation({
     mutationFn: async (file: File) => {
-      const fd = new FormData();
-      fd.append("cv", file);
+      const buffer = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
       const resp = await fetch("/api/dashboard/profile/cv", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          mimeType: file.type,
+          data: btoa(binary),
+        }),
       });
-      if (!resp.ok) throw new Error("Upload failed");
-      return resp.json();
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.error || "Upload failed");
+      return data;
     },
     onSuccess: (data) => {
       toast({ title: "CV uploaded", description: "Your CV has been parsed and profile updated." });
       qc.invalidateQueries({ queryKey: ["/api/dashboard/profile"] });
       // Pre-fill fields from parsed CV
-      if (data.parsed) {
+      const parsed = data.parsed ?? {
+        industry: data.industry,
+        jobTitle: data.parsedTitle,
+        yearsExperience: data.yearsExperience,
+        skills: data.parsedSkills,
+      };
+      if (parsed) {
         setForm((f) => ({
           ...f,
-          industry: data.parsed.industry ?? f.industry,
-          jobTitle: data.parsed.jobTitle ?? f.jobTitle,
-          yearsExperience: data.parsed.yearsExperience?.toString() ?? f.yearsExperience,
-          skills: data.parsed.skills?.length ? data.parsed.skills : f.skills,
+          industry: parsed.industry ?? f.industry,
+          jobTitle: parsed.jobTitle ?? f.jobTitle,
+          yearsExperience: parsed.yearsExperience?.toString() ?? f.yearsExperience,
+          skills: parsed.skills?.length ? parsed.skills : f.skills,
         }));
         setFormSynced(false);
       }
     },
-    onError: () => toast({ title: "Upload failed", description: "Could not parse CV. Please try again.", variant: "destructive" }),
+    onError: (error: Error) => toast({ title: "Upload failed", description: error.message || "Could not read this CV. Please try again.", variant: "destructive" }),
   });
 
   function handleFile(file: File) {
@@ -182,7 +195,7 @@ export function DashboardProfilePage() {
         {/* CV Upload */}
         <div className="bg-[var(--th-card)] border border-[var(--th-border)] rounded-xl p-6 mb-6">
           <h2 className="text-sm font-semibold text-[var(--th-text)] mb-1">Upload your CV</h2>
-          <p className="text-xs text-[var(--th-text-50)] mb-4">We'll parse it with AI to auto-fill your profile. PDF, DOC, DOCX, or TXT.</p>
+          <p className="text-xs text-[var(--th-text-50)] mb-4">We'll read it to auto-fill your profile. PDF, DOC, DOCX, or TXT.</p>
 
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -197,7 +210,7 @@ export function DashboardProfilePage() {
             {cvMutation.isPending ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 size={28} className="animate-spin text-[var(--th-text-50)]" />
-                <p className="text-sm text-[var(--th-text-60)]">Parsing CV with AI…</p>
+                <p className="text-sm text-[var(--th-text-60)]">Reading CV…</p>
               </div>
             ) : profile?.cvFilename ? (
               <div className="flex flex-col items-center gap-2">

@@ -12,6 +12,9 @@ import { eq } from "drizzle-orm";
 let openaiClient: OpenAI | null = null;
 
 function getOpenAI(): OpenAI {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is required for auto-apply document generation.");
+  }
   if (!openaiClient) {
     openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }

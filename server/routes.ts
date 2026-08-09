@@ -1,7 +1,11 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
-import multer from "multer";
+import mammoth from "mammoth";
+import { spawn } from "child_process";
+import { tmpdir } from "os";
+import path from "path";
+import { writeFile, unlink } from "fs/promises";
 import {
   storage,
   hashPassword,
@@ -14,9 +18,7 @@ import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail, sendCoinPurchaseEmail } from "./email";
 import { keywordScore, buildProfileText, buildProfileSummary, rankCandidatesWithAI } from "./embeddings";
-import { parseCvWithAI, processQueuedApplications } from "./autoApply";
-
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+import { processQueuedApplications } from "./autoApply";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -62,6 +64,115 @@ function safeUser(user: any) {
   const { password, ...rest } = user;
   return rest;
 }
+
+function parseCvLocally(text: string): {
+  jobTitle?: string;
+  industry?: string;
+  skills: string[];
+  yearsExperience?: number;
+} {
+  const normalised = text.replace(/\s+/g, " ").trim();
+  const lower = normalised.toLowerCase();
+  const skillTerms = [
+    "JavaScript", "TypeScript", "React", "Node.js", "Express", "HTML", "CSS",
+    "Tailwind CSS", "Python", "SQL", "PostgreSQL", "MongoDB", "Git", "GitHub",
+    "REST API", "API Integration", "WordPress", "UI/UX", "Figma", "Data Analysis",
+    "Project Management", "Digital Marketing", "SEO", "Content Management",
+    "Customer Service", "Communication", "Leadership", "Problem Solving",
+  ];
+  const skills = skillTerms.filter((skill) => lower.includes(skill.toLowerCase())).slice(0, 20);
+
+  const titlePatterns = [
+    /(?:current|target|recent)\s+(?:job\s+)?title[:\s-]+([^.\n]+)/i,
+    /\b(?:frontend|front-end|full stack|backend|back-end|software|web)\s+(?:developer|engineer)\b/i,
+    /\b(?:digital marketing|project|product|data|business)\s+(?:manager|analyst|specialist|associate)\b/i,
+  ];
+  let jobTitle = "";
+  for (const pattern of titlePatterns) {
+    const match = normalised.match(pattern);
+    if (match?.[1]) {
+      jobTitle = match[1].slice(0, 80).trim();
+      break;
+    }
+    if (match?.[0]) {
+      jobTitle = match[0].slice(0, 80).trim();
+      break;
+    }
+  }
+  if (!jobTitle && /computer science graduate/i.test(normalised)) {
+    jobTitle = "Computer Science Graduate";
+  }
+
+  const yearMatches = Array.from(normalised.matchAll(/(\d+)\+?\s+years?\s+(?:of\s+)?experience/gi))
+    .map((m) => Number(m[1]))
+    .filter(Number.isFinite);
+  const yearsExperience = yearMatches.length ? Math.max(...yearMatches) : undefined;
+
+  const industry = lower.match(/\b(react|node|javascript|typescript|software|web developer|computer science|api)\b/)
+    ? "Technology"
+    : undefined;
+
+  return { jobTitle, industry, skills, yearsExperience };
+}
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  const tempPath = path.join(tmpdir(), `askmigi-cv-${randomBytes(8).toString("hex")}.pdf`);
+  await writeFile(tempPath, buffer);
+
+  const script = `
+    const fs = require("fs");
+    (async () => {
+      const pdfModule = await import("pdf-parse");
+      const buffer = fs.readFileSync(process.argv[1]);
+      const pdfParse = pdfModule.default ?? pdfModule;
+      let text = "";
+      if (typeof pdfParse === "function") {
+        text = (await pdfParse(buffer)).text;
+      } else if (pdfModule.PDFParse) {
+        const parser = new pdfModule.PDFParse({ data: buffer });
+        try { text = (await parser.getText()).text; }
+        finally { await parser.destroy?.(); }
+      }
+      process.stdout.write(JSON.stringify({ text }));
+    })().catch((error) => {
+      process.stderr.write(error?.message || String(error));
+      process.exit(1);
+    });
+  `;
+
+  try {
+    return await new Promise<string>((resolve, reject) => {
+      const child = spawn(process.execPath, ["-e", script, tempPath], {
+        cwd: process.cwd(),
+        windowsHide: true,
+      });
+      let stdout = "";
+      let stderr = "";
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error("PDF parsing timed out."));
+      }, 30_000);
+      child.stdout.on("data", (chunk) => { stdout += chunk; });
+      child.stderr.on("data", (chunk) => { stderr += chunk; });
+      child.on("error", (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        if (code !== 0) return reject(new Error(stderr || "PDF parsing failed."));
+        try {
+          resolve(JSON.parse(stdout).text ?? "");
+        } catch {
+          reject(new Error("PDF parsing returned invalid output."));
+        }
+      });
+    });
+  } finally {
+    unlink(tempPath).catch(() => {});
+  }
+}
+
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
 
@@ -214,7 +325,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // GET /api/enquiries/:id
   app.get("/api/enquiries/:id", requireAuth, async (req, res) => {
-    const enquiry = await storage.getEnquiry(req.params.id);
+    const id = String(req.params.id);
+    const enquiry = await storage.getEnquiry(id);
     if (!enquiry) return res.status(404).json({ message: "Enquiry not found" });
     if (enquiry.userId !== (req as any).userId) return res.status(403).json({ message: "Forbidden" });
     return res.json(enquiry);
@@ -304,11 +416,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const result = schema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
 
-    const enquiry = await storage.getEnquiry(req.params.id);
+    const id = String(req.params.id);
+    const enquiry = await storage.getEnquiry(id);
     if (!enquiry) return res.status(404).json({ message: "Enquiry not found" });
 
     const updated = await storage.updateEnquiryAnswer(
-      req.params.id,
+      id,
       result.data.answer,
       result.data.answeredBy
     );
@@ -389,12 +502,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const result = schema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ message: result.error.issues[0].message });
 
-    const enquiry = await storage.getEnquiry(req.params.id);
+    const id = String(req.params.id);
+    const enquiry = await storage.getEnquiry(id);
     if (!enquiry) return res.status(404).json({ message: "Not found" });
 
     const isEdit = result.data.isEdit === true || enquiry.status === "answered";
     const answeredBy = `${user.firstName} ${user.lastName}`;
-    const updated = await storage.updateEnquiryAnswer(req.params.id, result.data.answer, answeredBy, "answered", user.profilePic ?? null);
+    const updated = await storage.updateEnquiryAnswer(id, result.data.answer, answeredBy, "answered", user.profilePic ?? null);
 
     if (!isEdit) {
       const enquiryUser = await storage.getUser(enquiry.userId);
@@ -820,7 +934,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // DELETE /api/expert/services/:id
   app.delete("/api/expert/services/:id", requireAuth, async (req, res) => {
     const userId = (req as any).userId;
-    const deleted = await storage.deleteExpertService(req.params.id, userId);
+    const id = String(req.params.id);
+    const deleted = await storage.deleteExpertService(id, userId);
     if (!deleted) return res.status(404).json({ message: "Service not found" });
     return res.json({ message: "Service deleted" });
   });
@@ -937,8 +1052,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   setTimeout(() => { reconcilePendingCoinPurchases(); }, 5_000);
 
   // ── Auto-apply queue processor (every 2 minutes) ──────────────────────────
-  setInterval(() => { processQueuedApplications().catch(console.error); }, 2 * 60 * 1000);
-  setTimeout(() => { processQueuedApplications().catch(console.error); }, 15_000);
+  if (process.env.ENABLE_BACKGROUND_JOBS === "true") {
+    setInterval(() => { processQueuedApplications().catch(console.error); }, 2 * 60 * 1000);
+    setTimeout(() => { processQueuedApplications().catch(console.error); }, 15_000);
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ── DASHBOARD ROUTES ──────────────────────────────────────────────────────
@@ -1007,50 +1124,62 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   /** POST /api/dashboard/profile/cv — upload + parse CV file */
-  app.post("/api/dashboard/profile/cv", requireAuth, upload.single("cv"), async (req: AuthRequest, res) => {
+  app.post("/api/dashboard/profile/cv", requireAuth, async (req: AuthRequest, res) => {
     try {
-      if (!req.file) return res.status(400).json({ error: "No file uploaded." });
+      const body = z.object({
+        filename: z.string().min(1),
+        mimeType: z.string().optional().default(""),
+        data: z.string().min(1),
+      }).safeParse(req.body);
+      if (!body.success) return res.status(400).json({ error: "No file uploaded." });
+
+      const fileBuffer = Buffer.from(body.data.data, "base64");
+      const originalName = body.data.filename;
 
       let text = "";
-      const mime = req.file.mimetype;
+      const mime = body.data.mimeType;
 
-      if (mime === "application/pdf" || req.file.originalname.endsWith(".pdf")) {
-        // Dynamically require pdf-parse to avoid startup issues with the module
-        const pdfModule = await import("pdf-parse");
-        const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfModule as any).default ?? pdfModule;
-        const result = await pdfParse(req.file.buffer);
-        text = result.text;
+      if (mime === "application/pdf" || originalName.endsWith(".pdf")) {
+        text = await extractPdfText(fileBuffer);
       } else if (
         mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-        req.file.originalname.endsWith(".docx")
+        originalName.endsWith(".docx")
       ) {
-        const mammoth = await import("mammoth");
-        const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
         text = result.value;
-      } else if (mime === "text/plain" || req.file.originalname.endsWith(".txt")) {
-        text = req.file.buffer.toString("utf-8");
+      } else if (mime === "text/plain" || originalName.endsWith(".txt")) {
+        text = fileBuffer.toString("utf-8");
       } else {
         return res.status(400).json({ error: "Unsupported file type. Please upload PDF, DOCX, or TXT." });
       }
 
       text = text.slice(0, 20_000); // cap at 20k chars
 
-      // Try AI parse for structured skills/title extraction
-      let parsedSkills: string[] = [];
-      let parsedTitle = "";
-      try {
-        const parsed = await parseCvWithAI(text);
-        parsedSkills = parsed.skills ?? [];
-        parsedTitle = (parsed as any).jobTitle ?? "";
-      } catch (_) { /* non-fatal */ }
-
+      const localParsed = parseCvLocally(text);
+      let parsedSkills: string[] = localParsed.skills;
+      let parsedTitle = localParsed.jobTitle ?? "";
+      let parsedIndustry = localParsed.industry ?? "";
+      let parsedYearsExperience: number | null = localParsed.yearsExperience ?? null;
       // Save cvText (and any extracted fields) to the profile
       const updateData: Record<string, any> = { userId: req.userId!, cvText: text };
       if (parsedTitle) updateData.jobTitle = parsedTitle;
+      if (parsedIndustry) updateData.industry = parsedIndustry;
+      if (parsedYearsExperience != null) updateData.yearsExperience = parsedYearsExperience;
       if (parsedSkills.length > 0) updateData.skills = parsedSkills;
       await storage.upsertUserProfile(updateData as Parameters<typeof storage.upsertUserProfile>[0]);
 
-      res.json({ ok: true, charCount: text.length, parsedSkills, parsedTitle });
+      res.json({
+        ok: true,
+        charCount: text.length,
+        parsed: {
+          industry: parsedIndustry,
+          jobTitle: parsedTitle,
+          yearsExperience: parsedYearsExperience,
+          skills: parsedSkills,
+        },
+        parsedSkills,
+        parsedTitle,
+      });
     } catch (err: any) {
       console.error("[CV upload]", err.message);
       res.status(500).json({ error: err.message });
@@ -1302,7 +1431,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
       }
-      const updated = await storage.updateApplicationStatus(id, req.userId!, status);
+      const updated = await storage.updateApplicationStatus(String(id), req.userId!, status);
       if (!updated) return res.status(404).json({ error: "Application not found." });
       res.json(updated);
     } catch (err: any) {

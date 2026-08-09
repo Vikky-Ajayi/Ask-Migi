@@ -7,6 +7,7 @@ interface ExpertLayoutProps {
   children: React.ReactNode;
   title: string;
   pendingCount?: number;
+  verified?: boolean;
 }
 
 export const ExpertLayout = ({ children, title, pendingCount = 0 }: ExpertLayoutProps) => {

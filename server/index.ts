@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
@@ -39,7 +40,7 @@ app.use(
 // ── Body parsers ──────────────────────────────────────────────────────────────
 app.use(
   express.json({
-    limit: "1mb",
+    limit: "15mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
@@ -113,7 +114,11 @@ app.use((req, res, next) => {
 (async () => {
   registerHealthCheck(app);
   await registerRoutes(httpServer, app);
-  startScraperScheduler();
+  if (process.env.ENABLE_BACKGROUND_JOBS === "true") {
+    startScraperScheduler();
+  } else {
+    log("background jobs disabled; set ENABLE_BACKGROUND_JOBS=true to run scrapers and auto-apply workers", "scheduler");
+  }
 
   // ── Global error handler ───────────────────────────────────────────────────
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -147,7 +152,7 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
+      ...(process.platform === "win32" ? {} : { reusePort: true }),
     },
     () => {
       log(`serving on port ${port}`);
