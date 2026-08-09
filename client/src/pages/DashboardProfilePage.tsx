@@ -252,6 +252,8 @@ export function DashboardProfilePage() {
         skills: parsed.skills?.length ? parsed.skills : f.skills,
         linkedinUrl: parsed.linkedinUrl ?? f.linkedinUrl,
         targetRoles: parsed.targetRoles?.length ? parsed.targetRoles.join(", ") : f.targetRoles,
+        experiences: parsed.experiences?.length ? parsed.experiences : f.experiences,
+        education: parsed.education?.length ? parsed.education : f.education,
       }));
       setFormSynced(true);
     },

@@ -67,6 +67,115 @@ function safeUser(user: any) {
   return rest;
 }
 
+function newParsedId(prefix: string) {
+  return `${prefix}-${randomBytes(4).toString("hex")}`;
+}
+
+function normaliseCvLines(text: string): string[] {
+  return text
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function isCvHeading(line: string): boolean {
+  return /^(work\s+experience|professional\s+experience|employment\s+history|experience|career\s+history|education|qualifications|academic\s+background|certifications?|skills|projects|references?|profile|summary|contact)$/i.test(line);
+}
+
+function getCvSection(lines: string[], headingPattern: RegExp): string[] {
+  const start = lines.findIndex((line) => headingPattern.test(line));
+  if (start === -1) return [];
+  const section: string[] = [];
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (isCvHeading(lines[i])) break;
+    section.push(lines[i]);
+  }
+  return section;
+}
+
+function parseCvDateRange(line: string): { startDate: string; endDate: string; current: boolean } {
+  const month = "(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)";
+  const match = line.match(new RegExp(`\\b(${month})?\\s*(20\\d{2})\\s*(?:-|–|—|to)\\s*(?:(present|current)|(${month})?\\s*(20\\d{2}))`, "i"));
+  if (!match) return { startDate: "", endDate: "", current: false };
+
+  const monthMap: Record<string, string> = {
+    jan: "01", january: "01", feb: "02", february: "02", mar: "03", march: "03", apr: "04", april: "04",
+    may: "05", jun: "06", june: "06", jul: "07", july: "07", aug: "08", august: "08", sep: "09", sept: "09",
+    september: "09", oct: "10", october: "10", nov: "11", november: "11", dec: "12", december: "12",
+  };
+  const startMonth = match[1] ? monthMap[match[1].toLowerCase()] : "01";
+  const endMonth = match[4] ? monthMap[match[4].toLowerCase()] : "01";
+  const current = Boolean(match[3]);
+
+  return {
+    startDate: `${match[2]}-${startMonth}`,
+    endDate: current || !match[5] ? "" : `${match[5]}-${endMonth}`,
+    current,
+  };
+}
+
+function parseCvExperience(text: string): Array<Record<string, unknown>> {
+  const lines = normaliseCvLines(text);
+  const section = getCvSection(lines, /^(work\s+experience|professional\s+experience|employment\s+history|experience|career\s+history)$/i);
+  const source = section.length ? section : lines;
+  const dateLineIndexes = source
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => /\b20\d{2}\b.*(?:-|–|—|to).*(?:20\d{2}|present|current)/i.test(line))
+    .slice(0, 5);
+
+  return dateLineIndexes.map(({ line, index }) => {
+    const previous = source[index - 1] ?? "";
+    const next = source[index + 1] ?? "";
+    const afterNext = source[index + 2] ?? "";
+    const titleCompany = previous || line.replace(/\b20\d{2}.*$/i, "").trim();
+    const parts = titleCompany.split(/\s+(?:at|@|\||,|-|–|—)\s+/i).map((part) => part.trim()).filter(Boolean);
+    const dateRange = parseCvDateRange(line);
+
+    return {
+      id: newParsedId("exp"),
+      title: parts[0] ?? titleCompany,
+      company: parts[1] ?? "",
+      location: "",
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+      current: dateRange.current,
+      description: [next, afterNext]
+        .filter((value) => value && !isCvHeading(value) && !/\b20\d{2}\b.*(?:-|–|—|to).*(?:20\d{2}|present|current)/i.test(value))
+        .join("\n"),
+    };
+  }).filter((item) => String(item.title ?? "").trim());
+}
+
+function parseCvEducation(text: string): Array<Record<string, unknown>> {
+  const lines = normaliseCvLines(text);
+  const section = getCvSection(lines, /^(education|qualifications|academic\s+background)$/i);
+  if (!section.length) return [];
+
+  const degreePattern = /\b(BSc|BA|MSc|MA|MBA|PhD|HND|OND|Bachelor|Master|Diploma|Certificate|GCSE|A-?Level|Degree)\b/i;
+  return section
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => degreePattern.test(line) || /\b(university|college|school|academy|institute)\b/i.test(line))
+    .slice(0, 5)
+    .map(({ line, index }) => {
+      const adjacent = section[index + 1] ?? "";
+      const combined = `${line} ${adjacent}`;
+      const dateRange = parseCvDateRange(combined);
+      const qualification = line.match(degreePattern)?.[0] ?? "";
+      const schoolMatch = combined.match(/([A-Z][A-Za-z&.,' ]+(?:University|College|School|Academy|Institute)[A-Za-z&.,' ]*)/);
+
+      return {
+        id: newParsedId("edu"),
+        school: schoolMatch?.[1]?.trim() ?? (qualification ? adjacent.replace(/\b20\d{2}.*$/i, "").trim() : line),
+        qualification: qualification || line.replace(/\b20\d{2}.*$/i, "").trim(),
+        field: "",
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      };
+    })
+    .filter((item) => item.school || item.qualification);
+}
+
 function parseCvLocally(text: string): {
   jobTitle?: string;
   industry?: string;
@@ -74,6 +183,8 @@ function parseCvLocally(text: string): {
   yearsExperience?: number;
   linkedinUrl?: string;
   targetRoles?: string[];
+  experiences?: Array<Record<string, unknown>>;
+  education?: Array<Record<string, unknown>>;
 } {
   const normalised = text.replace(/\s+/g, " ").trim();
   const lower = normalised.toLowerCase();
@@ -131,8 +242,10 @@ function parseCvLocally(text: string): {
 
   const linkedinUrl = normalised.match(/https?:\/\/(?:www\.)?linkedin\.com\/[^\s)]+/i)?.[0];
   const targetRoles = jobTitle ? [jobTitle] : undefined;
+  const experiences = parseCvExperience(text);
+  const education = parseCvEducation(text);
 
-  return { jobTitle, industry, skills, yearsExperience, linkedinUrl, targetRoles };
+  return { jobTitle, industry, skills, yearsExperience, linkedinUrl, targetRoles, experiences, education };
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
@@ -1184,6 +1297,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       let parsedYearsExperience: number | null = localParsed.yearsExperience ?? null;
       const parsedLinkedinUrl = localParsed.linkedinUrl ?? "";
       const parsedTargetRoles = localParsed.targetRoles ?? [];
+      const parsedExperiences = localParsed.experiences ?? [];
+      const parsedEducation = localParsed.education ?? [];
       // Save cvText (and any extracted fields) to the profile
       const updateData: Record<string, any> = { userId: req.userId!, cvText: text, cvFilename: originalName };
       if (parsedTitle) updateData.jobTitle = parsedTitle;
@@ -1192,6 +1307,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (parsedSkills.length > 0) updateData.skills = parsedSkills;
       if (parsedLinkedinUrl) updateData.linkedinUrl = parsedLinkedinUrl;
       if (parsedTargetRoles.length > 0) updateData.targetRoles = parsedTargetRoles;
+      if (parsedExperiences.length > 0) updateData.experiences = parsedExperiences;
+      if (parsedEducation.length > 0) updateData.education = parsedEducation;
       const profile = await storage.upsertUserProfile(updateData as Parameters<typeof storage.upsertUserProfile>[0]);
 
       res.json({
@@ -1204,6 +1321,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           skills: parsedSkills,
           linkedinUrl: parsedLinkedinUrl,
           targetRoles: parsedTargetRoles,
+          experiences: parsedExperiences,
+          education: parsedEducation,
         },
         parsedSkills,
         parsedTitle,
