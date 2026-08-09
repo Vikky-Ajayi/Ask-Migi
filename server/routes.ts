@@ -19,6 +19,8 @@ import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } fro
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail, sendCoinPurchaseEmail } from "./email";
 import { keywordScore, buildProfileText, buildProfileSummary, rankCandidatesWithAI } from "./embeddings";
 import { processQueuedApplications } from "./autoApply";
+import { runIncrementalEventSweep } from "./scraper/events";
+import { runJobScrape } from "./scraper/jobs";
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -1129,6 +1131,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         "industry", "jobTitle", "targetRoles", "skills",
         "locationCity", "locationPostcode", "salaryMin", "salaryMax",
         "workTypes", "linkedinUrl", "cvText", "yearsExperience",
+        "dealBreakers", "experiences", "education", "certifications",
+        "references", "profileStep", "profileComplete",
       ];
       const data: Record<string, any> = {};
       for (const key of allowed) {
@@ -1245,6 +1249,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  /** POST /api/dashboard/events/refresh — run a quick event scrape now */
+  app.post("/api/dashboard/events/refresh", requireAuth, async (_req: AuthRequest, res) => {
+    try {
+      await runIncrementalEventSweep();
+      const total = await storage.getTotalEvents();
+      res.json({ ok: true, total });
+    } catch (err: any) {
+      console.error("[events/refresh]", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   /** POST /api/dashboard/events/match — AI-rank events by user profile (2 coins) */
   app.post("/api/dashboard/events/match", requireAuth, async (req: AuthRequest, res) => {
     try {
@@ -1325,6 +1341,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const result = await storage.getJobs({ q, source, workType, remote, page, limit, matchedIds });
       res.json(result);
     } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /** POST /api/dashboard/jobs/refresh — run job scrapers now */
+  app.post("/api/dashboard/jobs/refresh", requireAuth, async (_req: AuthRequest, res) => {
+    try {
+      await runJobScrape();
+      const total = await storage.getTotalJobs();
+      res.json({ ok: true, total });
+    } catch (err: any) {
+      console.error("[jobs/refresh]", err.message);
       res.status(500).json({ error: err.message });
     }
   });

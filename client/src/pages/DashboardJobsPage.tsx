@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare } from "lucide-react";
+import { Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -118,6 +118,22 @@ export function DashboardJobsPage() {
     onError: (err: any) => toast({ title: "Error", description: err.message ?? "Could not queue applications.", variant: "destructive" }),
   });
 
+  const refreshMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/dashboard/jobs/refresh").then(r => r.json()),
+    onSuccess: (data: any) => {
+      qc.invalidateQueries({ queryKey: ["/api/dashboard/jobs"] });
+      toast({
+        title: "Jobs refreshed",
+        description: data.total > 0 ? `${data.total.toLocaleString()} job(s) are now available.` : "No jobs were found from the sources yet.",
+      });
+    },
+    onError: (err: any) => toast({
+      title: "Refresh failed",
+      description: err.message ?? "Could not refresh jobs right now.",
+      variant: "destructive",
+    }),
+  });
+
   const params = new URLSearchParams({
     page: page.toString(),
     limit: "20",
@@ -128,7 +144,7 @@ export function DashboardJobsPage() {
     ...(useMatching && { matched: "true" }),
   });
 
-  const { data, isLoading } = useQuery<any>({
+  const { data, isLoading, isError } = useQuery<any>({
     queryKey: ["/api/dashboard/jobs", params.toString()],
     retry: false,
   });
@@ -167,6 +183,14 @@ export function DashboardJobsPage() {
             <p className="text-[var(--th-text-60)] mt-1 text-sm">Jobs scraped from LinkedIn, Reed, Remotive, Greenhouse and more.</p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => refreshMutation.mutate()}
+              disabled={refreshMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--th-border)] bg-[var(--th-card)] text-[var(--th-text)] text-sm font-medium rounded-xl hover:bg-[var(--th-hover)] transition-colors disabled:opacity-50"
+            >
+              {refreshMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Refresh jobs
+            </button>
             {profile?.profileComplete && (
               <button
                 onClick={() => matchMutation.mutate()}
@@ -221,10 +245,31 @@ export function DashboardJobsPage() {
         {/* Jobs list */}
         {isLoading ? (
           <div className="flex items-center justify-center h-48"><Loader2 size={24} className="animate-spin text-[var(--th-text-50)]" /></div>
+        ) : isError ? (
+          <div className="text-center py-16">
+            <Briefcase size={36} className="mx-auto text-[var(--th-text-30)] mb-3" />
+            <p className="text-[var(--th-text-60)] text-sm">Could not load jobs.</p>
+            <button
+              onClick={() => qc.invalidateQueries({ queryKey: ["/api/dashboard/jobs"] })}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2 text-sm text-[var(--th-text)] hover:bg-[var(--th-hover)]"
+            >
+              <RefreshCw size={14} />
+              Try again
+            </button>
+          </div>
         ) : jobs.length === 0 ? (
           <div className="text-center py-16">
             <Briefcase size={36} className="mx-auto text-[var(--th-text-30)] mb-3" />
             <p className="text-[var(--th-text-60)] text-sm">No jobs found. Try different filters.</p>
+            <p className="text-[var(--th-text-40)] text-xs mt-1">Run a refresh to fetch the latest jobs from configured sources.</p>
+            <button
+              onClick={() => refreshMutation.mutate()}
+              disabled={refreshMutation.isPending}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0f0f11] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-black"
+            >
+              {refreshMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Refresh jobs
+            </button>
           </div>
         ) : (
           <>

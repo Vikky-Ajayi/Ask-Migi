@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Calendar, MapPin, ExternalLink, Search, Loader2, Coins, Globe, Navigation,
+  Calendar, MapPin, ExternalLink, Search, Loader2, Coins, Globe, Navigation, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
@@ -15,10 +15,10 @@ const CATEGORIES = [
 ];
 
 const DISTANCE_OPTIONS = [
-  { label: "5 mi", value: 5 },
-  { label: "10 mi", value: 10 },
-  { label: "25 mi", value: 25 },
-  { label: "50 mi", value: 50 },
+  { label: "Within 5 miles", value: 5 },
+  { label: "Within 10 miles", value: 10 },
+  { label: "Within 25 miles", value: 25 },
+  { label: "Within 50 miles", value: 50 },
 ];
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -145,6 +145,25 @@ export function DashboardEventsPage() {
     },
   });
 
+  const refreshMutation = useMutation({
+    mutationFn: () =>
+      apiRequest("POST", "/api/dashboard/events/refresh").then((r) => r.json()),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["/api/dashboard/events"] });
+      toast({
+        title: "Events refreshed",
+        description: data.total > 0 ? `${data.total.toLocaleString()} event(s) are now available.` : "No events were found from the sources yet.",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Refresh failed",
+        description: err.message ?? "Could not refresh events right now.",
+        variant: "destructive",
+      });
+    },
+  });
+
   async function handleGeocode() {
     const query = locationInput.trim();
     if (!query) return;
@@ -220,7 +239,7 @@ export function DashboardEventsPage() {
       : {}),
   });
 
-  const { data, isLoading } = useQuery<any>({
+  const { data, isLoading, isError } = useQuery<any>({
     queryKey: ["/api/dashboard/events", params.toString()],
     retry: false,
   });
@@ -242,20 +261,30 @@ export function DashboardEventsPage() {
               UK events from Meetup, Luma and more — find your next networking opportunity.
             </p>
           </div>
-          {profile?.profileComplete && (
+          <div className="flex gap-2 flex-wrap">
             <button
-              onClick={() => matchMutation.mutate()}
-              disabled={matchMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#0f0f11] dark:bg-white text-white dark:text-black text-sm font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
+              onClick={() => refreshMutation.mutate()}
+              disabled={refreshMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--th-border)] bg-[var(--th-card)] text-[var(--th-text)] text-sm font-medium rounded-xl hover:bg-[var(--th-hover)] transition-colors disabled:opacity-50 shrink-0"
             >
-              {matchMutation.isPending ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Coins size={14} />
-              )}
-              {useMatching ? "Re-run matching (2 coins)" : "Match to my profile (2 coins)"}
+              {refreshMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Refresh events
             </button>
-          )}
+            {profile?.profileComplete && (
+              <button
+                onClick={() => matchMutation.mutate()}
+                disabled={matchMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2.5 bg-[#0f0f11] dark:bg-white text-white dark:text-black text-sm font-medium rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
+              >
+                {matchMutation.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Coins size={14} />
+                )}
+                {useMatching ? "Re-run matching (2 coins)" : "Match to my profile (2 coins)"}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Stats bar */}
@@ -271,7 +300,7 @@ export function DashboardEventsPage() {
         {/* Location filter */}
         <div className="bg-[var(--th-card)] border border-[var(--th-border)] rounded-xl p-4 mb-4">
           <p className="text-xs font-medium text-[var(--th-text-70)] mb-2.5 flex items-center gap-1.5">
-            <Navigation size={12} /> Filter by location (UK postcode)
+            <Navigation size={12} /> Location radius
           </p>
           <div className="flex gap-2 flex-wrap">
             <input
@@ -312,6 +341,12 @@ export function DashboardEventsPage() {
             </p>
           )}
         </div>
+
+        {!locationActive && (
+          <p className="-mt-2 mb-4 px-1 text-xs text-[var(--th-text-40)]">
+            The distance option is only used after you enter a UK postcode and click Apply.
+          </p>
+        )}
 
         {/* Search + category filters */}
         <div className="flex flex-wrap gap-3 mb-6">
@@ -365,12 +400,32 @@ export function DashboardEventsPage() {
           <div className="flex items-center justify-center h-48">
             <Loader2 size={24} className="animate-spin text-[var(--th-text-50)]" />
           </div>
+        ) : isError ? (
+          <div className="text-center py-16">
+            <Calendar size={36} className="mx-auto text-[var(--th-text-30)] mb-3" />
+            <p className="text-[var(--th-text-60)] text-sm">Could not load events.</p>
+            <button
+              onClick={() => qc.invalidateQueries({ queryKey: ["/api/dashboard/events"] })}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--th-border)] px-4 py-2 text-sm text-[var(--th-text)] hover:bg-[var(--th-hover)]"
+            >
+              <RefreshCw size={14} />
+              Try again
+            </button>
+          </div>
         ) : events.length === 0 ? (
           <div className="text-center py-16">
             <Calendar size={36} className="mx-auto text-[var(--th-text-30)] mb-3" />
             <p className="text-[var(--th-text-60)] text-sm">
               No events found. Try adjusting your filters.
             </p>
+            <button
+              onClick={() => refreshMutation.mutate()}
+              disabled={refreshMutation.isPending}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0f0f11] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-black"
+            >
+              {refreshMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Refresh events
+            </button>
             <p className="text-[var(--th-text-40)] text-xs mt-1">
               Events are scraped from Meetup and Luma — check back soon.
             </p>
