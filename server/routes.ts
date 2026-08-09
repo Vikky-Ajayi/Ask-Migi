@@ -70,6 +70,8 @@ function parseCvLocally(text: string): {
   industry?: string;
   skills: string[];
   yearsExperience?: number;
+  linkedinUrl?: string;
+  targetRoles?: string[];
 } {
   const normalised = text.replace(/\s+/g, " ").trim();
   const lower = normalised.toLowerCase();
@@ -106,13 +108,29 @@ function parseCvLocally(text: string): {
   const yearMatches = Array.from(normalised.matchAll(/(\d+)\+?\s+years?\s+(?:of\s+)?experience/gi))
     .map((m) => Number(m[1]))
     .filter(Number.isFinite);
-  const yearsExperience = yearMatches.length ? Math.max(...yearMatches) : undefined;
+  const dateRangeYears = Array.from(
+    normalised.matchAll(/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)?\.?\s*(20\d{2})\s*(?:-|–|—|to)\s*(?:(?:present|current)|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)?\.?\s*(20\d{2}))/gi)
+  )
+    .map((m) => {
+      const start = Number(m[1]);
+      const end = m[2] ? Number(m[2]) : new Date().getFullYear();
+      return Math.max(0, end - start);
+    })
+    .filter((years) => years > 0);
+  const yearsExperience = yearMatches.length
+    ? Math.max(...yearMatches)
+    : dateRangeYears.length
+      ? Math.max(1, Math.min(30, Math.round(dateRangeYears.reduce((a, b) => a + b, 0))))
+      : undefined;
 
   const industry = lower.match(/\b(react|node|javascript|typescript|software|web developer|computer science|api)\b/)
     ? "Technology"
     : undefined;
 
-  return { jobTitle, industry, skills, yearsExperience };
+  const linkedinUrl = normalised.match(/https?:\/\/(?:www\.)?linkedin\.com\/[^\s)]+/i)?.[0];
+  const targetRoles = jobTitle ? [jobTitle] : undefined;
+
+  return { jobTitle, industry, skills, yearsExperience, linkedinUrl, targetRoles };
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
@@ -1160,13 +1178,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       let parsedTitle = localParsed.jobTitle ?? "";
       let parsedIndustry = localParsed.industry ?? "";
       let parsedYearsExperience: number | null = localParsed.yearsExperience ?? null;
+      const parsedLinkedinUrl = localParsed.linkedinUrl ?? "";
+      const parsedTargetRoles = localParsed.targetRoles ?? [];
       // Save cvText (and any extracted fields) to the profile
-      const updateData: Record<string, any> = { userId: req.userId!, cvText: text };
+      const updateData: Record<string, any> = { userId: req.userId!, cvText: text, cvFilename: originalName };
       if (parsedTitle) updateData.jobTitle = parsedTitle;
       if (parsedIndustry) updateData.industry = parsedIndustry;
       if (parsedYearsExperience != null) updateData.yearsExperience = parsedYearsExperience;
       if (parsedSkills.length > 0) updateData.skills = parsedSkills;
-      await storage.upsertUserProfile(updateData as Parameters<typeof storage.upsertUserProfile>[0]);
+      if (parsedLinkedinUrl) updateData.linkedinUrl = parsedLinkedinUrl;
+      if (parsedTargetRoles.length > 0) updateData.targetRoles = parsedTargetRoles;
+      const profile = await storage.upsertUserProfile(updateData as Parameters<typeof storage.upsertUserProfile>[0]);
 
       res.json({
         ok: true,
@@ -1176,9 +1198,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           jobTitle: parsedTitle,
           yearsExperience: parsedYearsExperience,
           skills: parsedSkills,
+          linkedinUrl: parsedLinkedinUrl,
+          targetRoles: parsedTargetRoles,
         },
         parsedSkills,
         parsedTitle,
+        profile,
       });
     } catch (err: any) {
       console.error("[CV upload]", err.message);

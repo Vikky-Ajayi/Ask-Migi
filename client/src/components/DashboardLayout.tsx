@@ -61,7 +61,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <nav className="dashboard-sidebar-scroll flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => (
             <NavItem key={item.path} item={item} />
           ))}
@@ -127,7 +127,7 @@ export function DashboardLayout({ children, mainClassName }: { children: React.R
                 <X size={18} className="text-[var(--th-text-70)]" />
               </button>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+            <nav className="dashboard-sidebar-scroll flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
               {navItems.map((item) => (
                 <NavItem key={item.path} item={item} mobile onClose={() => setMobileOpen(false)} />
               ))}

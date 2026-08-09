@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Plus, Loader2, CheckCircle2, User } from "lucide-react";
@@ -56,7 +56,8 @@ export function DashboardProfilePage() {
 
   // Sync form with loaded profile
   const [formSynced, setFormSynced] = useState(false);
-  if (profile && !formSynced) {
+  useEffect(() => {
+    if (!profile || formSynced) return;
     setForm({
       industry: profile.industry ?? "",
       jobTitle: profile.jobTitle ?? "",
@@ -72,7 +73,7 @@ export function DashboardProfilePage() {
       dealBreakers: profile.dealBreakers ?? "",
     });
     setFormSynced(true);
-  }
+  }, [profile, formSynced]);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) =>
@@ -106,7 +107,11 @@ export function DashboardProfilePage() {
     },
     onSuccess: (data) => {
       toast({ title: "CV uploaded", description: "Your CV has been parsed and profile updated." });
-      qc.invalidateQueries({ queryKey: ["/api/dashboard/profile"] });
+      if (data.profile) {
+        qc.setQueryData(["/api/dashboard/profile"], data.profile);
+      } else {
+        qc.invalidateQueries({ queryKey: ["/api/dashboard/profile"] });
+      }
       // Pre-fill fields from parsed CV
       const parsed = data.parsed ?? {
         industry: data.industry,
@@ -121,8 +126,10 @@ export function DashboardProfilePage() {
           jobTitle: parsed.jobTitle ?? f.jobTitle,
           yearsExperience: parsed.yearsExperience?.toString() ?? f.yearsExperience,
           skills: parsed.skills?.length ? parsed.skills : f.skills,
+          linkedinUrl: parsed.linkedinUrl ?? f.linkedinUrl,
+          targetRoles: parsed.targetRoles?.length ? parsed.targetRoles.join(", ") : f.targetRoles,
         }));
-        setFormSynced(false);
+        setFormSynced(true);
       }
     },
     onError: (error: Error) => toast({ title: "Upload failed", description: error.message || "Could not read this CV. Please try again.", variant: "destructive" }),

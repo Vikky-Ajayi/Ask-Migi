@@ -126,6 +126,36 @@
 .logo-adaptive { filter: brightness(0); }
 .dark .logo-adaptive { filter: none; }
 
+.dashboard-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.dashboard-sidebar-scroll:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.dashboard-sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
 /* Transition the page bg/text smoothly on theme change */
 html { transition: background-color 0.2s ease, color 0.2s ease; }
 
