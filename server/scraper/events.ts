@@ -15,6 +15,31 @@ import { createLimit } from "./limit";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+function normaliseEventText(value: string | undefined | null): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/&amp;/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(the|a|an|and|for|with|your|you)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function eventFingerprint(record: {
+  title: string;
+  startDate: Date;
+  locationVenue?: string;
+  locationCity?: string;
+}) {
+  const startMinute = record.startDate.toISOString().slice(0, 16);
+  return [
+    normaliseEventText(record.title),
+    startMinute,
+    normaliseEventText(record.locationVenue),
+    normaliseEventText(record.locationCity),
+  ].join("|");
+}
+
 function distanceMiles(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const earthRadiusMiles = 3958.8;
@@ -112,8 +137,25 @@ async function upsertEvent(record: {
 
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
   if (record.startDate < cutoff) return false;
+  const fingerprint = eventFingerprint(record);
 
   try {
+    const [duplicate] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(sql`
+        status = 'active'
+        AND eventbrite_id <> ${record.sourceId}
+        AND (
+          lower(regexp_replace(title, '[^a-zA-Z0-9]+', ' ', 'g')) || '|' ||
+          to_char(start_date, 'YYYY-MM-DD"T"HH24:MI') || '|' ||
+          lower(regexp_replace(coalesce(location_venue, ''), '[^a-zA-Z0-9]+', ' ', 'g')) || '|' ||
+          lower(regexp_replace(coalesce(location_city, ''), '[^a-zA-Z0-9]+', ' ', 'g'))
+        ) = ${fingerprint}
+      `)
+      .limit(1);
+    if (duplicate) return false;
+
     await db
       .insert(events)
       .values({

@@ -28,6 +28,16 @@ export function verifyPassword(password: string, stored: string): boolean {
   return hash === newHash;
 }
 
+function normaliseDedupeText(value: string | null | undefined): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/&amp;/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(the|a|an|and|for|with|your|you)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ─── Expert Service (matches DB schema) ───────────────────────────────────────
 export interface ExpertService {
   id: string;
@@ -446,9 +456,6 @@ class DatabaseStorage implements IStorage {
     const { q, category, online, free, city, page = 1, limit = 24, matchedIds, lat, lng, radiusMiles } = opts;
     const offset = (page - 1) * limit;
 
-    let query = db.select().from(events).$dynamic();
-    let countQuery = db.select({ count: sql<number>`count(*)` }).from(events).$dynamic();
-
     const conditions: any[] = [sql`status = 'active'`, sql`start_date > NOW()`];
 
     if (q) {
@@ -473,15 +480,25 @@ class DatabaseStorage implements IStorage {
     }
 
     const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
-
-    const [{ count }] = await countQuery.where(whereClause);
-    const rows = await query
+    const rawRows = await db.select().from(events)
       .where(whereClause)
       .orderBy(events.startDate)
-      .limit(limit)
-      .offset(offset);
+      .limit(Math.max(250, (page * limit) * 4));
 
-    return { events: rows, total: Number(count) };
+    const seen = new Set<string>();
+    const deduped = rawRows.filter((event) => {
+      const key = [
+        normaliseDedupeText(event.title),
+        new Date(event.startDate).toISOString().slice(0, 16),
+        normaliseDedupeText(event.locationVenue),
+        normaliseDedupeText(event.locationCity),
+      ].join("|");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return { events: deduped.slice(offset, offset + limit), total: deduped.length };
   }
 
   async getEventsByIds(ids: string[]): Promise<Event[]> {

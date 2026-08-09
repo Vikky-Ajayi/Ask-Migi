@@ -280,15 +280,14 @@ export function DashboardProfilePage() {
     };
   }
 
-  async function saveProgress(nextStep = step, message = "Your career profile draft has been saved.") {
+  async function saveProgress(nextStep = step) {
     await saveMutation.mutateAsync(buildPayload(false, nextStep));
     setStep(nextStep);
-    toast({ title: "Draft saved", description: message });
   }
 
   async function saveAndContinue() {
     const next = Math.min(step + 1, PROFILE_STEPS.length - 1);
-    await saveProgress(next, "You can continue from this step later.");
+    await saveProgress(next);
   }
 
   async function submitProfile() {
