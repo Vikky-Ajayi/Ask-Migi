@@ -7,7 +7,7 @@
 import OpenAI from "openai";
 import { db } from "./db";
 import { jobApplications, jobs, userProfiles, users } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 
 let openaiClient: OpenAI | null = null;
 
@@ -231,5 +231,40 @@ export async function processQueuedApplications(): Promise<void> {
     console.error("[autoApply] Queue processor error:", err);
   } finally {
     processorRunning = false;
+  }
+}
+
+/**
+ * Auto-flag applications the employer has gone silent on.
+ *
+ * Modeled on how job-tracking tools (Ghoster, G-Track) handle this without any inbox
+ * access at all: if an application has sat in "submitted" for longer than most hiring
+ * pipelines take to respond, treat the silence itself as a signal and move it to
+ * "no_response" — separate from "rejected" since we don't actually know the outcome,
+ * just that nobody replied. The user can still manually override with a real status
+ * (interview / rejected / offer) at any time if they do hear back after all.
+ *
+ * This needs no email integration, so it can run today; email-based detection
+ * (matching Teal/Huntr/Ghoster's approach of scanning a connected inbox for ATS
+ * senders) is a natural phase 2 on top of this.
+ */
+const STALE_AFTER_DAYS = 21;
+
+export async function flagStaleApplications(): Promise<number> {
+  const cutoff = new Date(Date.now() - STALE_AFTER_DAYS * 24 * 60 * 60 * 1000);
+  try {
+    const flipped = await db
+      .update(jobApplications)
+      .set({ status: "no_response", statusUpdatedAt: new Date() })
+      .where(and(eq(jobApplications.status, "submitted"), lt(jobApplications.appliedAt, cutoff)))
+      .returning({ id: jobApplications.id });
+
+    if (flipped.length > 0) {
+      console.log(`[autoApply] Flagged ${flipped.length} application(s) as no_response (no reply after ${STALE_AFTER_DAYS}d).`);
+    }
+    return flipped.length;
+  } catch (err) {
+    console.error("[autoApply] Staleness check error:", err);
+    return 0;
   }
 }

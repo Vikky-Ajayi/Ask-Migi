@@ -17,9 +17,12 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
   interview: { label: "Interview 🎉", color: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-100 dark:bg-emerald-900/60" },
   rejected: { label: "Rejected", color: "text-gray-500 dark:text-gray-500", bg: "bg-gray-50 dark:bg-gray-900/40" },
   offer: { label: "Offer! 🏆", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/60" },
+  // Auto-set by the server when a submitted application gets no reply for a while —
+  // never set manually, so it's not in the "update status" button list below.
+  no_response: { label: "No Response 👻", color: "text-slate-500 dark:text-slate-400", bg: "bg-slate-50 dark:bg-slate-900/40" },
 };
 
-const STATUS_OPTIONS = ["queued", "generating_docs", "applying", "submitted", "failed", "viewed", "interview", "rejected", "offer"];
+const STATUS_OPTIONS = ["queued", "generating_docs", "applying", "submitted", "failed", "viewed", "interview", "rejected", "offer", "no_response"];
 
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? { label: status, color: "text-gray-500", bg: "bg-gray-50" };
@@ -106,6 +109,14 @@ function ApplicationCard({ app, onStatusUpdate }: { app: any; onStatusUpdate: (i
               <p className="text-xs text-red-500 dark:text-red-400">{app.failureReason}</p>
             </div>
           )}
+          {app.status === "no_response" && (
+            <div className="bg-[var(--th-input)] rounded-lg p-3">
+              <p className="text-xs text-[var(--th-text-60)]">
+                No reply from the employer since this was submitted — we flag these automatically after a few weeks of silence.
+                If you do hear back, update the status manually below.
+              </p>
+            </div>
+          )}
 
           {/* Manual status update */}
           <div>
@@ -165,7 +176,7 @@ export function DashboardApplicationsPage() {
   const statusGroups = {
     active: apps.filter((a: any) => ["queued", "generating_docs", "applying", "submitted"].includes(a.status)),
     responded: apps.filter((a: any) => ["viewed", "interview", "offer"].includes(a.status)),
-    closed: apps.filter((a: any) => ["rejected", "failed"].includes(a.status)),
+    closed: apps.filter((a: any) => ["rejected", "failed", "no_response"].includes(a.status)),
   };
 
   return (

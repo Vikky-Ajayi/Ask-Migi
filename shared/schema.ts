@@ -276,7 +276,7 @@ export const jobApplications = pgTable("job_applications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   jobId: varchar("job_id").notNull().references(() => jobs.id),
-  status: text("status").notNull().default("queued"), // queued | generating_docs | applying | submitted | failed | viewed | interview | rejected | offer
+  status: text("status").notNull().default("queued"), // queued | generating_docs | applying | submitted | failed | viewed | interview | rejected | offer | no_response (auto-set after STALE_AFTER_DAYS of silence — see server/autoApply.ts)
   tailoredCvText: text("tailored_cv_text"),
   coverLetter: text("cover_letter"),
   failureReason: text("failure_reason"),

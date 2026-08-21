@@ -19,7 +19,7 @@ import { randomInt, randomBytes, createHmac } from "crypto";
 import { generateAIResponse, generateQuestionAnalysis, generateCasualReply } from "./ai";
 import { sendOTPEmail, sendWelcomeEmail, sendExpertWelcomeEmail, sendExpertReplyEmail, sendNewQuestionEmail, sendCoinPurchaseEmail } from "./email";
 import { keywordScore, buildProfileText, buildProfileSummary, rankCandidatesWithAI } from "./embeddings";
-import { processQueuedApplications } from "./autoApply";
+import { processQueuedApplications, flagStaleApplications } from "./autoApply";
 import { runIncrementalEventSweep } from "./scraper/events";
 import { runJobScrape } from "./scraper/jobs";
 
@@ -1281,6 +1281,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   if (process.env.ENABLE_BACKGROUND_JOBS === "true") {
     setInterval(() => { processQueuedApplications().catch(console.error); }, 2 * 60 * 1000);
     setTimeout(() => { processQueuedApplications().catch(console.error); }, 15_000);
+
+    // ── Staleness sweep — auto-flag "submitted" applications gone quiet too long
+    // (every 6 hours; no need to check more often than that) ──────────────────
+    setInterval(() => { flagStaleApplications().catch(console.error); }, 6 * 60 * 60 * 1000);
+    setTimeout(() => { flagStaleApplications().catch(console.error); }, 30_000);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1745,7 +1750,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const { id } = req.params;
       const { status } = req.body as { status: string };
-      const validStatuses = ["queued", "generating_docs", "submitted", "interviewing", "rejected", "offer"];
+      // Must match what the client's manual status buttons actually send
+      // (DashboardApplicationsPage.tsx) — "interviewing"/missing "viewed" here previously
+      // meant two of the four buttons always failed with a 400.
+      const validStatuses = ["queued", "generating_docs", "applying", "submitted", "failed", "viewed", "interview", "rejected", "offer", "no_response"];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
       }
