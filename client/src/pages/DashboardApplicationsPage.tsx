@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Loader2, ChevronDown, ChevronUp, ExternalLink, Briefcase, Clock, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,9 +24,17 @@ const STATUS_OPTIONS = ["queued", "generating_docs", "applying", "submitted", "f
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? { label: status, color: "text-gray-500", bg: "bg-gray-50" };
   return (
-    <span className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full", cfg.bg, cfg.color)}>
-      {cfg.label}
-    </span>
+    <AnimatePresence mode="wait">
+      <motion.span
+        key={status}
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        className={cn("text-[10px] font-semibold px-2.5 py-1 rounded-full inline-block", cfg.bg, cfg.color)}
+      >
+        {cfg.label}
+      </motion.span>
+    </AnimatePresence>
   );
 }
 
@@ -33,7 +42,13 @@ function ApplicationCard({ app, onStatusUpdate }: { app: any; onStatusUpdate: (i
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-[var(--th-card)] border border-[var(--th-border)] rounded-xl overflow-hidden">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="bg-[var(--th-card)] border border-[var(--th-border)] rounded-xl overflow-hidden"
+    >
       <div className="p-4 flex items-start gap-4">
         <div className="w-9 h-9 rounded-lg bg-[var(--th-input)] flex items-center justify-center shrink-0 text-sm font-semibold text-[var(--th-text-50)]">
           {app.job?.company?.[0]?.toUpperCase() ?? "?"}
@@ -115,7 +130,7 @@ function ApplicationCard({ app, onStatusUpdate }: { app: any; onStatusUpdate: (i
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -124,9 +139,15 @@ export function DashboardApplicationsPage() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
 
+  // Always fetch the full list — filtering happens client-side below (the stats row
+  // needs every application regardless of which tab is active). Note: `filter` must
+  // NOT be appended to the queryKey here — the default queryFn joins the key into the
+  // request URL, and a trailing segment like "/all" or "/active" doesn't match any
+  // backend route, so applications silently failed to load before this fix.
   const { data, isLoading } = useQuery<any>({
-    queryKey: ["/api/dashboard/applications", filter],
+    queryKey: ["/api/dashboard/applications"],
     retry: false,
+    refetchInterval: 15_000,
   });
 
   const updateMutation = useMutation({
@@ -196,19 +217,21 @@ export function DashboardApplicationsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {apps
-              .filter((a: any) => {
-                if (filter === "all") return true;
-                if (filter === "active") return ["queued", "generating_docs", "applying", "submitted"].includes(a.status);
-                return a.status === filter;
-              })
-              .map((app: any) => (
-                <ApplicationCard
-                  key={app.id}
-                  app={app}
-                  onStatusUpdate={(id, status) => updateMutation.mutate({ id, status })}
-                />
-              ))}
+            <AnimatePresence initial={false}>
+              {apps
+                .filter((a: any) => {
+                  if (filter === "all") return true;
+                  if (filter === "active") return ["queued", "generating_docs", "applying", "submitted"].includes(a.status);
+                  return a.status === filter;
+                })
+                .map((app: any) => (
+                  <ApplicationCard
+                    key={app.id}
+                    app={app}
+                    onStatusUpdate={(id, status) => updateMutation.mutate({ id, status })}
+                  />
+                ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

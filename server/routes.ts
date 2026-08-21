@@ -1656,10 +1656,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Deduplicate — skip jobs already applied to
       const queued: string[] = [];
       const skippedDuplicates: string[] = [];
+      const createdApps: Array<{ id: string; jobId: string; status: string }> = [];
       for (const jobId of jobIds) {
         const existing = await storage.getApplicationByUserAndJob(userId, jobId);
         if (!existing) {
-          await storage.createJobApplication({ userId, jobId, coinsSpent: COST_PER_JOB });
+          const app = await storage.createJobApplication({ userId, jobId, coinsSpent: COST_PER_JOB });
+          createdApps.push({ id: app.id, jobId: app.jobId, status: app.status });
           queued.push(jobId);
         } else {
           skippedDuplicates.push(jobId);
@@ -1673,13 +1675,54 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       // Fire the queue processor async (non-blocking)
       processQueuedApplications().catch(console.error);
 
+      // Attach lightweight job info so the client can render the progress flow immediately
+      const jobRows = await storage.getJobsByIds(createdApps.map((a) => a.jobId));
+      const jobMap = new Map(jobRows.map((j) => [j.id, j]));
+      const applications = createdApps.map((a) => ({
+        id: a.id,
+        jobId: a.jobId,
+        status: a.status,
+        job: jobMap.has(a.jobId)
+          ? { title: jobMap.get(a.jobId)!.title, company: jobMap.get(a.jobId)!.company }
+          : undefined,
+      }));
+
       res.json({
         ok: true,
         queued: queued.length,
         skippedDuplicates: skippedDuplicates.length,
+        applications,
         message: queued.length === 0 && skippedDuplicates.length > 0
           ? "Selected job(s) are already in your applications tracker."
           : undefined,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  /**
+   * GET /api/dashboard/applications/track?ids=a,b,c
+   * Lean polling endpoint for the auto-apply progress modal — returns just the
+   * fields needed to animate status transitions for a known set of application IDs.
+   */
+  app.get("/api/dashboard/applications/track", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const idsParam = typeof req.query.ids === "string" ? req.query.ids : "";
+      const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean);
+      if (ids.length === 0) return res.json({ applications: [] });
+
+      const apps = await storage.getApplicationsByIds(req.userId!, ids);
+      res.json({
+        applications: apps.map((a) => ({
+          id: a.id,
+          jobId: a.jobId,
+          status: a.status,
+          tailoredCvText: a.tailoredCvText,
+          coverLetter: a.coverLetter,
+          failureReason: a.failureReason,
+          job: a.job ? { title: a.job.title, company: a.job.company } : undefined,
+        })),
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -1691,7 +1734,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     try {
       const status = typeof req.query.status === "string" ? req.query.status : undefined;
       const apps = await storage.getUserApplications(req.userId!, status);
-      res.json(apps);
+      res.json({ applications: apps });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

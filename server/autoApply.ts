@@ -167,7 +167,8 @@ async function processApplication(applicationId: string): Promise<void> {
 
     // TODO Phase 2: Playwright automation submits the form here
     // For now, mark as submitted — documents are ready, user downloads and applies
-    await sleep(1500);
+    // (short dwell so the "Submitting application" step is visible in the UI)
+    await sleep(1200);
 
     await db
       .update(jobApplications)
@@ -196,20 +197,35 @@ async function processApplication(applicationId: string): Promise<void> {
 
 let processorRunning = false;
 
-/** Process all queued applications (called on a timer and after new applications are queued) */
+const BATCH_SIZE = 5;
+const MAX_PER_RUN = 40; // safety cap so one run can't loop forever
+const INTER_ITEM_DELAY_MS = 800;
+
+/**
+ * Process all queued applications (called on a timer and right after new applications
+ * are queued). Drains the queue in batches within a single run — rather than handling
+ * only one batch and waiting for the next timer tick — so a bulk auto-apply (up to 20
+ * jobs) finishes in one continuous pass that the progress modal can watch to completion.
+ */
 export async function processQueuedApplications(): Promise<void> {
   if (processorRunning) return;
   processorRunning = true;
   try {
-    const queued = await db
-      .select()
-      .from(jobApplications)
-      .where(eq(jobApplications.status, "queued"))
-      .limit(5);
+    let processed = 0;
+    while (processed < MAX_PER_RUN) {
+      const queued = await db
+        .select()
+        .from(jobApplications)
+        .where(eq(jobApplications.status, "queued"))
+        .limit(BATCH_SIZE);
 
-    for (const app of queued) {
-      await processApplication(app.id);
-      await sleep(3000);
+      if (queued.length === 0) break;
+
+      for (const app of queued) {
+        await processApplication(app.id);
+        processed++;
+        await sleep(INTER_ITEM_DELAY_MS);
+      }
     }
   } catch (err) {
     console.error("[autoApply] Queue processor error:", err);

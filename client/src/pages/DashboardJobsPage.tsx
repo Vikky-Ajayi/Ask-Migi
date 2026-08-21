@@ -1,10 +1,12 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Briefcase, MapPin, ExternalLink, Search, Loader2, Coins, Clock, Building2, Wifi, CheckSquare, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
+import { AutoApplyFlow, type AutoApplyJobInput } from "@/components/AutoApplyFlow";
 
 const SOURCES = ["All", "linkedin", "reed", "remotive", "weworkremotely", "greenhouse", "himalayas", "adzuna"];
 const WORK_TYPES = ["All", "remote", "hybrid", "onsite"];
@@ -90,6 +92,7 @@ function JobCard({ job, selected, onToggle, onApply, onView }: { job: any; selec
 export function DashboardJobsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("All");
@@ -99,6 +102,7 @@ export function DashboardJobsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [viewingJob, setViewingJob] = useState<any | null>(null);
   const [page, setPage] = useState(1);
+  const [autoApplyBatch, setAutoApplyBatch] = useState<AutoApplyJobInput[] | null>(null);
 
   const { data: profile } = useQuery<any>({ queryKey: ["/api/dashboard/profile"], retry: false });
 
@@ -115,8 +119,10 @@ export function DashboardJobsPage() {
   const applyMutation = useMutation({
     mutationFn: (jobIds: string[]) => apiRequest("POST", "/api/dashboard/jobs/apply", { jobIds }).then(r => r.json()),
     onSuccess: (data: any) => {
-      if (data.queued > 0) {
-        toast({ title: "Applications queued!", description: `${data.queued} application(s) queued. Generating tailored documents...` });
+      if (data.applications?.length > 0) {
+        // Carry the user through the process instead of leaving them guessing —
+        // open the animated progress flow right away.
+        setAutoApplyBatch(data.applications);
       } else {
         toast({ title: "Already queued", description: data.message ?? "This job is already in your applications tracker." });
       }
@@ -178,25 +184,38 @@ export function DashboardJobsPage() {
       toast({ title: "Profile incomplete", description: "Please upload your CV in your profile first.", variant: "destructive" });
       return;
     }
-    const coinCost = ids.length * 5;
     applyMutation.mutate(ids);
-    toast({ title: `Applying to ${ids.length} job(s)`, description: `${coinCost} coins will be deducted.` });
   }
+
+  const autoApplyModal = autoApplyBatch && (
+    <AutoApplyFlow
+      applications={autoApplyBatch}
+      onClose={() => setAutoApplyBatch(null)}
+      onViewApplications={() => {
+        setAutoApplyBatch(null);
+        setLocation("/dashboard/applications");
+      }}
+    />
+  );
 
   if (viewingJob) {
     return (
-      <DashboardLayout>
-        <JobDetailsPage
-          job={viewingJob}
-          onBack={() => setViewingJob(null)}
-          onApply={() => handleApply(viewingJob.id)}
-          applying={applyMutation.isPending}
-        />
-      </DashboardLayout>
+      <>
+        <DashboardLayout>
+          <JobDetailsPage
+            job={viewingJob}
+            onBack={() => setViewingJob(null)}
+            onApply={() => handleApply(viewingJob.id)}
+            applying={applyMutation.isPending}
+          />
+        </DashboardLayout>
+        {autoApplyModal}
+      </>
     );
   }
 
   return (
+    <>
     <DashboardLayout>
       <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
         {/* Header */}
@@ -321,6 +340,8 @@ export function DashboardJobsPage() {
         )}
       </div>
     </DashboardLayout>
+    {autoApplyModal}
+    </>
   );
 }
 

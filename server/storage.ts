@@ -605,6 +605,19 @@ class DatabaseStorage implements IStorage {
     return apps.map((a) => ({ ...a, job: jobMap.get(a.jobId) }));
   }
 
+  /** Lean lookup for a known set of application IDs — used by the auto-apply progress tracker. */
+  async getApplicationsByIds(userId: string, ids: string[]): Promise<(JobApplication & { job?: Job })[]> {
+    if (ids.length === 0) return [];
+    const apps = await db.select().from(jobApplications)
+      .where(and(eq(jobApplications.userId, userId), inArray(jobApplications.id, ids)));
+
+    const jobIds = Array.from(new Set(apps.map((a) => a.jobId)));
+    const jobRows = await this.getJobsByIds(jobIds);
+    const jobMap = new Map(jobRows.map((j) => [j.id, j]));
+
+    return apps.map((a) => ({ ...a, job: jobMap.get(a.jobId) }));
+  }
+
   async updateApplicationStatus(
     id: string,
     userId: string,
