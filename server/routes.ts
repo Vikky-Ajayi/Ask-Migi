@@ -1765,6 +1765,26 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  /** PATCH /api/dashboard/applications/:id/docs — edit the AI-generated cover letter / CV summary before it's submitted */
+  app.patch("/api/dashboard/applications/:id/docs", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const { tailoredCvText, coverLetter } = req.body as { tailoredCvText?: string; coverLetter?: string };
+      if (tailoredCvText === undefined && coverLetter === undefined) {
+        return res.status(400).json({ error: "Provide tailoredCvText and/or coverLetter." });
+      }
+      const docs: { tailoredCvText?: string; coverLetter?: string } = {};
+      if (typeof tailoredCvText === "string") docs.tailoredCvText = tailoredCvText.slice(0, 5000);
+      if (typeof coverLetter === "string") docs.coverLetter = coverLetter.slice(0, 5000);
+
+      const updated = await storage.updateApplicationDocs(String(id), req.userId!, docs);
+      if (!updated) return res.status(404).json({ error: "Application not found." });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   /**
    * GET /api/dashboard/applications/:id/download
    * Downloads the tailored CV + cover letter as a formatted text file.

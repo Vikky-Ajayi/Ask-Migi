@@ -630,6 +630,19 @@ class DatabaseStorage implements IStorage {
     return row;
   }
 
+  /** Lets a user tweak the AI-generated cover letter / CV summary before it's submitted. */
+  async updateApplicationDocs(
+    id: string,
+    userId: string,
+    docs: { tailoredCvText?: string; coverLetter?: string }
+  ): Promise<JobApplication | undefined> {
+    const [row] = await db.update(jobApplications)
+      .set({ ...docs, statusUpdatedAt: new Date() })
+      .where(and(eq(jobApplications.id, id), eq(jobApplications.userId, userId)))
+      .returning();
+    return row;
+  }
+
   async getApplicationByUserAndJob(userId: string, jobId: string): Promise<JobApplication | undefined> {
     const [row] = await db.select().from(jobApplications)
       .where(and(eq(jobApplications.userId, userId), eq(jobApplications.jobId, jobId)));

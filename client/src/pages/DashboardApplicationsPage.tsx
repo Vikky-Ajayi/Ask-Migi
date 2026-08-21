@@ -90,7 +90,7 @@ function ApplicationCard({ app, onStatusUpdate }: { app: any; onStatusUpdate: (i
           {app.coverLetter && (
             <div>
               <p className="text-xs font-medium text-[var(--th-text-70)] mb-2">AI Cover Letter</p>
-              <div className="bg-[var(--th-input)] rounded-lg p-3 text-xs text-[var(--th-text-80)] leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+              <div className="th-scroll bg-[var(--th-input)] rounded-lg p-3 text-xs text-[var(--th-text-80)] leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
                 {app.coverLetter}
               </div>
             </div>

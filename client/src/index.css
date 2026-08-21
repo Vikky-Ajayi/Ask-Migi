@@ -156,6 +156,30 @@
   background: rgba(255, 255, 255, 0.34);
 }
 
+/* Generic modern/thin scrollbar for cards, modals & textareas (theme-agnostic neutral tone) */
+.th-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+
+.th-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.th-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.th-scroll::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.35);
+  border-radius: 999px;
+}
+
+.th-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.55);
+}
+
 /* Transition the page bg/text smoothly on theme change */
 html { transition: background-color 0.2s ease, color 0.2s ease; }
 

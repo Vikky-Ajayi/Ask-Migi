@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X, Loader2, FileText, Send, CheckCircle2, XCircle, Sparkles,
@@ -32,6 +32,9 @@ interface AutoApplyFlowProps {
 }
 
 type Stage = "queued" | "generating" | "preview" | "submitting" | "done" | "failed";
+type DocField = "tailoredCvText" | "coverLetter";
+type GetDoc = (item: TrackedApplication, field: DocField) => string;
+type OnEditDoc = (id: string, field: DocField, value: string) => void;
 
 const STEP_ORDER: Stage[] = ["queued", "generating", "preview", "submitting", "done"];
 
@@ -94,8 +97,6 @@ export function AutoApplyFlow({ applications, onClose, onViewApplications }: Aut
   const [local, setLocal] = useState<Record<string, { confirmed: boolean; settled: boolean }>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  useEffect(() => () => { Object.values(timers.current).forEach(clearTimeout); }, []);
-
   function confirm(id: string) {
     setLocal((prev) => (prev[id]?.confirmed ? prev : { ...prev, [id]: { confirmed: true, settled: false } }));
     if (!timers.current[id]) {
@@ -104,6 +105,41 @@ export function AutoApplyFlow({ applications, onClose, onViewApplications }: Aut
       }, MIN_SUBMIT_MS);
     }
   }
+
+  // Let the user tweak the AI-generated docs before they go out — edits win over
+  // whatever the poll returns, and autosave (debounced) so nothing's lost on close.
+  const [edits, setEdits] = useState<Record<string, Partial<Record<DocField, string>>>>({});
+  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const saveDocsMutation = useMutation({
+    mutationFn: ({ id, docs }: { id: string; docs: Partial<Record<DocField, string>> }) =>
+      apiRequest("PATCH", `/api/dashboard/applications/${id}/docs`, docs).then((r) => r.json()),
+  });
+
+  function getDoc(item: TrackedApplication, field: DocField): string {
+    return edits[item.id]?.[field] ?? item[field] ?? "";
+  }
+
+  function editDoc(id: string, field: DocField, value: string) {
+    setEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+    const key = `${id}-${field}`;
+    clearTimeout(saveTimers.current[key]);
+    saveTimers.current[key] = setTimeout(() => {
+      saveDocsMutation.mutate({ id, docs: { [field]: value } });
+    }, 700);
+  }
+
+  function flushDocSave(id: string) {
+    const pending = edits[id];
+    if (!pending) return;
+    (Object.keys(pending) as DocField[]).forEach((field) => clearTimeout(saveTimers.current[`${id}-${field}`]));
+    saveDocsMutation.mutate({ id, docs: pending });
+  }
+
+  useEffect(() => () => {
+    Object.values(timers.current).forEach(clearTimeout);
+    Object.values(saveTimers.current).forEach(clearTimeout);
+  }, []);
 
   // Bulk apply auto-advances past the preview gate the moment docs are ready — the user
   // opted into batch automation already, so we don't stop and wait on every single job.
@@ -167,11 +203,17 @@ export function AutoApplyFlow({ applications, onClose, onViewApplications }: Aut
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto">
+        <div className="th-scroll overflow-y-auto">
           {mode === "single" ? (
-            <SingleFlow item={items[0]} stage={stages[0]} onConfirm={() => confirm(items[0].id)} />
+            <SingleFlow
+              item={items[0]}
+              stage={stages[0]}
+              onConfirm={() => { flushDocSave(items[0].id); confirm(items[0].id); }}
+              getDoc={getDoc}
+              onEditDoc={editDoc}
+            />
           ) : (
-            <BulkFlow items={items} stages={stages} />
+            <BulkFlow items={items} stages={stages} getDoc={getDoc} onEditDoc={editDoc} />
           )}
         </div>
 
@@ -206,7 +248,11 @@ export function AutoApplyFlow({ applications, onClose, onViewApplications }: Aut
 
 /* ── Single-job flow ─────────────────────────────────────────────────────── */
 
-function SingleFlow({ item, stage, onConfirm }: { item: TrackedApplication; stage: Stage; onConfirm: () => void }) {
+function SingleFlow({
+  item, stage, onConfirm, getDoc, onEditDoc,
+}: {
+  item: TrackedApplication; stage: Stage; onConfirm: () => void; getDoc: GetDoc; onEditDoc: OnEditDoc;
+}) {
   const stepIndex = stage === "failed" ? -1 : STEP_ORDER.indexOf(stage);
 
   return (
@@ -270,8 +316,18 @@ function SingleFlow({ item, stage, onConfirm }: { item: TrackedApplication; stag
             exit={{ opacity: 0, height: 0 }}
             className="mt-6 space-y-4"
           >
-            <DocPreview label="AI Cover Letter" text={item.coverLetter} delay={0.05} />
-            <DocPreview label="Tailored CV Summary" text={item.tailoredCvText} delay={0.15} />
+            <DocPreview
+              label="AI Cover Letter"
+              value={getDoc(item, "coverLetter")}
+              onChange={(v) => onEditDoc(item.id, "coverLetter", v)}
+              delay={0.05}
+            />
+            <DocPreview
+              label="Tailored CV Summary"
+              value={getDoc(item, "tailoredCvText")}
+              onChange={(v) => onEditDoc(item.id, "tailoredCvText", v)}
+              delay={0.15}
+            />
             <motion.button
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -288,20 +344,35 @@ function SingleFlow({ item, stage, onConfirm }: { item: TrackedApplication; stag
   );
 }
 
-function DocPreview({ label, text, delay }: { label: string; text?: string | null; delay: number }) {
+function DocPreview({
+  label, value, onChange, delay,
+}: {
+  label: string; value: string; onChange: (value: string) => void; delay: number;
+}) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}>
-      <p className="text-xs font-medium text-[var(--th-text-70)] mb-2">{label}</p>
-      <div className="bg-[var(--th-input)] rounded-lg p-3 text-xs text-[var(--th-text-80)] leading-relaxed whitespace-pre-wrap max-h-36 overflow-y-auto">
-        {text || "…"}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-medium text-[var(--th-text-70)]">{label}</p>
+        <span className="text-[10px] text-[var(--th-text-40)]">Editable</span>
       </div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={5}
+        placeholder="…"
+        className="th-scroll w-full resize-none bg-[var(--th-input)] rounded-lg p-3 text-xs text-[var(--th-text-80)] leading-relaxed max-h-36 overflow-y-auto border border-transparent focus:border-[var(--th-border-strong)] focus:outline-none transition-colors"
+      />
     </motion.div>
   );
 }
 
 /* ── Bulk flow ────────────────────────────────────────────────────────────── */
 
-function BulkFlow({ items, stages }: { items: TrackedApplication[]; stages: Stage[] }) {
+function BulkFlow({
+  items, stages, getDoc, onEditDoc,
+}: {
+  items: TrackedApplication[]; stages: Stage[]; getDoc: GetDoc; onEditDoc: OnEditDoc;
+}) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const total = items.length;
   const done = stages.filter((s) => s === "done").length;
@@ -326,6 +397,8 @@ function BulkFlow({ items, stages }: { items: TrackedApplication[]; stages: Stag
             stage={stages[i]}
             expanded={expanded === item.id}
             onToggle={() => setExpanded(expanded === item.id ? null : item.id)}
+            getDoc={getDoc}
+            onEditDoc={onEditDoc}
           />
         ))}
       </div>
@@ -333,7 +406,11 @@ function BulkFlow({ items, stages }: { items: TrackedApplication[]; stages: Stag
   );
 }
 
-function BulkRow({ item, stage, expanded, onToggle }: { item: TrackedApplication; stage: Stage; expanded: boolean; onToggle: () => void }) {
+function BulkRow({
+  item, stage, expanded, onToggle, getDoc, onEditDoc,
+}: {
+  item: TrackedApplication; stage: Stage; expanded: boolean; onToggle: () => void; getDoc: GetDoc; onEditDoc: OnEditDoc;
+}) {
   const hasDocs = !!(item.tailoredCvText || item.coverLetter);
 
   return (
@@ -371,8 +448,18 @@ function BulkRow({ item, stage, expanded, onToggle }: { item: TrackedApplication
               <p className="text-xs text-red-500 dark:text-red-400">{item.failureReason || "Unknown error."}</p>
             ) : (
               <>
-                <DocPreview label="AI Cover Letter" text={item.coverLetter} delay={0} />
-                <DocPreview label="Tailored CV Summary" text={item.tailoredCvText} delay={0} />
+                <DocPreview
+                  label="AI Cover Letter"
+                  value={getDoc(item, "coverLetter")}
+                  onChange={(v) => onEditDoc(item.id, "coverLetter", v)}
+                  delay={0}
+                />
+                <DocPreview
+                  label="Tailored CV Summary"
+                  value={getDoc(item, "tailoredCvText")}
+                  onChange={(v) => onEditDoc(item.id, "tailoredCvText", v)}
+                  delay={0}
+                />
               </>
             )}
           </motion.div>
